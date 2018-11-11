@@ -7,6 +7,7 @@ namespace AGSUnpackerSharp
 {
   public static class AGSUtils
   {
+    //FIX(adm244): don't modify the passed-in array, make a copy!
     public static unsafe string DecryptString(byte[] str)
     {
       const string password = "Avis Durgan";

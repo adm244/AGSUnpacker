@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
+using AGSUnpackerSharp.Room;
+using AGSUnpackerSharp.Shared;
 
 namespace AGSUnpackerSharp
 {
@@ -12,8 +14,6 @@ namespace AGSUnpackerSharp
     private readonly string CLIB_TAIL_SIGNATURE = "CLIB\x1\x2\x3\x4SIGE";
 
     private readonly string DTA_SIGNATURE = "Adventure Creator Game File v2";
-
-    private readonly string SCRIPT_SIGNATURE = "SCOM";
 
     private readonly Int32 EncryptionRandSeed = 9338638;
 
@@ -144,6 +144,363 @@ namespace AGSUnpackerSharp
       return filenames;
     }
 
+    public AGSRoom ParseCRMText(string crmpath)
+    {
+      FileStream fs = new FileStream(crmpath, FileMode.Open);
+      BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
+
+      Int16 version = r.ReadInt16();
+      Debug.Assert(version == 29);
+
+      AGSRoom room = new AGSRoom();
+
+      byte blockType = 0xFF;
+      do
+      {
+        blockType = r.ReadByte();
+        if (blockType != 0xFF)
+        {
+          ParseRoomBlock(r, ref room, blockType);
+        }
+      } while (blockType != 0xFF);
+
+      r.Close();
+
+      return room;
+    }
+
+    public void ParseRoomBlock(BinaryReader r, ref AGSRoom room, byte blockType)
+    {
+      Int32 length = r.ReadInt32();
+
+      switch (blockType)
+      {
+        case 0x01:
+          ParseRoomMainBlock(r, ref room);
+          break;
+        case 0x05:
+          ParseObjectNamesBlock(r, ref room);
+          break;
+        case 0x06:
+          ParseBackgroundAnimationBlock(r, ref room);
+          break;
+        case 0x07:
+          ParseSCOM3Block(r, ref room);
+          break;
+        case 0x08:
+          ParsePropertiesBlock(r, ref room);
+          break;
+        case 0x09:
+          ParseObjectScriptNamesBlock(r, ref room);
+          break;
+        
+        default:
+          Debug.Assert(false, "Unknown block is encountered!");
+          break;
+      }
+    }
+
+    public void ParseBackgroundAnimationBlock(BinaryReader r, ref AGSRoom room)
+    {
+      byte frames = r.ReadByte();
+      Debug.Assert(frames <= 5);
+
+      byte animation_speed = r.ReadByte();
+      // skip palette share flags
+      r.BaseStream.Seek(frames, SeekOrigin.Current);
+
+      for (int i = 1; i < frames; ++i)
+      {
+        ParseLZWImage(r);
+      }
+    }
+
+    public void ParseObjectScriptNamesBlock(BinaryReader r, ref AGSRoom room)
+    {
+      byte objects_count = r.ReadByte();
+      Debug.Assert(objects_count == room.objects.Length);
+
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        room.objects[i].scriptname = r.ReadFixedString(20);
+      }
+    }
+
+    public void ParseObjectNamesBlock(BinaryReader r, ref AGSRoom room)
+    {
+      byte objects_count = r.ReadByte();
+      Debug.Assert(objects_count == room.objects.Length);
+
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        room.objects[i].name = r.ReadFixedString(30);
+      }
+    }
+
+    public void ParsePropertiesBlock(BinaryReader r, ref AGSRoom room)
+    {
+      Int32 version = r.ReadInt32();
+      Debug.Assert(version == 1);
+
+      // parse room properties
+      ParsePropertyValues(r);
+
+      // parse hotspot properties
+      for (int i = 0; i < room.hotspots.Length; ++i)
+      {
+        ParsePropertyValues(r);
+      }
+
+      // parse object properties
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        ParsePropertyValues(r);
+      }
+    }
+
+    public void ParseSCOM3Block(BinaryReader r, ref AGSRoom room)
+    {
+      room.script = new AGSScript();
+      room.script.LoadFromStream(r);
+    }
+
+    public void ParseRoomMainBlock(BinaryReader r, ref AGSRoom room)
+    {
+      room.background_bpp = r.ReadInt32();
+
+      // parse walk-behind baselines
+      Int16 walkbehind_count = r.ReadInt16();
+      room.walkbehinds = new AGSWalkBehindArea[walkbehind_count];
+      for (int i = 0; i < walkbehind_count; ++i)
+      {
+        room.walkbehinds[i] = new AGSWalkBehindArea();
+        room.walkbehinds[i].baseline = r.ReadInt16();
+      }
+
+      // parse hotspots info
+      Int32 hotspots_count = r.ReadInt32();
+      room.hotspots = new AGSHotspot[hotspots_count];
+      for (int i = 0; i < hotspots_count; ++i)
+      {
+        room.hotspots[i] = new AGSHotspot();
+        room.hotspots[i].walkto_x = r.ReadInt16();
+        room.hotspots[i].walkto_y = r.ReadInt16();
+      }
+      for (int i = 0; i < room.hotspots.Length; ++i)
+      {
+        room.hotspots[i].name = r.ReadNullTerminatedString();
+      }
+      for (int i = 0; i < room.hotspots.Length; ++i)
+      {
+        room.hotspots[i].scriptname = r.ReadChars(20);
+      }
+
+      // parse poly-points
+      Int32 polypoints_count = r.ReadInt32();
+      Debug.Assert(polypoints_count == 0);
+
+      // parse room edges
+      room.edge.top = r.ReadInt16();
+      room.edge.bottom = r.ReadInt16();
+      room.edge.left = r.ReadInt16();
+      room.edge.right = r.ReadInt16();
+
+      // parse room objects
+      Int16 objects_count = r.ReadInt16();
+      room.objects = new AGSObject[objects_count];
+      for (int i = 0; i < objects_count; ++i)
+      {
+        room.objects[i] = new AGSObject();
+        room.objects[i].sprite = r.ReadInt16();
+        room.objects[i].x = r.ReadInt16();
+        room.objects[i].y = r.ReadInt16();
+        room.objects[i].room = r.ReadInt16();
+        room.objects[i].visible = r.ReadInt16();
+      }
+
+      // parse interaction variables
+      Int32 interactionvars_count = r.ReadInt32();
+      Debug.Assert(interactionvars_count == 0);
+
+      Int32 regions_count = r.ReadInt32();
+      room.regions = new AGSRegion[regions_count];
+
+      // parse room events
+      room.events = ParseInteractionScript(r);
+
+      // parse hotspot events
+      for (int i = 0; i < room.hotspots.Length; ++i)
+      {
+        room.hotspots[i].events = ParseInteractionScript(r);
+      }
+
+      // parse object events
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        room.objects[i].events = ParseInteractionScript(r);
+      }
+
+      // parse region events
+      for (int i = 0; i < room.regions.Length; ++i)
+      {
+        room.regions[i] = new AGSRegion();
+        room.regions[i].events = ParseInteractionScript(r);
+      }
+
+      // parse objects baselines
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        room.objects[i].baseline = r.ReadInt32();
+      }
+
+      // parse room dimensions
+      room.width = r.ReadInt16();
+      room.height = r.ReadInt16();
+
+      // parse objects flags
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        room.objects[i].flags = r.ReadInt16();
+      }
+
+      room.resolution_type = r.ReadInt16();
+
+      // parse walkable areas info
+      Int32 walkareas_count = r.ReadInt32();
+      room.walkareas = new AGSWalkableArea[walkareas_count];
+      for (int i = 0; i < room.walkareas.Length; ++i)
+      {
+        room.walkareas[i] = new AGSWalkableArea();
+        room.walkareas[i].scale_far = r.ReadInt16();
+      }
+      for (int i = 0; i < room.walkareas.Length; ++i)
+      {
+        room.walkareas[i].light = r.ReadInt16();
+      }
+      for (int i = 0; i < room.walkareas.Length; ++i)
+      {
+        room.walkareas[i].scale_near = r.ReadInt16();
+      }
+      for (int i = 0; i < room.walkareas.Length; ++i)
+      {
+        room.walkareas[i].top_y = r.ReadInt16();
+      }
+      for (int i = 0; i < room.walkareas.Length; ++i)
+      {
+        room.walkareas[i].bottom_y = r.ReadInt16();
+      }
+
+      // parse room settings
+      room.password = r.ReadBytes(11);
+      room.startup_music = r.ReadByte();
+      room.saveload_disabled = r.ReadByte();
+      room.player_invisible = r.ReadByte();
+      room.player_view = r.ReadByte();
+      room.music_volume = r.ReadByte();
+      r.BaseStream.Seek(5, SeekOrigin.Current);
+
+      Int16 messages_count = r.ReadInt16();
+      room.messages = new AGSMessage[messages_count];
+
+      room.game_id = r.ReadInt32();
+
+      // parse messages flags
+      for (int i = 0; i < room.messages.Length; ++i)
+      {
+        room.messages[i].display_as = r.ReadByte();
+        room.messages[i].flags = r.ReadByte();
+      }
+
+      // parse messages text
+      for (int i = 0; i < messages_count; ++i)
+      {
+        room.messages[i].text = AGSUtils.ReadEncryptedString(r);
+      }
+
+      // parse legacy room animations
+      Int16 room_animations_count = r.ReadInt16();
+      Debug.Assert(room_animations_count == 0);
+
+      // parse walkable areas light level (unused)
+      for (int i = 0; i < 16; ++i)
+      {
+        room.walkareas[i].light = r.ReadInt16();
+      }
+      // parse regions light level
+      for (int i = 0; i < room.regions.Length; ++i)
+      {
+        room.regions[i].light = r.ReadInt16();
+      }
+      // parse regions tint colors
+      for (int i = 0; i < room.regions.Length; ++i)
+      {
+        room.regions[i].tint = r.ReadInt32();
+      }
+      //Debug.Assert(r.BaseStream.Position == 0xC22);
+
+      //TODO(adm244): parse stuff below as well
+
+      // parse primary background
+      ParseLZWImage(r);
+      //Debug.Assert(r.BaseStream.Position == 0x54A1);
+
+      // parse region mask
+      ParseAllegroCompressedImage(r);
+      //Debug.Assert(r.BaseStream.Position == 0x5C55);
+
+      // parse walkable area mask
+      ParseAllegroCompressedImage(r);
+
+      // parse walkbehind area mask
+      ParseAllegroCompressedImage(r);
+
+      // parse hotspot mask
+      ParseAllegroCompressedImage(r);
+      //Debug.Assert(r.BaseStream.Position == 0x7655);
+    }
+
+    public void ParseAllegroCompressedImage(BinaryReader r)
+    {
+      Int16 width = r.ReadInt16();
+      Int16 height = r.ReadInt16();
+
+      //TODO(adm244): do real parsing
+      for (int y = 0; y < height; ++y)
+      {
+        int pixelsRead = 0;
+        while (pixelsRead < width)
+        {
+          sbyte index = (sbyte)r.ReadByte();
+          if (index == -128) index = 0;
+
+          if (index < 0)
+          {
+            r.BaseStream.Seek(1, SeekOrigin.Current);
+            pixelsRead += (1 - index);
+          }
+          else
+          {
+            r.BaseStream.Seek(index + 1, SeekOrigin.Current);
+            pixelsRead += (index + 1);
+          }
+        }
+      }
+
+      // skip palette
+      // 768 = 256 * 3
+      r.BaseStream.Seek(768, SeekOrigin.Current);
+    }
+
+    public void ParseLZWImage(BinaryReader r)
+    {
+      // skip palette
+      r.BaseStream.Seek(256 * sizeof(Int32), SeekOrigin.Current);
+      Int32 picture_maxsize = r.ReadInt32();
+      Int32 picture_data_size = r.ReadInt32();
+      // skip lzw compressed image
+      r.BaseStream.Seek(picture_data_size, SeekOrigin.Current);
+    }
+
     public void ParseDTAText(string dtapath)
     {
       FileStream fs = new FileStream(dtapath, FileMode.Open);
@@ -203,11 +560,17 @@ namespace AGSUnpackerSharp
       Debug.Assert(r.BaseStream.Position == 0x878D);
 
       // parse characters interaction scripts
-      ParseInteractionScripts(r, gameSetup.characters_count);
+      for (int i = 0; i < gameSetup.characters_count; ++i)
+      {
+        ParseInteractionScript(r);
+      }
       Debug.Assert(r.BaseStream.Position == 0x8870);
 
       // parse inventory items interaction scripts
-      ParseInteractionScripts(r, gameSetup.inventory_items_count - 1);
+      for (int i = 1; i < gameSetup.inventory_items_count; ++i)
+      {
+        ParseInteractionScript(r);
+      }
       Debug.Assert(r.BaseStream.Position == 0x88FA);
 
       // parse dictionary
@@ -218,13 +581,15 @@ namespace AGSUnpackerSharp
       }
 
       // parse global script
-      ParseCScript(r);
+      AGSScript globalScript = new AGSScript();
+      globalScript.LoadFromStream(r);
       Debug.Assert(r.BaseStream.Position == 0x11515);
 
       // parse dialog script
       if (dta_version > 37) // 3.1.0
       {
-        ParseCScript(r);
+        AGSScript dialogScript = new AGSScript();
+        dialogScript.LoadFromStream(r);
         Debug.Assert(r.BaseStream.Position == 0x11F4E);
       }
 
@@ -234,7 +599,8 @@ namespace AGSUnpackerSharp
         Int32 modules_count = r.ReadInt32();
         for (int i = 0; i < modules_count; ++i)
         {
-          ParseCScript(r);
+          AGSScript moduleScript = new AGSScript();
+          moduleScript.LoadFromStream(r);
         }
         Debug.Assert(r.BaseStream.Position == 0x126D6);
       }
@@ -780,90 +1146,6 @@ namespace AGSUnpackerSharp
       return views;
     }
 
-    private void ParseCScript(BinaryReader r)
-    {
-      // verify signature
-      char[] scom_sig = r.ReadChars(4);
-      string scom_sig_string = new string(scom_sig);
-      Debug.Assert(scom_sig_string == SCRIPT_SIGNATURE);
-
-      Int32 version = r.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x8A51);
-
-      // read section sizes
-      Int32 globaldata_size = r.ReadInt32();
-      Int32 code_size = r.ReadInt32();
-      Int32 strings_size = r.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x8A5D);
-
-      // parse global data section
-      if (globaldata_size > 0)
-      {
-        //NOTE(adm244): skip for now
-        r.BaseStream.Seek(globaldata_size, SeekOrigin.Current);
-      }
-
-      // parse code section
-      if (code_size > 0)
-      {
-        //NOTE(adm244): skip for now
-        r.BaseStream.Seek(code_size * sizeof(Int32), SeekOrigin.Current);
-      }
-      //Debug.Assert(r.BaseStream.Position == 0xFD79);
-
-      // parse strings section
-      if (strings_size > 0)
-      {
-        //NOTE(adm244): sequence of null terminated strings
-        byte[] buffer = r.ReadBytes(strings_size);
-        //Debug.Assert(r.BaseStream.Position == 0xFFF2);
-
-        string[] strs = AGSUtils.ConvertNullTerminatedSequence(buffer);
-      }
-
-      // parse fixups section
-      Int32 fixups_count = r.ReadInt32();
-      //NOTE(adm244): skip for now
-      r.BaseStream.Seek(fixups_count, SeekOrigin.Current);
-      //Debug.Assert(r.BaseStream.Position == 0x1017F);
-
-      //NOTE(adm244): skip for now
-      r.BaseStream.Seek(fixups_count * sizeof(Int32), SeekOrigin.Current);
-      //Debug.Assert(r.BaseStream.Position == 0x107A3);
-
-      // parse imports section
-      Int32 imports_count = r.ReadInt32();
-      string[] import_symbols = new string[imports_count];
-      for (int i = 0; i < imports_count; ++i)
-      {
-        import_symbols[i] = r.ReadNullTerminatedString(300);
-      }
-      //Debug.Assert(r.BaseStream.Position == 0x11115);
-
-      // parse exports section
-      Int32 exports_count = r.ReadInt32();
-      string[] export_symbols = new string[exports_count];
-      for (int i = 0; i < exports_count; ++i)
-      {
-        export_symbols[i] = r.ReadNullTerminatedString(300);
-        Int32 ptr = r.ReadInt32();
-      }
-      //Debug.Assert(r.BaseStream.Position == 0x114F8);
-
-      // parse script sections
-      Int32 sections_count = r.ReadInt32();
-      for (int i = 0; i < sections_count; ++i)
-      {
-        string section_name = r.ReadNullTerminatedString(300);
-        Int32 section_offset = r.ReadInt32();
-      }
-      //Debug.Assert(r.BaseStream.Position == 0x11511);
-
-      // verify tail signature
-      Int32 tail_sig = r.ReadInt32();
-      Debug.Assert((UInt32)tail_sig == 0xBEEFCAFE);
-    }
-
     private void ParseDictionary(BinaryReader r)
     {
       Int32 words_count = r.ReadInt32();
@@ -875,17 +1157,18 @@ namespace AGSUnpackerSharp
       }
     }
 
-    private void ParseInteractionScripts(BinaryReader r, int count)
+    private AGSInteractionScript ParseInteractionScript(BinaryReader r)
     {
-      for (int i = 0; i < count; ++i)
+      AGSInteractionScript script = new AGSInteractionScript();
+      
+      Int32 events_count = r.ReadInt32();
+      script.events = new AGSInteractionScriptEvent[events_count];
+      for (int i = 0; i < events_count; ++i)
       {
-        Int32 events_count = r.ReadInt32();
-        string[] event_names = new string[events_count];
-        for (int j = 0; j < events_count; ++j)
-        {
-          event_names[j] = r.ReadNullTerminatedString(200);
-        }
+        script.events[i].name = r.ReadNullTerminatedString(200);
       }
+
+      return script;
     }
 
     private AGSCursorInfo[] ParseCursors(BinaryReader r, ref AGSGameSetupStruct setup)

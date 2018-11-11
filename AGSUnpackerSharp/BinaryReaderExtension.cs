@@ -25,6 +25,19 @@ namespace AGSUnpackerSharp
       return sb.ToString();
     }
 
+    public static string ReadFixedString(this BinaryReader r, int length)
+    {
+      char[] buffer = r.ReadChars(length);
+      StringBuilder sb = new StringBuilder(length);
+      for (int i = 0; i < length; ++i)
+      {
+        if (buffer[i] == 0) break;
+        sb.Append(buffer[i]);
+      }
+
+      return sb.ToString();
+    }
+
     public static Int32[] ReadArrayInt32(this BinaryReader r, int count)
     {
       Int32[] values = new Int32[count];

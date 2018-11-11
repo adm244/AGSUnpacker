@@ -61,6 +61,16 @@
     <Compile Include="BinaryReaderExtension.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Room\AGSHotspot.cs" />
+    <Compile Include="Room\AGSMessage.cs" />
+    <Compile Include="Room\AGSObject.cs" />
+    <Compile Include="Room\AGSRegion.cs" />
+    <Compile Include="Room\AGSRoom.cs" />
+    <Compile Include="Room\AGSWalkableArea.cs" />
+    <Compile Include="Room\AGSWalkBehindArea.cs" />
+    <Compile Include="Shared\AGSInteractionScript.cs" />
+    <Compile Include="Shared\AGSInteractionScriptEvent.cs" />
+    <Compile Include="Shared\AGSScript.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
