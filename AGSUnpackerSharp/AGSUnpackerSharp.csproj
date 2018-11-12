@@ -59,6 +59,7 @@
     <Compile Include="AGSViewLoop.cs" />
     <Compile Include="AGSViewLoopFrame.cs" />
     <Compile Include="BinaryReaderExtension.cs" />
+    <Compile Include="Game\AGSGameData.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Room\AGSHotspot.cs" />
@@ -70,6 +71,7 @@
     <Compile Include="Room\AGSWalkBehindArea.cs" />
     <Compile Include="Shared\AGSInteractionScript.cs" />
     <Compile Include="Shared\AGSInteractionScriptEvent.cs" />
+    <Compile Include="Shared\AGSProperty.cs" />
     <Compile Include="Shared\AGSScript.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

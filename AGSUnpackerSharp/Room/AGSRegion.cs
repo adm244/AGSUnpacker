@@ -6,10 +6,17 @@ using AGSUnpackerSharp.Shared;
 
 namespace AGSUnpackerSharp.Room
 {
-  public struct AGSRegion
+  public class AGSRegion
   {
-    public AGSInteractionScript events;
+    public AGSInteractionScript interactions;
     public Int16 light;
     public Int32 tint;
+
+    public AGSRegion()
+    {
+      interactions = new AGSInteractionScript();
+      light = 0;
+      tint = 0;
+    }
   }
 }

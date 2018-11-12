@@ -18,7 +18,7 @@ namespace AGSUnpackerSharp.Shared
     public Int32 offset;
   }
 
-  public struct AGSScript
+  public class AGSScript
   {
     private static readonly string HEAD_SIGNATURE = "SCOM";
     private static readonly UInt32 TAIL_SIGNATURE = 0xBEEFCAFE;
@@ -28,6 +28,15 @@ namespace AGSUnpackerSharp.Shared
     public string[] imports;
     public AGSScriptExport[] exports;
     public AGSScriptSection[] sections;
+
+    public AGSScript()
+    {
+      code = new Int32[0];
+      strings = new string[0];
+      imports = new string[0];
+      exports = new AGSScriptExport[0];
+      sections = new AGSScriptSection[0];
+    }
 
     public void LoadFromStream(BinaryReader r)
     {

@@ -6,12 +6,23 @@ using AGSUnpackerSharp.Shared;
 
 namespace AGSUnpackerSharp.Room
 {
-  public struct AGSHotspot
+  public class AGSHotspot
   {
     public Int16 walkto_x;
     public Int16 walkto_y;
     public string name;
     public char[] scriptname;
-    public AGSInteractionScript events;
+    public AGSInteractionScript interactions;
+    public AGSProperty properties;
+
+    public AGSHotspot()
+    {
+      walkto_x = 0;
+      walkto_y = 0;
+      name = string.Empty;
+      scriptname = new char[0];
+      interactions = new AGSInteractionScript();
+      properties = new AGSProperty();
+    }
   }
 }

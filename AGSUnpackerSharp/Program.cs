@@ -30,9 +30,12 @@ namespace AGSUnpackerSharp
             {
               parser.ParseDTAText(filenames[i]);
             }
-            else */if (fileExtension == "crm")
+            else */
+            if (fileExtension == "crm")
             {
-              rooms.Add(parser.ParseCRMText(filenames[i]));
+              AGSRoom room = new AGSRoom();
+              room.LoadFromFile(filenames[i]);
+              rooms.Add(room);
             }
           }
 
