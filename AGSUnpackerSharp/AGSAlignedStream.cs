@@ -9,10 +9,17 @@ namespace AGSUnpackerSharp
   {
     private readonly byte BASE_ALIGNMENT = 2;
 
+    private BinaryReader r;
     private int _curPos;
 
-    public AGSAlignedStream()
+    public long Position
     {
+      get { return r.BaseStream.Position; }
+    }
+
+    public AGSAlignedStream(BinaryReader r)
+    {
+      this.r = r;
       _curPos = 0;
     }
 
@@ -21,7 +28,7 @@ namespace AGSUnpackerSharp
       _curPos = 0;
     }
 
-    private void SkipPadding(BinaryReader r, byte aligment)
+    private void SkipPadding(byte aligment)
     {
       if (aligment == 0) return;
 
@@ -42,27 +49,27 @@ namespace AGSUnpackerSharp
       }
     }
 
-    public byte[] ReadBytes(BinaryReader r, int count)
+    public byte[] ReadBytes(int count)
     {
-      SkipPadding(r, sizeof(byte));
+      SkipPadding(sizeof(byte));
       byte[] rawData = r.ReadBytes(count);
       _curPos += rawData.Length;
 
       return rawData;
     }
 
-    public char[] ReadFixedString(BinaryReader r, int length)
+    public string ReadFixedString(int length)
     {
-      SkipPadding(r, sizeof(byte));
-      char[] rawData = r.ReadChars(length);
-      _curPos += rawData.Length;
+      SkipPadding(sizeof(byte));
+      string rawData = r.ReadFixedString(length);
+      _curPos += length;
 
       return rawData;
     }
 
-    public Int16[] ReadArrayInt16(BinaryReader r, int count)
+    public Int16[] ReadArrayInt16(int count)
     {
-      SkipPadding(r, sizeof(Int16));
+      SkipPadding(sizeof(Int16));
       Int16[] rawData = new Int16[count];
       for (int i = 0; i < count; ++i)
       {
@@ -73,9 +80,9 @@ namespace AGSUnpackerSharp
       return rawData;
     }
 
-    public Int32[] ReadArrayInt32(BinaryReader r, int count)
+    public Int32[] ReadArrayInt32(int count)
     {
-      SkipPadding(r, sizeof(Int32));
+      SkipPadding(sizeof(Int32));
       Int32[] rawData = new Int32[count];
       for (int i = 0; i < count; ++i)
       {
@@ -86,27 +93,27 @@ namespace AGSUnpackerSharp
       return rawData;
     }
 
-    public byte ReadByte(BinaryReader r)
+    public byte ReadByte()
     {
-      SkipPadding(r, sizeof(byte));
+      SkipPadding(sizeof(byte));
       byte value = r.ReadByte();
       _curPos += sizeof(byte);
 
       return value;
     }
 
-    public Int16 ReadInt16(BinaryReader r)
+    public Int16 ReadInt16()
     {
-      SkipPadding(r, sizeof(Int16));
+      SkipPadding(sizeof(Int16));
       Int16 value = r.ReadInt16();
       _curPos += sizeof(Int16);
 
       return value;
     }
 
-    public Int32 ReadInt32(BinaryReader r)
+    public Int32 ReadInt32()
     {
-      SkipPadding(r, sizeof(Int32));
+      SkipPadding(sizeof(Int32));
       Int32 value = r.ReadInt32();
       _curPos += sizeof(Int32);
 

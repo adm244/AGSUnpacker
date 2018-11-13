@@ -37,7 +37,7 @@ namespace AGSUnpackerSharp.Room
     public AGSMessage[] messages;
     public Int32 game_id;
     public AGSScript script;
-    public AGSProperty properties;
+    public AGSPropertyStorage properties;
 
     public AGSRoom()
     {
@@ -64,7 +64,7 @@ namespace AGSUnpackerSharp.Room
       messages = new AGSMessage[0];
       game_id = 0;
       script = new AGSScript();
-      properties = new AGSProperty();
+      properties = new AGSPropertyStorage();
     }
 
     public void LoadFromFile(string filepath)

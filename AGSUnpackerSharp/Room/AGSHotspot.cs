@@ -13,7 +13,7 @@ namespace AGSUnpackerSharp.Room
     public string name;
     public char[] scriptname;
     public AGSInteractionScript interactions;
-    public AGSProperty properties;
+    public AGSPropertyStorage properties;
 
     public AGSHotspot()
     {
@@ -22,7 +22,7 @@ namespace AGSUnpackerSharp.Room
       name = string.Empty;
       scriptname = new char[0];
       interactions = new AGSInteractionScript();
-      properties = new AGSProperty();
+      properties = new AGSPropertyStorage();
     }
   }
 }

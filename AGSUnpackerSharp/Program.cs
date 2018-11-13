@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Room;
+using AGSUnpackerSharp.Game;
 
 namespace AGSUnpackerSharp
 {
   class Program
   {
+    public static AGSGameData gameData = new AGSGameData();
     public static List<AGSRoom> rooms = new List<AGSRoom>();
     public static List<string> lines = new List<string>();
 
@@ -26,12 +28,11 @@ namespace AGSUnpackerSharp
             int index = filenames[i].LastIndexOf('.');
             string fileExtension = filenames[i].Substring(index + 1);
 
-            /*if (fileExtension == "dta")
+            if (fileExtension == "dta")
             {
-              parser.ParseDTAText(filenames[i]);
+              gameData.LoadFromFile(filenames[i]);
             }
-            else */
-            if (fileExtension == "crm")
+            else if (fileExtension == "crm")
             {
               AGSRoom room = new AGSRoom();
               room.LoadFromFile(filenames[i]);
@@ -55,49 +56,133 @@ namespace AGSUnpackerSharp
 
     public static void PrepareTranslationLines()
     {
-      //FIX(adm244): quick and dirty
-      for (int room_index = 0; room_index < rooms.Count; ++room_index)
+      // extract translation lines from game data
+      lines.Add("// [game28.dta]");
+      ExtractTranslationLines(gameData);
+
+      // extract translation lines from rooms
+      for (int i = 0; i < rooms.Count; ++i)
       {
-        // hotspots
-        for (int i = 0; i < rooms[room_index].hotspots.Length; ++i)
-        {
-          if (string.IsNullOrEmpty(rooms[room_index].hotspots[i].name)) continue;
-          if (lines.IndexOf(rooms[room_index].hotspots[i].name) < 0)
-          {
-            lines.Add(rooms[room_index].hotspots[i].name);
-          }
-        }
+        lines.Add(string.Format("// [room{0}.crm - {1}]", i, gameData.roomsDebugInfo[i].name));
+        ExtractTranslationLines(rooms[i]);
+      }
+    }
 
-        // messages
-        for (int i = 0; i < rooms[room_index].messages.Length; ++i)
-        {
-          if (string.IsNullOrEmpty(rooms[room_index].messages[i].text)) continue;
-          if (lines.IndexOf(rooms[room_index].messages[i].text) < 0)
-          {
-            lines.Add(rooms[room_index].messages[i].text);
-          }
-        }
+    public static void ExtractTranslationLines(AGSRoom room)
+    {
+      // hotspots
+      lines.Add("//   [hotspots]");
+      for (int i = 0; i < room.hotspots.Length; ++i)
+      {
+        PushIntoLines(room.hotspots[i].name);
+      }
 
-        // objects
-        for (int i = 0; i < rooms[room_index].objects.Length; ++i)
-        {
-          if (string.IsNullOrEmpty(rooms[room_index].objects[i].name)) continue;
-          if (lines.IndexOf(rooms[room_index].objects[i].name) < 0)
-          {
-            lines.Add(rooms[room_index].objects[i].name);
-          }
-        }
+      // messages
+      lines.Add("//   [messages]");
+      for (int i = 0; i < room.messages.Length; ++i)
+      {
+        PushIntoLines(room.messages[i].text);
+      }
 
-        // script strings
-        for (int i = 0; i < rooms[room_index].script.strings.Length; ++i)
+      // objects
+      lines.Add("//   [objects]");
+      for (int i = 0; i < room.objects.Length; ++i)
+      {
+        PushIntoLines(room.objects[i].name);
+      }
+
+      // script strings
+      lines.Add("//   [script strings]");
+      for (int i = 0; i < room.script.strings.Length; ++i)
+      {
+        PushIntoLines(room.script.strings[i]);
+      }
+    }
+
+    public static void ExtractTranslationLines(AGSGameData data)
+    {
+      // dialogs
+      // TODO(adm244): implements dialogs
+
+      // global script strings
+      lines.Add("//   [global script strings]");
+      for (int i = 0; i < data.globalScript.strings.Length; ++i)
+      {
+        PushIntoLines(data.globalScript.strings[i]);
+      }
+
+      // dialog script strings
+      lines.Add("//   [dialog script strings]");
+      for (int i = 0; i < data.dialogScript.strings.Length; ++i)
+      {
+        PushIntoLines(data.dialogScript.strings[i]);
+      }
+
+      // module scritps strings
+      for (int script_index = 0; script_index < data.scriptModules.Length; ++script_index)
+      {
+        lines.Add(string.Format("//   [module script {0} strings]", script_index));
+        for (int i = 0; i < data.scriptModules[script_index].strings.Length; ++i)
         {
-          if (string.IsNullOrEmpty(rooms[room_index].script.strings[i])) continue;
-          if (lines.IndexOf(rooms[room_index].script.strings[i]) < 0)
-          {
-            lines.Add(rooms[room_index].script.strings[i]);
-          }
+          PushIntoLines(data.scriptModules[script_index].strings[i]);
         }
       }
+
+      // gui labels
+      lines.Add("//   [labels]");
+      for (int i = 0; i < data.labels.Length; ++i)
+      {
+        PushIntoLines(data.labels[i].text);
+      }
+
+      // gui buttons
+      lines.Add("//   [buttons]");
+      for (int i = 0; i < data.buttons.Length; ++i)
+      {
+        PushIntoLines(data.buttons[i].text);
+      }
+
+      // gui listboxes
+      lines.Add("//   [listboxes]");
+      for (int i = 0; i < data.listboxes.Length; ++i)
+      {
+        for (int j = 0; j < data.listboxes[i].items.Length; ++j)
+        {
+          PushIntoLines(data.listboxes[i].items[j]);
+        }
+      }
+
+      // characters
+      lines.Add("//   [characters]");
+      for (int i = 0; i < data.characters.Length; ++i)
+      {
+        PushIntoLines(data.characters[i].name);
+      }
+
+      // inventory items
+      lines.Add("//   [inventory items]");
+      for (int i = 0; i < data.inventoryItems.Length; ++i)
+      {
+        PushIntoLines(data.inventoryItems[i].name);
+      }
+
+      // global messages
+      lines.Add("//   [global messages]");
+      for (int i = 0; i < data.globalMessages.Length; ++i)
+      {
+        PushIntoLines(data.globalMessages[i]);
+      }
+    }
+
+    public static bool PushIntoLines(string line)
+    {
+      if (string.IsNullOrEmpty(line)) return false;
+      if (lines.IndexOf(line) < 0)
+      {
+        lines.Add(line);
+      }
+
+      return true;
     }
 
     public static void WriteTranslationFile(string filename)
@@ -108,8 +193,13 @@ namespace AGSUnpackerSharp
 
       for (int i = 0; i < lines.Count; ++i)
       {
+        if (lines[i].StartsWith("__")) continue;
+
         w.WriteLine(lines[i]);
-        w.WriteLine();
+        if (!lines[i].StartsWith("//"))
+        {
+          w.WriteLine();
+        }
       }
 
       w.Close();

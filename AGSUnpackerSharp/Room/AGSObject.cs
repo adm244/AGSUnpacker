@@ -18,7 +18,7 @@ namespace AGSUnpackerSharp.Room
     public Int16 flags;
     public string name;
     public string scriptname;
-    public AGSProperty properties;
+    public AGSPropertyStorage properties;
 
     public AGSObject()
     {
@@ -32,7 +32,7 @@ namespace AGSUnpackerSharp.Room
       flags = 0;
       name = string.Empty;
       scriptname = string.Empty;
-      properties = new AGSProperty();
+      properties = new AGSPropertyStorage();
     }
   }
 }

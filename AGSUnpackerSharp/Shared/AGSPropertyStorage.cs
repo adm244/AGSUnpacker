@@ -6,12 +6,12 @@ using System.Diagnostics;
 
 namespace AGSUnpackerSharp.Shared
 {
-  public class AGSProperty
+  public class AGSPropertyStorage
   {
     public string[] names;
     public string[] values;
 
-    public AGSProperty()
+    public AGSPropertyStorage()
     {
       names = new string[0];
       values = new string[0];
