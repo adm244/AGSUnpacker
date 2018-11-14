@@ -21,7 +21,7 @@ namespace AGSUnpackerSharp
         string filepath = args[0];
         if (File.Exists(filepath))
         {
-          AGSTextParser parser = new AGSTextParser();
+          /*AGSTextParser parser = new AGSTextParser();
           string[] filenames = parser.UnpackAGSAssetFiles(filepath);
 
           for (int i = 0; i < filenames.Length; ++i)
@@ -42,7 +42,9 @@ namespace AGSUnpackerSharp
           }
 
           PrepareTranslationLines();
-          WriteTranslationFile("text.trs");
+          WriteTranslationFile("text.trs");*/
+
+          DecompileTranslation(filepath);
         }
         else
         {
@@ -53,6 +55,53 @@ namespace AGSUnpackerSharp
       {
         Console.WriteLine("ERROR: Filepath is not specified.");
       }
+    }
+
+    public static void DecompileTranslation(string filepath)
+    {
+      // decompile *.tra file
+      Int32 unique_id = 0;
+      string game_name = string.Empty;
+
+      FileStream fs = new FileStream(filepath, FileMode.Open);
+      BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
+
+      r.BaseStream.Seek(15, SeekOrigin.Begin);
+
+      for (; ; )
+      {
+        Int32 blockType = r.ReadInt32();
+        Int32 blockSize = r.ReadInt32();
+
+        if (blockType == 0x1)
+        {
+          for (; ; )
+          {
+            string original = AGSUtils.ReadEncryptedString(r);
+            string translation = AGSUtils.ReadEncryptedString(r);
+            lines.Add(original);
+
+            if ((original.Length < 1) && (translation.Length < 1)) break;
+          }
+        }
+        else if (blockType == 0x2)
+        {
+          unique_id = r.ReadInt32();
+          game_name = AGSUtils.ReadEncryptedString(r);
+        }
+        else if (blockType == 0x3)
+        {
+          break;
+        }
+        else
+        {
+          Debug.Assert(false, "Unknown block type encountered!");
+        }
+      }
+
+      r.Close();
+
+      WriteTranslationFile("decompiled.trs");
     }
 
     public static void PrepareTranslationLines()
