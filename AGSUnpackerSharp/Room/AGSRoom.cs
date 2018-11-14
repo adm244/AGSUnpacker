@@ -73,7 +73,7 @@ namespace AGSUnpackerSharp.Room
       BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
 
       Int16 version = r.ReadInt16();
-      Debug.Assert(version == 29);
+      //Debug.Assert(version == 29);
 
       byte blockType = 0xFF;
       do
@@ -81,36 +81,36 @@ namespace AGSUnpackerSharp.Room
         blockType = r.ReadByte();
         if (blockType != 0xFF)
         {
-          ParseRoomBlock(r, blockType);
+          ParseRoomBlock(r, blockType, version);
         }
       } while (blockType != 0xFF);
 
       r.Close();
     }
 
-    private void ParseRoomBlock(BinaryReader r, byte blockType)
+    private void ParseRoomBlock(BinaryReader r, byte blockType, int room_version)
     {
       Int32 length = r.ReadInt32();
 
       switch (blockType)
       {
         case 0x01:
-          ParseRoomMainBlock(r);
+          ParseRoomMainBlock(r, room_version);
           break;
         case 0x05:
-          ParseObjectNamesBlock(r);
+          ParseObjectNamesBlock(r, room_version);
           break;
         case 0x06:
-          ParseBackgroundAnimationBlock(r);
+          ParseBackgroundAnimationBlock(r, room_version);
           break;
         case 0x07:
-          ParseSCOM3Block(r);
+          ParseSCOM3Block(r, room_version);
           break;
         case 0x08:
-          ParsePropertiesBlock(r);
+          ParsePropertiesBlock(r, room_version);
           break;
         case 0x09:
-          ParseObjectScriptNamesBlock(r);
+          ParseObjectScriptNamesBlock(r, room_version);
           break;
 
         default:
@@ -119,7 +119,7 @@ namespace AGSUnpackerSharp.Room
       }
     }
 
-    private void ParseBackgroundAnimationBlock(BinaryReader r)
+    private void ParseBackgroundAnimationBlock(BinaryReader r, int room_version)
     {
       byte frames = r.ReadByte();
       Debug.Assert(frames <= 5);
@@ -134,29 +134,45 @@ namespace AGSUnpackerSharp.Room
       }
     }
 
-    private void ParseObjectScriptNamesBlock(BinaryReader r)
+    private void ParseObjectScriptNamesBlock(BinaryReader r, int room_version)
     {
       byte objects_count = r.ReadByte();
       Debug.Assert(objects_count == objects.Length);
 
       for (int i = 0; i < objects.Length; ++i)
       {
-        objects[i].scriptname = r.ReadFixedString(20);
+        if (room_version >= 31) // 3.4.1.5
+        {
+          Int32 strlen = r.ReadInt32();
+          objects[i].scriptname = r.ReadFixedString(strlen);
+        }
+        else
+        {
+          objects[i].scriptname = r.ReadFixedString(20);
+        }
       }
     }
 
-    private void ParseObjectNamesBlock(BinaryReader r)
+    private void ParseObjectNamesBlock(BinaryReader r, int room_version)
     {
       byte objects_count = r.ReadByte();
       Debug.Assert(objects_count == objects.Length);
 
       for (int i = 0; i < objects.Length; ++i)
       {
-        objects[i].name = r.ReadFixedString(30);
+        if (room_version >= 31) // 3.4.1.5
+        {
+          Int32 strlen = r.ReadInt32();
+          objects[i].name = r.ReadFixedString(strlen);
+        }
+        else
+        {
+          objects[i].name = r.ReadFixedString(30);
+        }
       }
     }
 
-    private void ParsePropertiesBlock(BinaryReader r)
+    private void ParsePropertiesBlock(BinaryReader r, int room_version)
     {
       Int32 version = r.ReadInt32();
       Debug.Assert(version == 1);
@@ -177,13 +193,13 @@ namespace AGSUnpackerSharp.Room
       }
     }
 
-    private void ParseSCOM3Block(BinaryReader r)
+    private void ParseSCOM3Block(BinaryReader r, int room_version)
     {
       script = new AGSScript();
       script.LoadFromStream(r);
     }
 
-    private void ParseRoomMainBlock(BinaryReader r)
+    private void ParseRoomMainBlock(BinaryReader r, int room_version)
     {
       background_bpp = r.ReadInt32();
 
@@ -207,11 +223,29 @@ namespace AGSUnpackerSharp.Room
       }
       for (int i = 0; i < hotspots.Length; ++i)
       {
-        hotspots[i].name = r.ReadNullTerminatedString();
+        if (room_version >= 31) // 3.4.1.5
+        {
+          //NOTE(adm244): why they switched from null-terminated string to this one??
+          Int32 strlen = r.ReadInt32();
+          hotspots[i].name = r.ReadFixedString(strlen);
+        }
+        else
+        {
+          hotspots[i].name = r.ReadNullTerminatedString();
+        }
       }
       for (int i = 0; i < hotspots.Length; ++i)
       {
-        hotspots[i].scriptname = r.ReadChars(20);
+        if (room_version >= 31) // 3.4.1.5
+        {
+          //NOTE(adm244): why they switched from null-terminated string to this one??
+          Int32 strlen = r.ReadInt32();
+          hotspots[i].scriptname = r.ReadFixedString(strlen);
+        }
+        else
+        {
+          hotspots[i].scriptname = r.ReadFixedString(20);
+        }
       }
 
       // parse poly-points

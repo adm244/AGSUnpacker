@@ -14,7 +14,7 @@ namespace AGSUnpackerSharp
 
     public static string ReadNullTerminatedString(this BinaryReader r, int maxLength)
     {
-      StringBuilder sb = new StringBuilder(maxLength);
+      StringBuilder sb = new StringBuilder(maxLength / 4);
       for (int i = 0; i < maxLength; ++i)
       {
         char symbol = r.ReadChar();
@@ -36,6 +36,17 @@ namespace AGSUnpackerSharp
       }
 
       return sb.ToString();
+    }
+
+    public static Int16[] ReadArrayInt16(this BinaryReader r, int count)
+    {
+      Int16[] values = new Int16[count];
+      for (int i = 0; i < count; ++i)
+      {
+        values[i] = r.ReadInt16();
+      }
+
+      return values;
     }
 
     public static Int32[] ReadArrayInt32(this BinaryReader r, int count)

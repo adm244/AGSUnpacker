@@ -25,7 +25,8 @@ namespace AGSUnpackerSharp.Game
       base.LoadFromStream(r);
 
       // parse label info
-      text = r.ReadString();
+      Int32 strlen = r.ReadInt32();
+      text = r.ReadFixedString(strlen);
       font = r.ReadInt32();
       text_color = r.ReadInt32();
       text_aligment = r.ReadInt32();

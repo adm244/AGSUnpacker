@@ -34,6 +34,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <LangVersion>3</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>AGSUnpackerSharp.Program</StartupObject>
@@ -49,32 +50,32 @@
   <ItemGroup>
     <Compile Include="AGSAlignedStream.cs" />
     <Compile Include="AGSAssetInfo.cs" />
-    <Compile Include="AGSCursorInfo.cs" />
+    <Compile Include="Game\AGSCursorInfo.cs" />
     <Compile Include="AGSEncoder.cs" />
-    <Compile Include="AGSGameSetupStruct.cs" />
-    <Compile Include="AGSInventoryItem.cs" />
+    <Compile Include="Game\AGSGameSetupStruct.cs" />
+    <Compile Include="Game\AGSInventoryItem.cs" />
     <Compile Include="AGSTextParser.cs" />
     <Compile Include="AGSUtils.cs" />
-    <Compile Include="AGSView.cs" />
-    <Compile Include="AGSViewLoop.cs" />
-    <Compile Include="AGSViewLoopFrame.cs" />
-    <Compile Include="BinaryReaderExtension.cs" />
-    <Compile Include="Game\AGSAudioClip.cs" />
-    <Compile Include="Game\AGSAudioStorage.cs" />
-    <Compile Include="Game\AGSAudioType.cs" />
+    <Compile Include="Game\View\AGSView.cs" />
+    <Compile Include="Game\View\AGSViewLoop.cs" />
+    <Compile Include="Game\View\AGSViewLoopFrame.cs" />
+    <Compile Include="Extensions\BinaryReaderExtension.cs" />
+    <Compile Include="Game\Audio\AGSAudioClip.cs" />
+    <Compile Include="Game\Audio\AGSAudioStorage.cs" />
+    <Compile Include="Game\Audio\AGSAudioType.cs" />
     <Compile Include="Game\AGSCharacter.cs" />
     <Compile Include="Game\AGSCustomProperiesSchema.cs" />
-    <Compile Include="Game\AGSDialog.cs" />
+    <Compile Include="Game\Dialog\AGSDialog.cs" />
     <Compile Include="Game\AGSDictionary.cs" />
     <Compile Include="Game\AGSGameData.cs" />
-    <Compile Include="Game\AGSGUI.cs" />
-    <Compile Include="Game\AGSGUIButton.cs" />
-    <Compile Include="Game\AGSGUIInventoryWindow.cs" />
-    <Compile Include="Game\AGSGUILabel.cs" />
-    <Compile Include="Game\AGSGUIListBox.cs" />
-    <Compile Include="Game\AGSGUIObject.cs" />
-    <Compile Include="Game\AGSGUISlider.cs" />
-    <Compile Include="Game\AGSGUITextBox.cs" />
+    <Compile Include="Game\GUI\AGSGUI.cs" />
+    <Compile Include="Game\GUI\AGSGUIButton.cs" />
+    <Compile Include="Game\GUI\AGSGUIInventoryWindow.cs" />
+    <Compile Include="Game\GUI\AGSGUILabel.cs" />
+    <Compile Include="Game\GUI\AGSGUIListBox.cs" />
+    <Compile Include="Game\GUI\AGSGUIObject.cs" />
+    <Compile Include="Game\GUI\AGSGUISlider.cs" />
+    <Compile Include="Game\GUI\AGSGUITextBox.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Room\AGSHotspot.cs" />
@@ -84,8 +85,8 @@
     <Compile Include="Room\AGSRoom.cs" />
     <Compile Include="Room\AGSWalkableArea.cs" />
     <Compile Include="Room\AGSWalkBehindArea.cs" />
-    <Compile Include="Shared\AGSInteractionScript.cs" />
-    <Compile Include="Shared\AGSInteractionScriptEvent.cs" />
+    <Compile Include="Shared\InteractionScript\AGSInteractionScript.cs" />
+    <Compile Include="Shared\InteractionScript\AGSInteractionScriptEvent.cs" />
     <Compile Include="Shared\AGSPropertyStorage.cs" />
     <Compile Include="Shared\AGSScript.cs" />
   </ItemGroup>

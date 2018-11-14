@@ -37,19 +37,13 @@ namespace AGSUnpackerSharp
     {
       // verify tail signature
       r.BaseStream.Seek(-CLIB_TAIL_SIGNATURE.Length, SeekOrigin.End);
-      Debug.Assert(r.BaseStream.Position == 0xD160CB);
-
       char[] tail_sig = r.ReadChars(CLIB_TAIL_SIGNATURE.Length);
       string tail_sig_string = new string(tail_sig);
       Debug.Assert(CLIB_TAIL_SIGNATURE == tail_sig_string);
 
       // get clib offset
       r.BaseStream.Seek(-(CLIB_TAIL_SIGNATURE.Length + 4), SeekOrigin.End);
-      Debug.Assert(r.BaseStream.Position == 0xD160C7);
-
       UInt32 clib_offset = r.ReadUInt32();
-      Debug.Assert(clib_offset == 0x20EC00);
-
       r.BaseStream.Seek(clib_offset, SeekOrigin.Begin);
       Debug.Assert(r.BaseStream.Position == clib_offset);
 
@@ -69,12 +63,10 @@ namespace AGSUnpackerSharp
 
       AGSEncoder encoder = new AGSEncoder(rand_val);
       Int32 files_count = encoder.ReadInt32(r);
-      Debug.Assert(files_count == 0x01);
 
       for (int i = 0; i < files_count; ++i)
       {
         string lib_filename = encoder.ReadString(r);
-        Debug.Assert(lib_filename == "Uploaded.exe");
       }
 
       Int32 asset_count = encoder.ReadInt32(r);
@@ -114,7 +106,7 @@ namespace AGSUnpackerSharp
         string filepath = Path.Combine(dirpath, assetInfos[i].Filename);
         filenames[i] = filepath;
 
-        FileStream fs = new FileStream(filepath, FileMode.Create);
+        /*FileStream fs = new FileStream(filepath, FileMode.Create);
         BinaryWriter w = new BinaryWriter(fs, Encoding.ASCII);
 
         r.BaseStream.Seek(assetInfos[i].Offset, SeekOrigin.Begin);
@@ -134,7 +126,7 @@ namespace AGSUnpackerSharp
           bytesRead += bytesToRead;
         }
 
-        w.Close();
+        w.Close();*/
 
         Console.WriteLine(" Done!");
       }

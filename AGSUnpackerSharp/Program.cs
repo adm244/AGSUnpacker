@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Room;
 using AGSUnpackerSharp.Game;
+using System.Diagnostics;
 
 namespace AGSUnpackerSharp
 {
@@ -63,7 +64,17 @@ namespace AGSUnpackerSharp
       // extract translation lines from rooms
       for (int i = 0; i < rooms.Count; ++i)
       {
-        lines.Add(string.Format("// [room{0}.crm - {1}]", i, gameData.roomsDebugInfo[i].name));
+        string metadata = string.Empty;
+        if (gameData.roomsDebugInfo.Length == 0)
+        {
+          metadata = string.Format("// [room{0}.crm]", (i + 1));
+        }
+        else
+        {
+          metadata = string.Format("// [room{0}.crm - {1}]", (i + 1), gameData.roomsDebugInfo[i].name);
+        }
+
+        lines.Add(metadata);
         ExtractTranslationLines(rooms[i]);
       }
     }
@@ -102,7 +113,14 @@ namespace AGSUnpackerSharp
     public static void ExtractTranslationLines(AGSGameData data)
     {
       // dialogs
-      // TODO(adm244): implements dialogs
+      for (int i = 0; i < data.dialogs.Length; ++i)
+      {
+        lines.Add(string.Format("//   [dialog topic {0}]", (i + 1)));
+        for (int j = 0; j < data.dialogs[i].options.Length; ++j)
+        {
+          PushIntoLines(data.dialogs[i].options[j]);
+        }
+      }
 
       // global script strings
       lines.Add("//   [global script strings]");
@@ -121,7 +139,7 @@ namespace AGSUnpackerSharp
       // module scritps strings
       for (int script_index = 0; script_index < data.scriptModules.Length; ++script_index)
       {
-        lines.Add(string.Format("//   [module script {0} strings]", script_index));
+        lines.Add(string.Format("//   [{0} strings]", data.scriptModules[script_index].sections[0].name));
         for (int i = 0; i < data.scriptModules[script_index].strings.Length; ++i)
         {
           PushIntoLines(data.scriptModules[script_index].strings[i]);
@@ -170,12 +188,25 @@ namespace AGSUnpackerSharp
       lines.Add("//   [global messages]");
       for (int i = 0; i < data.globalMessages.Length; ++i)
       {
+        if (data.setup.global_messages[i] == 0) continue;
         PushIntoLines(data.globalMessages[i]);
       }
     }
 
     public static bool PushIntoLines(string line)
     {
+      if (line == null) return false;
+
+      // cut non printable characters at the beginning
+      int trim_index = 0;
+      for (int i = 0; i < line.Length; ++i)
+      {
+        if (line[i] < 0x20) trim_index = i;
+      }
+      if ((trim_index + 1) >= line.Length) return false;
+      if (trim_index > 0) line = line.Substring(trim_index + 1);
+
+      // check if string is valid
       if (string.IsNullOrEmpty(line)) return false;
       if (lines.IndexOf(line) < 0)
       {

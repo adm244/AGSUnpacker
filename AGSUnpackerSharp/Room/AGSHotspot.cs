@@ -11,7 +11,7 @@ namespace AGSUnpackerSharp.Room
     public Int16 walkto_x;
     public Int16 walkto_y;
     public string name;
-    public char[] scriptname;
+    public string scriptname;
     public AGSInteractionScript interactions;
     public AGSPropertyStorage properties;
 
@@ -20,7 +20,7 @@ namespace AGSUnpackerSharp.Room
       walkto_x = 0;
       walkto_y = 0;
       name = string.Empty;
-      scriptname = new char[0];
+      scriptname = string.Empty;
       interactions = new AGSInteractionScript();
       properties = new AGSPropertyStorage();
     }

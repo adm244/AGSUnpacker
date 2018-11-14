@@ -29,6 +29,7 @@ namespace AGSUnpackerSharp
       hotspot_y = 0;
       reserved = new Int32[0];
       flag = 0;
+      scriptName = string.Empty;
 
       interactions = new AGSInteractionScript();
       properties = new AGSPropertyStorage();

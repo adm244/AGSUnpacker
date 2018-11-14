@@ -29,7 +29,6 @@ namespace AGSUnpackerSharp.Game
         audioTypes[i] = new AGSAudioType();
         audioTypes[i].LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x1A7FE);
 
       // parse audio clips info
       Int32 audioclips_count = r.ReadInt32();
@@ -41,7 +40,6 @@ namespace AGSUnpackerSharp.Game
         audioClips[i].LoadFromStream(ar);
         ar.Reset();
       }
-      Debug.Assert(r.BaseStream.Position == 0x1AD02);
 
       score_clip_id = r.ReadInt32();
     }

@@ -20,17 +20,27 @@ namespace AGSUnpackerSharp.Shared
     public void LoadFromStream(BinaryReader r)
     {
       Int32 version = r.ReadInt32();
-      Debug.Assert(version == 1);
+      Debug.Assert((version == 1) || (version == 2));
 
       Int32 count = r.ReadInt32();
       names = new string[count];
       values = new string[count];
 
-      //TODO(adm244): test that on a real dta file
       for (int i = 0; i < count; ++i)
       {
-        names[i] = r.ReadNullTerminatedString(200);
-        values[i] = r.ReadNullTerminatedString(500);
+        if (version == 1)
+        {
+          names[i] = r.ReadNullTerminatedString(200);
+          values[i] = r.ReadNullTerminatedString(500);
+        }
+        else
+        {
+          Int32 strlen = r.ReadInt32();
+          names[i] = r.ReadFixedString(strlen);
+
+          strlen = r.ReadInt32();
+          values[i] = r.ReadFixedString(strlen);
+        }
       }
     }
   }
