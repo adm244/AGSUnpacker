@@ -70,7 +70,7 @@ namespace AGSUnpackerSharp.Room
     public void LoadFromFile(string filepath)
     {
       FileStream fs = new FileStream(filepath, FileMode.Open);
-      BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
+      BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
 
       Int16 version = r.ReadInt16();
       //Debug.Assert(version == 29);

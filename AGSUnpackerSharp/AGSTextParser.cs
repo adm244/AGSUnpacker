@@ -18,7 +18,7 @@ namespace AGSUnpackerSharp
     public string[] UnpackAGSAssetFiles(string agsfile)
     {
       FileStream fs = new FileStream(agsfile, FileMode.Open, FileAccess.Read, FileShare.Read);
-      BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
+      BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
 
       Console.Write("Parsing {0}...", agsfile);
       AGSAssetInfo[] assetInfos = ParseAGSAssetInfos(r);
@@ -106,8 +106,8 @@ namespace AGSUnpackerSharp
         string filepath = Path.Combine(dirpath, assetInfos[i].Filename);
         filenames[i] = filepath;
 
-        /*FileStream fs = new FileStream(filepath, FileMode.Create);
-        BinaryWriter w = new BinaryWriter(fs, Encoding.ASCII);
+        FileStream fs = new FileStream(filepath, FileMode.Create);
+        BinaryWriter w = new BinaryWriter(fs, Encoding.GetEncoding(1252));
 
         r.BaseStream.Seek(assetInfos[i].Offset, SeekOrigin.Begin);
 
@@ -126,7 +126,7 @@ namespace AGSUnpackerSharp
           bytesRead += bytesToRead;
         }
 
-        w.Close();*/
+        w.Close();
 
         Console.WriteLine(" Done!");
       }

@@ -84,7 +84,7 @@ namespace AGSUnpackerSharp.Game
     public void LoadFromFile(string filepath)
     {
       FileStream fs = new FileStream(filepath, FileMode.Open);
-      BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
+      BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
 
       // verify signature
       char[] dta_sig = r.ReadChars(DTA_SIGNATURE.Length);
@@ -109,14 +109,14 @@ namespace AGSUnpackerSharp.Game
       // parse game setup struct base
       AGSAlignedStream ar = new AGSAlignedStream(r);
       setup.LoadFromStream(ar, dta_version);
-      Debug.Assert(r.BaseStream.Position == 0xF6A);
+      //Debug.Assert(r.BaseStream.Position == 0xF6A);
 
       // parse extended game setup struct (dtaver > 32)
       // parse save game info
       save_guid = r.ReadChars(40);
       save_extension = r.ReadChars(20);
       save_folder = r.ReadChars(50);
-      Debug.Assert(r.BaseStream.Position == 0xFD8);
+      //Debug.Assert(r.BaseStream.Position == 0xFD8);
 
       // parse font info
       font_flags = r.ReadBytes(setup.fonts_count);
@@ -132,13 +132,13 @@ namespace AGSUnpackerSharp.Game
           }
         }
       }
-      Debug.Assert(r.BaseStream.Position == 0x1096);
+      //Debug.Assert(r.BaseStream.Position == 0x1096);
 
       // parse sprite flags
       // dtaver >= 24
       Int32 sprites_count_max = r.ReadInt32();
       sprite_flags = r.ReadBytes(sprites_count_max);
-      Debug.Assert(r.BaseStream.Position == 0x85CA);
+      //Debug.Assert(r.BaseStream.Position == 0x85CA);
 
       // parse inventory items info
       inventoryItems = new AGSInventoryItem[setup.inventory_items_count];
@@ -149,7 +149,7 @@ namespace AGSUnpackerSharp.Game
         inventoryItems[i].LoadFromStream(ar1);
         //NOTE(adm244): reset aligned stream??
       }
-      Debug.Assert(r.BaseStream.Position == 0x992E);
+      //Debug.Assert(r.BaseStream.Position == 0x992E);
 
       // parse cursors info
       AGSAlignedStream ar2 = new AGSAlignedStream(r);
@@ -159,7 +159,7 @@ namespace AGSUnpackerSharp.Game
         cursors[i] = new AGSCursorInfo();
         cursors[i].LoadFromStream(ar2);
       }
-      Debug.Assert(r.BaseStream.Position == 0x9A36);
+      //Debug.Assert(r.BaseStream.Position == 0x9A36);
 
       // parse characters interaction scripts
       characters = new AGSCharacter[setup.characters_count];
@@ -168,7 +168,7 @@ namespace AGSUnpackerSharp.Game
         characters[i] = new AGSCharacter();
         characters[i].interactions.LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0xA3D0);
+      //Debug.Assert(r.BaseStream.Position == 0xA3D0);
 
       // parse inventory items interaction scripts
       for (int i = 1; i < setup.inventory_items_count; ++i)
@@ -176,24 +176,24 @@ namespace AGSUnpackerSharp.Game
         inventoryItems[i] = new AGSInventoryItem();
         inventoryItems[i].interactions.LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0xA81C);
+      //Debug.Assert(r.BaseStream.Position == 0xA81C);
 
       // parse dictionary
       if (setup.load_dictionary != 0)
       {
         dictionary.LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0xA96B);
+      //Debug.Assert(r.BaseStream.Position == 0xA96B);
 
       // parse global script
       globalScript.LoadFromStream(r);
-      Debug.Assert(r.BaseStream.Position == 0xAFA44);
+      //Debug.Assert(r.BaseStream.Position == 0xAFA44);
 
       // parse dialog script
       if (dta_version > 37) // 3.1.0
       {
         dialogScript.LoadFromStream(r);
-        Debug.Assert(r.BaseStream.Position == 0x404CD3);
+        //Debug.Assert(r.BaseStream.Position == 0x404CD3);
       }
 
       // parse other scripts
@@ -206,7 +206,7 @@ namespace AGSUnpackerSharp.Game
           scriptModules[i] = new AGSScript();
           scriptModules[i].LoadFromStream(r);
         }
-        Debug.Assert(r.BaseStream.Position == 0x639860);
+        //Debug.Assert(r.BaseStream.Position == 0x639860);
       }
 
       // parse views
@@ -218,7 +218,7 @@ namespace AGSUnpackerSharp.Game
           views[i] = new AGSView();
           views[i].LoadFromStream(r);
         }
-        Debug.Assert(r.BaseStream.Position == 0x6BEB3A);
+        //Debug.Assert(r.BaseStream.Position == 0x6BEB3A);
       }
 
       // parse characters
@@ -228,48 +228,48 @@ namespace AGSUnpackerSharp.Game
         characters[i].LoadFromStream(ar3);
         ar.Reset();
       }
-      Debug.Assert(r.BaseStream.Position == 0x6D0CAE);
+      //Debug.Assert(r.BaseStream.Position == 0x6D0CAE);
 
       // parse lipsync
       if (dta_version >= 21) // 2.54
       {
         //TODO(adm244): real parsing
         r.BaseStream.Seek(20 * 50, SeekOrigin.Current);
-        Debug.Assert(r.BaseStream.Position == 0x6D1096);
+        //Debug.Assert(r.BaseStream.Position == 0x6D1096);
       }
 
       // parse global messages
       ParseGlobalMessages(r);
-      Debug.Assert(r.BaseStream.Position == 0x6D1096);
+      //Debug.Assert(r.BaseStream.Position == 0x6D1096);
 
       // parse dialogs
       ParseDialogs(r);
-      Debug.Assert(r.BaseStream.Position == 0x7DB056);
+      //Debug.Assert(r.BaseStream.Position == 0x7DB056);
 
       // parse guis
       ParseGUIs(r);
 
       // parse gui controls
       ParseGUIControls(r);
-      Debug.Assert(r.BaseStream.Position == 0x7E8738);
+      //Debug.Assert(r.BaseStream.Position == 0x7E8738);
 
       // parse plugins
       ParsePlugins(r);
-      Debug.Assert(r.BaseStream.Position == 0x7E8758);
+      //Debug.Assert(r.BaseStream.Position == 0x7E8758);
 
       // parse custom properties
       ParseCustomProperties(r);
       ParseObjectsScriptNames(r);
-      Debug.Assert(r.BaseStream.Position == 0x7EAE1D);
+      //Debug.Assert(r.BaseStream.Position == 0x7EAE1D);
 
       // parse audio clips
       audioStorage = new AGSAudioStorage();
       audioStorage.LoadFromStream(r);
-      Debug.Assert(r.BaseStream.Position == 0x7FEBC9);
+      //Debug.Assert(r.BaseStream.Position == 0x7FEBC9);
 
       // parse rooms debug info
       ParseRoomsDebugInfo(r);
-      Debug.Assert(r.BaseStream.Position == 0x7FEBC9);
+      //Debug.Assert(r.BaseStream.Position == 0x7FEBC9);
       
       r.Close();
     }
@@ -327,7 +327,7 @@ namespace AGSUnpackerSharp.Game
         inventoryItems[i].properties = new AGSPropertyStorage();
         inventoryItems[i].properties.LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x7E912D);
+      //Debug.Assert(r.BaseStream.Position == 0x7E912D);
     }
 
     private void ParsePlugins(BinaryReader r)
@@ -357,7 +357,7 @@ namespace AGSUnpackerSharp.Game
         buttons[i] = new AGSGUIButton();
         buttons[i].LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x7E63FD);
+      //Debug.Assert(r.BaseStream.Position == 0x7E63FD);
 
       Int32 labels_count = r.ReadInt32();
       labels = new AGSGUILabel[labels_count];
@@ -367,7 +367,7 @@ namespace AGSUnpackerSharp.Game
         labels[i] = new AGSGUILabel();
         labels[i].LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x7E7D3C);
+      //Debug.Assert(r.BaseStream.Position == 0x7E7D3C);
 
       Int32 invwindows_count = r.ReadInt32();
       inventoryWindows = new AGSGUIInventoryWindow[invwindows_count];
@@ -376,7 +376,7 @@ namespace AGSUnpackerSharp.Game
         inventoryWindows[i] = new AGSGUIInventoryWindow();
         inventoryWindows[i].LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x7E7D81);
+      //Debug.Assert(r.BaseStream.Position == 0x7E7D81);
 
       Int32 sliders_count = r.ReadInt32();
       sliders = new AGSGUISlider[sliders_count];
@@ -386,7 +386,7 @@ namespace AGSUnpackerSharp.Game
         sliders[i] = new AGSGUISlider();
         sliders[i].LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x7E80BF);
+      //Debug.Assert(r.BaseStream.Position == 0x7E80BF);
 
       Int32 textboxes_count = r.ReadInt32();
       textboxes = new AGSGUITextBox[textboxes_count];
@@ -396,7 +396,7 @@ namespace AGSUnpackerSharp.Game
         textboxes[i] = new AGSGUITextBox();
         textboxes[i].LoadFromStream(r);
       }
-      Debug.Assert(r.BaseStream.Position == 0x7E8537);
+      //Debug.Assert(r.BaseStream.Position == 0x7E8537);
 
       Int32 listboxes_count = r.ReadInt32();
       listboxes = new AGSGUIListBox[listboxes_count];

@@ -21,7 +21,7 @@ namespace AGSUnpackerSharp
         string filepath = args[0];
         if (File.Exists(filepath))
         {
-          /*AGSTextParser parser = new AGSTextParser();
+          AGSTextParser parser = new AGSTextParser();
           string[] filenames = parser.UnpackAGSAssetFiles(filepath);
 
           for (int i = 0; i < filenames.Length; ++i)
@@ -42,9 +42,9 @@ namespace AGSUnpackerSharp
           }
 
           PrepareTranslationLines();
-          WriteTranslationFile("text.trs");*/
+          WriteTranslationFile("text.trs");
 
-          DecompileTranslation(filepath);
+          //DecompileTranslation(filepath);
         }
         else
         {
@@ -64,7 +64,7 @@ namespace AGSUnpackerSharp
       string game_name = string.Empty;
 
       FileStream fs = new FileStream(filepath, FileMode.Open);
-      BinaryReader r = new BinaryReader(fs, Encoding.ASCII);
+      BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
 
       r.BaseStream.Seek(15, SeekOrigin.Begin);
 
@@ -251,6 +251,7 @@ namespace AGSUnpackerSharp
       for (int i = 0; i < line.Length; ++i)
       {
         if (line[i] < 0x20) trim_index = i;
+        else break;
       }
       if ((trim_index + 1) >= line.Length) return false;
       if (trim_index > 0) line = line.Substring(trim_index + 1);
@@ -269,7 +270,7 @@ namespace AGSUnpackerSharp
     {
       string filepath = Path.Combine(Environment.CurrentDirectory, filename);
       FileStream f = new FileStream(filepath, FileMode.Create);
-      StreamWriter w = new StreamWriter(f, Encoding.GetEncoding("windows-1252"));
+      StreamWriter w = new StreamWriter(f, Encoding.GetEncoding(1252));
 
       for (int i = 0; i < lines.Count; ++i)
       {
