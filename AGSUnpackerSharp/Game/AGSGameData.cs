@@ -445,7 +445,7 @@ namespace AGSUnpackerSharp.Game
       {
         if (setup.global_messages[i] == 0) continue;
         // read encrypted string
-        globalMessages[i] = AGSUtils.ReadEncryptedString(r);
+        globalMessages[i] = AGSStringUtils.ReadEncryptedString(r);
       }
     }
   }

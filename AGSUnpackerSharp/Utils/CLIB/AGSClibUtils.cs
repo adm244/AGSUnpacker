@@ -1,21 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
-using AGSUnpackerSharp.Room;
-using AGSUnpackerSharp.Shared;
 
 namespace AGSUnpackerSharp
 {
-  public class AGSTextParser
+  public static class AGSClibUtils
   {
-    private readonly string CLIB_HEAD_SIGNATURE = "CLIB\x1a";
-    private readonly string CLIB_TAIL_SIGNATURE = "CLIB\x1\x2\x3\x4SIGE";
+    private static readonly string CLIB_HEAD_SIGNATURE = "CLIB\x1a";
+    private static readonly string CLIB_TAIL_SIGNATURE = "CLIB\x1\x2\x3\x4SIGE";
 
-    private readonly Int32 EncryptionRandSeed = 9338638;
+    private static readonly Int32 EncryptionRandSeed = 9338638;
 
-    public string[] UnpackAGSAssetFiles(string agsfile)
+    public static string[] UnpackAGSAssetFiles(string agsfile)
     {
       FileStream fs = new FileStream(agsfile, FileMode.Open, FileAccess.Read, FileShare.Read);
       BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
@@ -33,7 +30,7 @@ namespace AGSUnpackerSharp
       return filenames;
     }
 
-    private AGSAssetInfo[] ParseAGSAssetInfos(BinaryReader r)
+    private static AGSAssetInfo[] ParseAGSAssetInfos(BinaryReader r)
     {
       // verify tail signature
       r.BaseStream.Seek(-CLIB_TAIL_SIGNATURE.Length, SeekOrigin.End);
@@ -64,9 +61,10 @@ namespace AGSUnpackerSharp
       AGSEncoder encoder = new AGSEncoder(rand_val);
       Int32 files_count = encoder.ReadInt32(r);
 
+      string[] lib_filenames = new string[files_count];
       for (int i = 0; i < files_count; ++i)
       {
-        string lib_filename = encoder.ReadString(r);
+        lib_filenames[i] = encoder.ReadString(r);
       }
 
       Int32 asset_count = encoder.ReadInt32(r);
@@ -88,10 +86,47 @@ namespace AGSUnpackerSharp
         assetInfos[i].UId = encoder.ReadInt8(r);
       }
 
+      //FIX(adm244): remove later
+      /*FileStream fs = new FileStream("decrypted.clib", FileMode.Create);
+      BinaryWriter w = new BinaryWriter(fs, Encoding.GetEncoding(1252));
+
+      w.Write(CLIB_HEAD_SIGNATURE.ToCharArray());
+      w.Write(clib_version);
+      w.Write(asset_index);
+      w.Write(rand_val - EncryptionRandSeed);
+
+      w.Write(files_count);
+      for (int i = 0; i < lib_filenames.Length; ++i)
+      {
+        w.Write(lib_filenames[i].ToCharArray());
+        w.Write((byte)0x0);
+      }
+
+      w.Write(asset_count);
+      for (int i = 0; i < assetInfos.Length; ++i)
+      {
+        w.Write(assetInfos[i].Filename.ToCharArray());
+        w.Write((byte)0x0);
+      }
+      for (int i = 0; i < assetInfos.Length; ++i)
+      {
+        w.Write(assetInfos[i].Offset);
+      }
+      for (int i = 0; i < assetInfos.Length; ++i)
+      {
+        w.Write(assetInfos[i].Size);
+      }
+      for (int i = 0; i < assetInfos.Length; ++i)
+      {
+        w.Write(assetInfos[i].UId);
+      }
+
+      w.Close();*/
+
       return assetInfos;
     }
 
-    private string[] ExtractAGSAssetFiles(BinaryReader r, AGSAssetInfo[] assetInfos, string targetpath)
+    private static string[] ExtractAGSAssetFiles(BinaryReader r, AGSAssetInfo[] assetInfos, string targetpath)
     {
       string[] filenames = new string[assetInfos.Length];
 

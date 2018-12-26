@@ -48,14 +48,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AGSAlignedStream.cs" />
-    <Compile Include="AGSAssetInfo.cs" />
+    <Compile Include="Utils\AGSAlignedStream.cs" />
+    <Compile Include="Translation\AGSTranslation.cs" />
+    <Compile Include="Utils\CLIB\AGSAssetInfo.cs" />
     <Compile Include="Game\AGSCursorInfo.cs" />
-    <Compile Include="AGSEncoder.cs" />
+    <Compile Include="Utils\AGSEncoder.cs" />
     <Compile Include="Game\AGSGameSetupStruct.cs" />
     <Compile Include="Game\AGSInventoryItem.cs" />
-    <Compile Include="AGSTextParser.cs" />
-    <Compile Include="AGSUtils.cs" />
+    <Compile Include="Utils\CLIB\AGSClibUtils.cs" />
+    <Compile Include="Utils\AGSStringUtils.cs" />
     <Compile Include="Game\View\AGSView.cs" />
     <Compile Include="Game\View\AGSViewLoop.cs" />
     <Compile Include="Game\View\AGSViewLoopFrame.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Shared\AGSPropertyStorage.cs" />
     <Compile Include="Shared\AGSScript.cs" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -70,7 +70,7 @@ namespace AGSUnpackerSharp.Shared
       {
         //NOTE(adm244): sequence of null terminated strings
         byte[] buffer = r.ReadBytes(strings_size);
-        strings = AGSUtils.ConvertNullTerminatedSequence(buffer);
+        strings = AGSStringUtils.ConvertNullTerminatedSequence(buffer);
       }
 
       // parse fixups section
@@ -111,6 +111,37 @@ namespace AGSUnpackerSharp.Shared
       // verify tail signature
       UInt32 tail_sig = r.ReadUInt32();
       Debug.Assert(tail_sig == TAIL_SIGNATURE);
+    }
+
+    // disassembles script and dumps instructions in a file
+    public void Disassemble(string targetpath)
+    {
+      /*
+       * Instructions are stored as Int32 where highest byte stores instance id:
+       *       (memory)           (register)
+       *  [ AA  BB  CC  01 ]  [ 01  CC  BB  AA ]
+       *   [  opcode  ][id]    [id][  opcode  ]
+       * 
+       * If script compiled in debug mode, it contains "linenumber" instructions
+       * with a line number as an argument.
+       * 
+       * For 3.4 opcode is 0..74 inclusive.
+       * 
+       * Each instruction can have multiple arguments represented as Int32.
+       * For 3.4 maximum arguments count is 3.
+       * Argument may be either a numeric value or an offset\pointer.
+       * Fixups table is used to determine the type of an argument.
+       * 
+       * Fixups types:
+       *  0x0 : numerical literal
+       *  GLOBAL_DATA = 0x1 : pointer?
+       *  FUNCTION = 0x2 : offset from a start of code section (pc value)
+       *  STRING = 0x3 : offset to strings null-terminated sequence (in bytes)
+       *  IMPORT = 0x4 : index for imports array
+       *  STACK = 0x5 : offset on the stack (in bytes)
+       * 
+       * 
+       */
     }
   }
 }

@@ -26,7 +26,7 @@ namespace AGSUnpackerSharp.Game
       words = new AGSDictionaryWord[words_count];
       for (int i = 0; i < words_count; ++i)
       {
-        words[i].text = AGSUtils.ReadEncryptedString(r);
+        words[i].text = AGSStringUtils.ReadEncryptedString(r);
         words[i].group = r.ReadInt16();
       }
     }

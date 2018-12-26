@@ -5,7 +5,7 @@ using System.Text;
 
 namespace AGSUnpackerSharp
 {
-  public static class AGSUtils
+  public static class AGSStringUtils
   {
     //FIX(adm244): don't modify the passed-in array, make a copy!
     public static unsafe string DecryptString(byte[] str)
@@ -32,7 +32,6 @@ namespace AGSUnpackerSharp
 
       //NOTE(adm244): ASCII ReadChars is not reliable in this case since it replaces bytes > 0x7F
       // https://referencesource.microsoft.com/#mscorlib/system/text/asciiencoding.cs,879
-      // BTW, never heard of extended ascii, did you?
       byte[] buffer = r.ReadBytes(length);
       return DecryptString(buffer);
     }

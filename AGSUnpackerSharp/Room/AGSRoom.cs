@@ -367,7 +367,7 @@ namespace AGSUnpackerSharp.Room
       // parse messages text
       for (int i = 0; i < messages_count; ++i)
       {
-        messages[i].text = AGSUtils.ReadEncryptedString(r);
+        messages[i].text = AGSStringUtils.ReadEncryptedString(r);
       }
 
       // parse legacy room animations
