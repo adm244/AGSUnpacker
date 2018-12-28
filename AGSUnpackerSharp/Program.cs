@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Text;
-using AGSUnpackerSharp.Game;
-using AGSUnpackerSharp.Room;
+using AGSUnpackerSharp.Graphics;
 
 namespace AGSUnpackerSharp
 {
@@ -15,6 +10,7 @@ namespace AGSUnpackerSharp
       if (args.Length > 0)
       {
         string filepath = args[0];
+        AGSSpritesCache.ExtractSprites(filepath);
       }
       else
       {

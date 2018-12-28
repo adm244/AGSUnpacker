@@ -42,12 +42,10 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
+    <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Graphics\AGSSpritesCache.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />
     <Compile Include="Utils\CLIB\AGSAssetInfo.cs" />
@@ -90,6 +88,7 @@
     <Compile Include="Shared\InteractionScript\AGSInteractionScriptEvent.cs" />
     <Compile Include="Shared\AGSPropertyStorage.cs" />
     <Compile Include="Shared\AGSScript.cs" />
+    <Compile Include="Utils\TextExtractor.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
