@@ -86,43 +86,6 @@ namespace AGSUnpackerSharp
         assetInfos[i].UId = encoder.ReadInt8(r);
       }
 
-      //FIX(adm244): remove later
-      /*FileStream fs = new FileStream("decrypted.clib", FileMode.Create);
-      BinaryWriter w = new BinaryWriter(fs, Encoding.GetEncoding(1252));
-
-      w.Write(CLIB_HEAD_SIGNATURE.ToCharArray());
-      w.Write(clib_version);
-      w.Write(asset_index);
-      w.Write(rand_val - EncryptionRandSeed);
-
-      w.Write(files_count);
-      for (int i = 0; i < lib_filenames.Length; ++i)
-      {
-        w.Write(lib_filenames[i].ToCharArray());
-        w.Write((byte)0x0);
-      }
-
-      w.Write(asset_count);
-      for (int i = 0; i < assetInfos.Length; ++i)
-      {
-        w.Write(assetInfos[i].Filename.ToCharArray());
-        w.Write((byte)0x0);
-      }
-      for (int i = 0; i < assetInfos.Length; ++i)
-      {
-        w.Write(assetInfos[i].Offset);
-      }
-      for (int i = 0; i < assetInfos.Length; ++i)
-      {
-        w.Write(assetInfos[i].Size);
-      }
-      for (int i = 0; i < assetInfos.Length; ++i)
-      {
-        w.Write(assetInfos[i].UId);
-      }
-
-      w.Close();*/
-
       return assetInfos;
     }
 

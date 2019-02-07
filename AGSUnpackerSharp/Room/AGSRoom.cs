@@ -1,9 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Shared;
-using System.Diagnostics;
+using AGSUnpackerSharp.Utils;
 
 namespace AGSUnpackerSharp.Room
 {
@@ -130,7 +130,7 @@ namespace AGSUnpackerSharp.Room
 
       for (int i = 1; i < frames; ++i)
       {
-        ParseLZWImage(r);
+        AGSGraphicUtils.ParseLZWImage(r);
       }
     }
 
@@ -394,66 +394,22 @@ namespace AGSUnpackerSharp.Room
       //TODO(adm244): parse stuff below as well
 
       // parse primary background
-      ParseLZWImage(r);
+      AGSGraphicUtils.ParseLZWImage(r);
       //Debug.Assert(r.BaseStream.Position == 0x54A1);
 
       // parse region mask
-      ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
       //Debug.Assert(r.BaseStream.Position == 0x5C55);
 
       // parse walkable area mask
-      ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
 
       // parse walkbehind area mask
-      ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
 
       // parse hotspot mask
-      ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
       //Debug.Assert(r.BaseStream.Position == 0x7655);
-    }
-
-    //TODO(adm244): move to some other place
-    private void ParseAllegroCompressedImage(BinaryReader r)
-    {
-      Int16 width = r.ReadInt16();
-      Int16 height = r.ReadInt16();
-
-      //TODO(adm244): do real parsing
-      for (int y = 0; y < height; ++y)
-      {
-        int pixelsRead = 0;
-        while (pixelsRead < width)
-        {
-          sbyte index = (sbyte)r.ReadByte();
-          if (index == -128) index = 0;
-
-          if (index < 0)
-          {
-            r.BaseStream.Seek(1, SeekOrigin.Current);
-            pixelsRead += (1 - index);
-          }
-          else
-          {
-            r.BaseStream.Seek(index + 1, SeekOrigin.Current);
-            pixelsRead += (index + 1);
-          }
-        }
-      }
-
-      // skip palette
-      // 768 = 256 * 3
-      r.BaseStream.Seek(768, SeekOrigin.Current);
-    }
-
-    //TODO(adm244): move to some other place
-    private void ParseLZWImage(BinaryReader r)
-    {
-      // skip palette
-      r.BaseStream.Seek(256 * sizeof(Int32), SeekOrigin.Current);
-      Int32 picture_maxsize = r.ReadInt32();
-      Int32 picture_data_size = r.ReadInt32();
-      // skip lzw compressed image
-      r.BaseStream.Seek(picture_data_size, SeekOrigin.Current);
     }
   }
 }

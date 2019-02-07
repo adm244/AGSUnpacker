@@ -46,8 +46,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Graphics\AGSSpritesCache.cs" />
+    <Compile Include="Graphics\SpritesMeta.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />
+    <Compile Include="Utils\AGSGraphicUtils.cs" />
     <Compile Include="Utils\CLIB\AGSAssetInfo.cs" />
     <Compile Include="Game\AGSCursorInfo.cs" />
     <Compile Include="Utils\AGSEncoder.cs" />
