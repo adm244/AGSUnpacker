@@ -94,10 +94,10 @@ namespace AGSUnpackerSharp
       dialogs_count = ar.ReadInt32();
       dialog_messages_count = ar.ReadInt32();
       fonts_count = ar.ReadInt32();
-      color_depth = ar.ReadInt32();
+      color_depth = ar.ReadInt32(); // bytes per pixel
       target_win = ar.ReadInt32();
       dialog_bullet = ar.ReadInt32();
-      hotdot = ar.ReadInt16();
+      hotdot = ar.ReadInt16(); // inventory item hotdot
       hotdot_outter = ar.ReadInt16();
       unique_id = ar.ReadInt32();
       guis_count = ar.ReadInt32();

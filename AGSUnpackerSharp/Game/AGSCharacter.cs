@@ -46,11 +46,11 @@ namespace AGSUnpackerSharp.Game
     public Int16 frame;
     public Int16 walking;
     public Int16 animating;
+    public Int16 walkspeed;
+    public Int16 animspeed;
     public Int16[] inventory;
     public Int16 act_x;
     public Int16 act_y;
-    public Int16 unknown1;
-    public Int16 unknown2;
     public string name;
     public string name_script;
     public Int16 on;
@@ -98,11 +98,11 @@ namespace AGSUnpackerSharp.Game
       frame = 0;
       walking = 0;
       animating = 0;
+      walkspeed = 0;
+      animspeed = 0;
       inventory = new Int16[0];
       act_x = 0;
       act_y = 0;
-      unknown1 = 0;
-      unknown2 = 0;
       name = string.Empty;
       name_script = string.Empty;
       on = 0;
@@ -151,13 +151,11 @@ namespace AGSUnpackerSharp.Game
       frame = ar.ReadInt16();
       walking = ar.ReadInt16();
       animating = ar.ReadInt16();
+      walkspeed = ar.ReadInt16();
+      animspeed = ar.ReadInt16();
       inventory = ar.ReadArrayInt16(301);
       act_x = ar.ReadInt16();
       act_y = ar.ReadInt16();
-
-      //NOTE(adm244): in source it doesn't exist, but in the actual dta file it's there
-      unknown1 = ar.ReadInt16();
-      unknown2 = ar.ReadInt16();
 
       name = ar.ReadFixedString(40);
       name_script = ar.ReadFixedString(20);
