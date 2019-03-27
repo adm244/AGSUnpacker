@@ -2,6 +2,8 @@
 using AGSUnpackerSharp.Graphics;
 using AGSUnpackerSharp.Room;
 using System.IO;
+using System.Drawing;
+using System.Drawing.Imaging;
 
 namespace AGSUnpackerSharp
 {
@@ -29,10 +31,26 @@ namespace AGSUnpackerSharp
         AGSSpritesCache.PackSprites(files);*/
         AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);
+
+        /*string[] files = Directory.GetFiles(filepath);
+        Convert16bitTo32bitImages(files);*/
       }
       else
       {
         Console.WriteLine("ERROR: Filepath is not specified.");
+      }
+    }
+
+    public static void Convert16bitTo32bitImages(params string[] files)
+    {
+      Color transparentColor = Color.FromArgb(255, 0, 255);
+      for (int i = 0; i < files.Length; ++i)
+      {
+        Bitmap bitmap = new Bitmap(files[i]);
+        bitmap.MakeTransparent(transparentColor);
+
+        string filename = files[i].Split('.')[0];
+        bitmap.Save(string.Format("{0}.png", filename), ImageFormat.Png);
       }
     }
   }

@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Shared;
 using AGSUnpackerSharp.Utils;
+using System.Drawing;
 
 namespace AGSUnpackerSharp.Room
 {
@@ -17,7 +18,9 @@ namespace AGSUnpackerSharp.Room
 
   public class AGSRoom
   {
+    public Int16 version;
     public Int32 background_bpp;
+    public Bitmap[] backgrounds;
     public AGSWalkBehindArea[] walkbehinds;
     public AGSHotspot[] hotspots;
     public AGSRoomEdge edge;
@@ -41,7 +44,9 @@ namespace AGSUnpackerSharp.Room
 
     public AGSRoom()
     {
+      version = 29;
       background_bpp = 1;
+      backgrounds = new Bitmap[5];
       walkbehinds = new AGSWalkBehindArea[0];
       hotspots = new AGSHotspot[0];
       edge.top = 0;
@@ -67,12 +72,23 @@ namespace AGSUnpackerSharp.Room
       properties = new AGSPropertyStorage();
     }
 
+    /*public void SaveToFile(string filepath)
+    {
+      FileStream fs = new FileStream(filepath, FileMode.Create);
+      BinaryWriter w = new BinaryWriter(fs, Encoding.GetEncoding(1252));
+
+      w.Write(version);
+      WriteRoomMainBlock(w);
+
+      w.Close();
+    }*/
+
     public void LoadFromFile(string filepath)
     {
       FileStream fs = new FileStream(filepath, FileMode.Open);
       BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
 
-      Int16 version = r.ReadInt16();
+      version = r.ReadInt16();
       //Debug.Assert(version == 29);
 
       byte blockType = 0xFF;
@@ -130,7 +146,7 @@ namespace AGSUnpackerSharp.Room
 
       for (int i = 1; i < frames; ++i)
       {
-        AGSGraphicUtils.ParseLZWImage(r);
+        backgrounds[i] = AGSGraphicUtils.ParseLZWImage(r);
       }
     }
 
@@ -198,6 +214,203 @@ namespace AGSUnpackerSharp.Room
       script = new AGSScript();
       script.LoadFromStream(r);
     }
+
+    /*private void WriteRoomMainBlock(BinaryWriter w)
+    {
+      w.Write((byte)0x01);
+      w.Write(background_bpp);
+      
+      // write walk-behind baselines
+      w.Write((Int16)walkbehinds.Length);
+      for (int i = 0; i < walkbehinds.Length; ++i)
+      {
+        w.Write((Int16)walkbehinds[i].baseline);
+      }
+
+      // write hotspots info
+      w.Write((Int32)hotspots.Length);
+      for (int i = 0; i < hotspots.Length; ++i)
+      {
+        w.Write((Int16)hotspots[i].walkto_x);
+        w.Write((Int16)hotspots[i].walkto_y);
+      }
+
+      for (int i = 0; i < hotspots.Length; ++i)
+      {
+        if (version >= 31)
+        {
+          // DOUBLE CHECK IT!
+          w.Write(hotspots[i].name);
+        }
+        else
+        {
+          w.Write(hotspots[i].name.ToCharArray());
+          w.Write((byte)0x0);
+        }
+      }
+
+      for (int i = 0; i < hotspots.Length; ++i)
+      {
+        if (version >= 31)
+        {
+          // DOUBLE CHECK IT!
+          w.Write(hotspots[i].scriptname);
+        }
+        else
+        {
+          w.Write(hotspots[i].scriptname.ToCharArray());
+          w.Write((byte)0x0);
+        }
+      }
+
+      // write polypoints count
+      w.Write((Int32)0x0);
+
+      // write room edges
+      w.Write((Int16)edge.top);
+      w.Write((Int16)edge.bottom);
+      w.Write((Int16)edge.left);
+      w.Write((Int16)edge.right);
+
+      // write objects info
+      w.Write((Int16)objects.Length);
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        w.Write((Int16)objects[i].sprite);
+        w.Write((Int16)objects[i].x);
+        w.Write((Int16)objects[i].y);
+        w.Write((Int16)objects[i].room);
+        w.Write((Int16)objects[i].visible);
+      }
+
+      // write interaction variables count
+      w.Write((Int32)0x0);
+
+      w.Write((Int32)regions.Length);
+
+      interactions.WriteToStream(w);
+
+      // write hotspot events
+      for (int i = 0; i < hotspots.Length; ++i)
+      {
+        hotspots[i].interactions.WriteToStream(w);
+      }
+
+      // write object events
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        objects[i].interactions.WriteToStream(w);
+      }
+
+      // write region events
+      for (int i = 0; i < regions.Length; ++i)
+      {
+        regions[i] = new AGSRegion();
+        regions[i].interactions.WriteToStream(w);
+      }
+
+      // write objects baselines
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        w.Write((Int32)objects[i].baseline);
+      }
+
+      // write room dimensions
+      w.Write((Int16)width);
+      w.Write((Int16)height);
+
+      // write objects flags
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        w.Write((Int16)objects[i].flags);
+      }
+
+      w.Write((Int16)resolution_type);
+
+      // write walkable areas info
+      w.Write((Int32)walkareas.Length);
+      for (int i = 0; i < walkareas.Length; ++i)
+      {
+        w.Write((Int16)walkareas[i].scale_far);
+      }
+      for (int i = 0; i < walkareas.Length; ++i)
+      {
+        w.Write((Int16)walkareas[i].light);
+      }
+      for (int i = 0; i < walkareas.Length; ++i)
+      {
+        w.Write((Int16)walkareas[i].scale_near);
+      }
+      for (int i = 0; i < walkareas.Length; ++i)
+      {
+        w.Write((Int16)walkareas[i].top_y);
+      }
+      for (int i = 0; i < walkareas.Length; ++i)
+      {
+        w.Write((Int16)walkareas[i].bottom_y);
+      }
+
+      // write room settings
+      w.Write(password);
+      w.Write((byte)startup_music);
+      w.Write((byte)saveload_disabled);
+      w.Write((byte)player_invisible);
+      w.Write((byte)player_view);
+      w.Write((byte)music_volume);
+      w.Write(new byte[5]);
+
+      w.Write((Int16)messages.Length);
+
+      w.Write((Int32)game_id);
+
+      // write messages flags
+      for (int i = 0; i < messages.Length; ++i)
+      {
+        w.Write((byte)messages[i].display_as);
+        w.Write((byte)messages[i].flags);
+      }
+
+      // write messages text
+      for (int i = 0; i < messages.Length; ++i)
+      {
+        AGSStringUtils.WriteEncryptedString(w, messages[i].text);
+      }
+
+      // write legacy room animations
+      w.Write((Int16)0x0);
+
+      // write walkable areas light level (unused)
+      for (int i = 0; i < 16; ++i)
+      {
+        w.Write((Int16)walkareas[i].light);
+      }
+      // write regions light level
+      for (int i = 0; i < regions.Length; ++i)
+      {
+        w.Write((Int16)regions[i].light);
+      }
+      // write regions tint colors
+      for (int i = 0; i < regions.Length; ++i)
+      {
+        w.Write((Int32)regions[i].tint);
+      }
+
+      // write primary background
+      AGSGraphicUtils.ParseLZWImage(r);
+      //AGSGraphicUtils.WriteLZWImage(w, );
+
+      // parse region mask
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+
+      // parse walkable area mask
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+
+      // parse walkbehind area mask
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+
+      // parse hotspot mask
+      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+    }*/
 
     private void ParseRoomMainBlock(BinaryReader r, int room_version)
     {
@@ -394,7 +607,7 @@ namespace AGSUnpackerSharp.Room
       //TODO(adm244): parse stuff below as well
 
       // parse primary background
-      AGSGraphicUtils.ParseLZWImage(r);
+      backgrounds[0] = AGSGraphicUtils.ParseLZWImage(r);
       //Debug.Assert(r.BaseStream.Position == 0x54A1);
 
       // parse region mask

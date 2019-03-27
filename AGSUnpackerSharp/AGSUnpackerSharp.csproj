@@ -45,7 +45,9 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\BinaryWriterExtension.cs" />
     <Compile Include="Graphics\AGSSpritesCache.cs" />
+    <Compile Include="Graphics\LZWImage.cs" />
     <Compile Include="Graphics\SpritesMeta.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />

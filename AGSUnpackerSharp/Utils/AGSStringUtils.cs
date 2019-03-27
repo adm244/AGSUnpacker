@@ -7,11 +7,11 @@ namespace AGSUnpackerSharp
 {
   public static class AGSStringUtils
   {
+    private const string password = "Avis Durgan";
+
     //FIX(adm244): don't modify the passed-in array, make a copy!
     public static unsafe string DecryptString(byte[] str)
     {
-      const string password = "Avis Durgan";
-
       int passlen = password.Length;
       for (int i = 0; i < str.Length; ++i)
       {
@@ -25,6 +25,23 @@ namespace AGSUnpackerSharp
       }
     }
 
+    public static byte[] EncryptString(string str)
+    {
+      byte[] buffer = new byte[str.Length];
+      for (int i = 0; i < str.Length; ++i)
+      {
+        buffer[i] = (byte)str[i];
+      }
+
+      int passlen = password.Length;
+      for (int i = 0; i < str.Length; ++i)
+      {
+        buffer[i] += (byte)password[i % passlen];
+      }
+
+      return buffer;
+    }
+
     public static string ReadEncryptedString(BinaryReader r)
     {
       Int32 length = r.ReadInt32();
@@ -34,6 +51,13 @@ namespace AGSUnpackerSharp
       // https://referencesource.microsoft.com/#mscorlib/system/text/asciiencoding.cs,879
       byte[] buffer = r.ReadBytes(length);
       return DecryptString(buffer);
+    }
+
+    public static void WriteEncryptedString(BinaryWriter w, string str)
+    {
+      byte[] buffer = EncryptString(str);
+      w.Write((Int32)buffer.Length);
+      w.Write(buffer);
     }
 
     public static unsafe string[] ConvertNullTerminatedSequence(byte[] buffer)

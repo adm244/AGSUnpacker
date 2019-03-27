@@ -49,7 +49,9 @@ namespace AGSUnpackerSharp.Graphics
       {
         //FIX(adm244): get the original pixel format!
         Bitmap sprite = new Bitmap(filepaths[i]);
-        UInt16 bytesPerPixel = (UInt16)(Bitmap.GetPixelFormatSize(sprite.PixelFormat) / 8);
+        //UInt16 bytesPerPixel = (UInt16)(Bitmap.GetPixelFormatSize(sprite.PixelFormat) / 8);
+        PixelFormat format = PixelFormat.Format32bppArgb;
+        UInt16 bytesPerPixel = (UInt16)(Bitmap.GetPixelFormatSize(PixelFormat.Format32bppArgb) / 8);
 
         UInt16 width = (UInt16)sprite.Width;
         UInt16 height = (UInt16)sprite.Height;
@@ -77,7 +79,7 @@ namespace AGSUnpackerSharp.Graphics
         }
 
         //TODO(adm244): write raw image data
-        PixelFormat format;
+        /*PixelFormat format;
         switch (bytesPerPixel)
         {
           case 2:
@@ -95,7 +97,7 @@ namespace AGSUnpackerSharp.Graphics
           default:
             format = PixelFormat.Format8bppIndexed;
             break;
-        }
+        }*/
 
         byte[] rawData = new byte[size];
 
