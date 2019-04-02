@@ -30,9 +30,10 @@ namespace AGSUnpackerSharp.Graphics
       FileID = fileID;
     }
 
-    public void WriteMetaFile()
+    public void WriteMetaFile(string folderpath)
     {
-      FileStream fs = new FileStream(SPRITESET_META_FILENAME, FileMode.Create);
+      string filepath = Path.Combine(folderpath, SPRITESET_META_FILENAME);
+      FileStream fs = new FileStream(filepath, FileMode.Create);
       BinaryWriter w = new BinaryWriter(fs, Encoding.GetEncoding(1252));
 
       w.Write(Version);
