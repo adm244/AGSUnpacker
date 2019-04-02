@@ -219,7 +219,7 @@ namespace AGSUnpackerSharp.Graphics
             break;
 
           case 4:
-            format = PixelFormat.Format32bppRgb;
+            format = PixelFormat.Format32bppArgb;
             break;
 
           default:
@@ -251,7 +251,7 @@ namespace AGSUnpackerSharp.Graphics
         ImageFormat imageFormat;
         switch (format)
         {
-          case PixelFormat.Format32bppRgb:
+          case PixelFormat.Format32bppArgb:
             imageFormat = ImageFormat.Png;
             break;
 

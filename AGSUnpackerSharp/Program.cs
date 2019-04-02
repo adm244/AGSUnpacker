@@ -4,6 +4,8 @@ using AGSUnpackerSharp.Room;
 using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
+using AGSUnpackerSharp.Utils;
+using System.Text;
 
 namespace AGSUnpackerSharp
 {
@@ -26,14 +28,24 @@ namespace AGSUnpackerSharp
             room.LoadFromFile(files[i]);
           }
         }*/
-        //AGSSpritesCache.ExtractSprites(filepath);
+        AGSSpritesCache.ExtractSprites(filepath);
         /*string[] files = Directory.GetFiles(filepath, "spr*");
         AGSSpritesCache.PackSprites(files);*/
-        AGSRoom room = new AGSRoom();
-        room.LoadFromFile(filepath);
+        /*AGSRoom room = new AGSRoom();
+        room.LoadFromFile(filepath);*/
 
         /*string[] files = Directory.GetFiles(filepath);
         Convert16bitTo32bitImages(files);*/
+
+        /*FileStream file = new FileStream(filepath, FileMode.Open);
+        BinaryReader reader = new BinaryReader(file, Encoding.GetEncoding(1252));
+        Bitmap image = AGSGraphicUtils.ParseLZWImage(reader);
+        reader.Close();
+
+        FileStream output = new FileStream(filepath + ".compressed", FileMode.Create);
+        BinaryWriter writer = new BinaryWriter(output, Encoding.GetEncoding(1252));
+        AGSGraphicUtils.WriteLZWImage(writer, image);
+        writer.Close();*/
       }
       else
       {
