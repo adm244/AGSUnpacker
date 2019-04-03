@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using AGSUnpackerSharp.Utils;
 
 namespace AGSUnpackerSharp.Graphics
 {
@@ -136,11 +137,41 @@ namespace AGSUnpackerSharp.Graphics
       SpriteData[] spritesData = new SpriteData[filepaths.Length];
       for (int i = 0; i < filepaths.Length; ++i)
       {
-        //FIX(adm244): get the original pixel format!
+        //NOTE(adm244): .NET decides for some reason that 16-bits is 32-bits when loading bmp (bug?),
+        // so we have to parse bits count field manualy...
+        PixelFormat format = PixelFormat.Undefined;
+        if (Path.GetExtension(filepaths[i]) == ".bmp")
+        {
+          FileStream file = new FileStream(filepaths[i], FileMode.Open);
+          BinaryReader reader = new BinaryReader(file, Encoding.ASCII);
+          reader.BaseStream.Seek(28, SeekOrigin.Begin);
+          UInt16 bitCount = reader.ReadUInt16();
+          reader.Close();
+
+          switch (bitCount)
+          {
+            case 8:
+              format = PixelFormat.Format8bppIndexed;
+              break;
+            case 16:
+              format = PixelFormat.Format16bppRgb565;
+              break;
+            case 32:
+              format = PixelFormat.Format32bppArgb;
+              break;
+
+            default:
+              Debug.Assert(false);
+              break;
+          }
+        }
+
         Bitmap sprite = new Bitmap(filepaths[i]);
-        //UInt16 bytesPerPixel = (UInt16)(Bitmap.GetPixelFormatSize(sprite.PixelFormat) / 8);
-        PixelFormat format = PixelFormat.Format32bppArgb;
-        UInt16 bytesPerPixel = (UInt16)(Bitmap.GetPixelFormatSize(PixelFormat.Format32bppArgb) / 8);
+
+        if (format == PixelFormat.Undefined)
+          format = sprite.PixelFormat;
+
+        UInt16 bytesPerPixel = (UInt16)(Bitmap.GetPixelFormatSize(format) / 8);
 
         UInt16 width = (UInt16)sprite.Width;
         UInt16 height = (UInt16)sprite.Height;
@@ -154,40 +185,6 @@ namespace AGSUnpackerSharp.Graphics
         w.Write(width);
         w.Write(height);
 
-        if (meta.Version == 5)
-        {
-          w.Write(size);
-        }
-        else if (meta.Version >= 6)
-        {
-          if (meta.Compression == 1)
-          {
-            //TODO(adm244): compressed size
-            w.Write(size);
-          }
-        }
-
-        //TODO(adm244): write raw image data
-        /*PixelFormat format;
-        switch (bytesPerPixel)
-        {
-          case 2:
-            format = PixelFormat.Format16bppRgb565;
-            break;
-
-          case 3:
-            format = PixelFormat.Format24bppRgb;
-            break;
-
-          case 4:
-            format = PixelFormat.Format32bppArgb;
-            break;
-
-          default:
-            format = PixelFormat.Format8bppIndexed;
-            break;
-        }*/
-
         byte[] rawData = new byte[size];
 
         BitmapData lockData = sprite.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, format);
@@ -198,6 +195,69 @@ namespace AGSUnpackerSharp.Graphics
           p = new IntPtr(p.ToInt64() + lockData.Stride);
         }
         sprite.UnlockBits(lockData);
+
+        if (meta.Compression == 1)
+        {
+          switch (bytesPerPixel)
+          {
+            case 1:
+              //rawData = AGSGraphicUtils.WriteRLEData8(rawData);
+              {
+                MemoryStream stream = new MemoryStream(rawData.Length);
+                for (int y = 0; y < height; ++y)
+                {
+                  byte[] pixels = new byte[width];
+                  Buffer.BlockCopy(rawData, y * width, pixels, 0, width);
+
+                  byte[] buf = AGSGraphicUtils.WriteRLEData8(pixels);
+                  stream.Write(buf, 0, buf.Length);
+                }
+                rawData = stream.ToArray();
+              }
+              break;
+            case 2:
+              {
+                /*UInt16[] pixels = new UInt16[rawData.Length / 2];
+                Buffer.BlockCopy(rawData, 0, pixels, 0, rawData.Length);
+                rawData = AGSGraphicUtils.WriteRLEData16(pixels);*/
+
+                MemoryStream stream = new MemoryStream(rawData.Length);
+                for (int y = 0; y < height; ++y)
+                {
+                  UInt16[] pixels = new UInt16[width];
+                  Buffer.BlockCopy(rawData, y * width * 2, pixels, 0, width * 2);
+
+                  byte[] buf = AGSGraphicUtils.WriteRLEData16(pixels);
+                  stream.Write(buf, 0, buf.Length);
+                }
+                rawData = stream.ToArray();
+              }
+              break;
+            case 4:
+              {
+                MemoryStream stream = new MemoryStream(rawData.Length);
+                for (int y = 0; y < height; ++y)
+                {
+                  UInt32[] pixels = new UInt32[width];
+                  Buffer.BlockCopy(rawData, y * width * 4, pixels, 0, width * 4);
+
+                  byte[] buf = AGSGraphicUtils.WriteRLEData32(pixels);
+                  stream.Write(buf, 0, buf.Length);
+                }
+                rawData = stream.ToArray();
+              }
+              break;
+
+            default:
+              Debug.Assert(false);
+              break;
+          }
+        }
+
+        if (meta.Version >= 5)
+        {
+          w.Write(rawData.Length);
+        }
 
         w.Write(rawData);
       }
@@ -260,7 +320,7 @@ namespace AGSUnpackerSharp.Graphics
       }
 
       //TODO(adm244): read compressed images
-      Debug.Assert(meta.Compression == 0);
+      //Debug.Assert(meta.Compression == 0);
 
       Color[] palette = null;
       if (meta.Version < 5)
@@ -308,17 +368,49 @@ namespace AGSUnpackerSharp.Graphics
           size = (UInt32)width * height * bytesPerPixel;
         }
 
-        byte[] rawData = r.ReadBytes((int)size);
+        byte[] rawData = null;
+        if (meta.Compression == 0)
+        {
+          rawData = r.ReadBytes((int)size);
+        }
+        else
+        {
+          int imageSize = width * height * bytesPerPixel;
+          switch (bytesPerPixel)
+          {
+            case 1:
+              rawData = AGSGraphicUtils.ReadRLEData8(r, size, imageSize);
+              break;
+            case 2:
+              rawData = AGSGraphicUtils.ReadRLEData16(r, size, imageSize);
+              break;
+            case 3:
+              Debug.Assert(false);
+              break;
+            case 4:
+              rawData = AGSGraphicUtils.ReadRLEData32(r, size, imageSize);
+              break;
 
-        PixelFormat format;
+            default:
+              Debug.Assert(false);
+              break;
+          }
+        }
+
+        PixelFormat format = PixelFormat.Undefined;
         switch (bytesPerPixel)
         {
+          case 1:
+            format = PixelFormat.Format8bppIndexed;
+            break;
+
           case 2:
             format = PixelFormat.Format16bppRgb565;
             break;
 
           case 3:
-            format = PixelFormat.Format24bppRgb;
+            //format = PixelFormat.Format24bppRgb;
+            Debug.Assert(false);
             break;
 
           case 4:
@@ -326,7 +418,7 @@ namespace AGSUnpackerSharp.Graphics
             break;
 
           default:
-            format = PixelFormat.Format8bppIndexed;
+            Debug.Assert(false);
             break;
         }
 

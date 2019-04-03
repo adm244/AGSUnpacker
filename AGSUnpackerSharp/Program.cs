@@ -29,9 +29,9 @@ namespace AGSUnpackerSharp
             room.LoadFromFile(files[i]);
           }
         }*/
-        AGSSpritesCache.ExtractSprites(filepath);
-        /*string[] files = Directory.GetFiles(filepath, "spr*");
-        AGSSpritesCache.PackSprites(files);*/
+        //AGSSpritesCache.ExtractSprites(filepath);
+        string[] files = Directory.GetFiles(filepath, "spr*");
+        AGSSpritesCache.PackSprites(files);
         /*AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);*/
 
