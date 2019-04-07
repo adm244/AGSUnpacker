@@ -30,23 +30,37 @@ namespace AGSUnpackerSharp
           }
         }*/
         //AGSSpritesCache.ExtractSprites(filepath);
-        string[] files = Directory.GetFiles(filepath, "spr*");
-        AGSSpritesCache.PackSprites(files);
+        /*string[] files = Directory.GetFiles(filepath, "spr*");
+        AGSSpritesCache.PackSprites(files);*/
         /*AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);*/
 
         /*string[] files = Directory.GetFiles(filepath);
         Convert16bitTo32bitImages(files);*/
 
-        /*FileStream file = new FileStream(filepath, FileMode.Open);
+        // open original file
+        FileStream file = new FileStream(filepath, FileMode.Open);
         BinaryReader reader = new BinaryReader(file, Encoding.GetEncoding(1252));
-        Bitmap image = AGSGraphicUtils.ParseLZWImage(reader);
+        Bitmap image = AGSGraphicUtils.ParseLZ77Image(reader);
         reader.Close();
 
+        // save original uncompressed image
+        image.Save(filepath + ".bmp.original.bmp", ImageFormat.Bmp);
+
+        // compress original image into a file
         FileStream output = new FileStream(filepath + ".compressed", FileMode.Create);
         BinaryWriter writer = new BinaryWriter(output, Encoding.GetEncoding(1252));
-        AGSGraphicUtils.WriteLZWImage(writer, image);
-        writer.Close();*/
+        AGSGraphicUtils.WriteLZ77Image(writer, image);
+        writer.Close();
+
+        // decompress image again from a file
+        file = new FileStream(filepath + ".compressed", FileMode.Open);
+        reader = new BinaryReader(file, Encoding.GetEncoding(1252));
+        image = AGSGraphicUtils.ParseLZ77Image(reader);
+        reader.Close();
+
+        // save decompressed image into a file
+        image.Save(filepath + ".bmp.decompressed.bmp", ImageFormat.Bmp);
 
         /*AGSGameData gameData = new AGSGameData();
         gameData.LoadFromFile(filepath);*/

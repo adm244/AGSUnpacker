@@ -14,7 +14,7 @@ namespace AGSUnpackerSharp.Utils
     Lookback,
   }
 
-  public struct Literal
+  public struct Element
   {
     public LiteralType Type;
     public byte Symbol;
@@ -346,7 +346,7 @@ namespace AGSUnpackerSharp.Utils
       r.BaseStream.Seek(768, SeekOrigin.Current);
     }
 
-    public static Bitmap ParseLZWImage(BinaryReader r)
+    public static Bitmap ParseLZ77Image(BinaryReader r)
     {
       // skip palette
       //r.BaseStream.Seek(256 * sizeof(Int32), SeekOrigin.Current);
@@ -521,98 +521,138 @@ namespace AGSUnpackerSharp.Utils
       return rawData;
     }
 
-    public static void WriteLZWImage(BinaryWriter w, Bitmap image)
+    public static void WriteLZ77Image(BinaryWriter w, Bitmap image)
     {
       /*w.Write((Int32)image.picture_maxsize);
       w.Write((Int32)image.picture_data_size);
       w.Write(image.rawBackground);*/
 
-      const long LookbackSize = 4096;
-      const byte LiteralsSize = 8;
-
       byte[] rawData = ConvertToRaw(image);
-      Literal[] literals = new Literal[LiteralsSize];
-      byte literalsCount = 0;
+      byte[] rawDataCompressed = LZ77Compress(rawData);
 
-      long i = 0;
-      while (i < rawData.Length)
+      w.Write((UInt32)rawData.Length);
+      w.Write((UInt32)rawDataCompressed.Length);
+      w.Write(rawDataCompressed);
+    }
+
+    private static byte[] LZ77Compress(byte[] data)
+    {
+      //NOTE(adm244): it performs worse than the original, i.e. low speed, bigger file size
+      MemoryStream stream = new MemoryStream(data.Length);
+
+      const long LookbackSize = 4095;
+      const byte LookbackSequenceLength = 18;
+      const byte ElementsSize = 8;
+
+      Element[] elements = new Element[ElementsSize];
+      byte elementsCount = 0;
+
+      long bufferPosition = 0;
+      while (bufferPosition < data.Length)
       {
-        long lookbackMax = Math.Min(i, LookbackSize);
+        //NOTE(adm244): PART 1: Find largest matching sequence in a lookback buffer
+
+        //NOTE(adm244): BRUTE-FORCE approach
+
+        //NOTE(adm244): lookback buffer includes current buffer position
+        long lookbackLength = Math.Min(bufferPosition, LookbackSize);
+        long lookbackStart = bufferPosition - lookbackLength;
 
         long bestRun = 0;
         long bestRunOffset = 0;
-        for (long j = 0; j < lookbackMax; ++j)
+        long lookbackEnd = lookbackStart + lookbackLength;
+        for (long lookbackPosition = lookbackStart; lookbackPosition < lookbackEnd; )
         {
-          long i2 = i;
-          long runs = 0;
-          for (long k = j; k < lookbackMax; ++k)
+          //NOTE(adm244): allow lookback buffer to go beyond current buffer position
+          long sequenceLength = 0;
+          long lookbackSubEnd = (lookbackPosition + LookbackSequenceLength);
+          for (long lookbackSubPosition = lookbackPosition; lookbackSubPosition < lookbackSubEnd; ++lookbackSubPosition)
           {
-            if (rawData[i - k] == rawData[i2++])
-              ++runs;
+            long bufferSubPosition = bufferPosition + (lookbackSubPosition - lookbackPosition);
+            if (bufferSubPosition == data.Length)
+              break;
+
+            if (data[lookbackSubPosition] == data[bufferSubPosition])
+              ++sequenceLength;
             else
               break;
           }
 
-          if (bestRun < runs)
+          if (bestRun < sequenceLength)
           {
-            bestRun = runs;
-            bestRunOffset = j;
+            bestRun = sequenceLength;
+            bestRunOffset = bufferPosition - lookbackPosition - 1;
           }
+
+          if (sequenceLength > 0)
+            lookbackPosition += sequenceLength;
+          else
+            lookbackPosition += 1;
         }
 
-        if ((literalsCount == LiteralsSize) || (i == rawData.Length))
+        //NOTE(adm244): PART 2: Encode either LOOKBACK (RUN) or LITERAL
+
+        if (bestRun >= 3)
         {
-          //NOTE(adm244): flush literals buffer
+          //NOTE(adm244): encode looback (run)
+          elements[elementsCount].SetLookback(bestRunOffset, bestRun);
+          elementsCount += 1;
 
-          int mask = 0;
-          int literalsMax = (literalsCount < LiteralsSize) ? literalsCount : LiteralsSize;
-
-          //NOTE(adm244): make mask for control byte
-          for (int literalIndex = 0; literalIndex < literalsMax; ++literalIndex)
-          {
-            if (literals[literalIndex].Type == LiteralType.Lookback)
-            {
-              mask &= (1 << literalIndex);
-            }
-          }
-
-          w.Write((byte)mask);
-
-          //NOTE(adm244): write literals data
-          for (int literalIndex = 0; literalIndex < literalsMax; ++literalIndex)
-          {
-            if (literals[literalIndex].Type == LiteralType.Lookback)
-            {
-              UInt16 offset = (UInt16)(literals[literalIndex].Offset & 0x0FFF);
-              UInt16 length = (UInt16)((literals[literalIndex].Length - 3) << 12);
-              UInt16 runlength = (UInt16)(offset & length);
-              w.Write(runlength);
-            }
-            else
-            {
-              w.Write((byte)literals[literalIndex].Symbol);
-            }
-          }
-
-          literalsCount = 0;
+          bufferPosition += bestRun;
         }
         else
         {
-          if (bestRun > 2)
-          {
-            //NOTE(adm244): encode runs
-            literals[literalsCount].SetLookback(bestRunOffset, bestRun);
-          }
-          else
-          {
-            //NOTE(adm244): encode literals
-            literals[literalsCount].SetSymbol(rawData[i]);
-          }
-          ++literalsCount;
+          //NOTE(adm244): encode literal
+          elements[elementsCount].SetSymbol(data[bufferPosition]);
+          elementsCount += 1;
+
+          bufferPosition += 1;
         }
 
-        ++i;
+        //NOTE(adm244): PART 3: Flush elements buffer if it's full or we're at the end of a stream
+
+        if ((elementsCount == ElementsSize) || (bufferPosition == data.Length))
+        {
+          int controlMask = 0;
+          int elementsLength = (elementsCount < ElementsSize) ? elementsCount : ElementsSize;
+
+          //NOTE(adm244): make mask for control byte
+          for (int i = 0; i < elementsLength; ++i)
+          {
+            if (elements[i].Type == LiteralType.Lookback)
+              controlMask |= (1 << i);
+          }
+
+          Debug.Assert(controlMask == (int)((byte)(controlMask)));
+          stream.WriteByte((byte)controlMask);
+
+          //NOTE(adm244): write elements
+          for (int i = 0; i < elementsLength; ++i)
+          {
+            if (elements[i].Type == LiteralType.Lookback)
+            {
+              UInt16 offset = (UInt16)(elements[i].Offset & 0x0FFF);
+              Debug.Assert(elements[i].Offset == (long)offset);
+
+              byte length = (byte)(elements[i].Length - 3);
+              Debug.Assert(elements[i].Length == (long)((length + 3)));
+              Debug.Assert((length >= 0) && (length <= 15));
+
+              UInt16 runlength = (UInt16)(offset | (length << 12));
+              stream.WriteByte((byte)(runlength & 0xFF));
+              stream.WriteByte((byte)((runlength >> 8) & 0xFF));
+            }
+            else
+            {
+              stream.WriteByte((byte)elements[i].Symbol);
+            }
+          }
+
+          elementsCount = 0;
+        }
       }
+
+      return stream.ToArray();
     }
   }
 }

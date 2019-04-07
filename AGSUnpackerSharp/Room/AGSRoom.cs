@@ -146,7 +146,7 @@ namespace AGSUnpackerSharp.Room
 
       for (int i = 1; i < frames; ++i)
       {
-        backgrounds[i] = AGSGraphicUtils.ParseLZWImage(r);
+        backgrounds[i] = AGSGraphicUtils.ParseLZ77Image(r);
       }
     }
 
@@ -607,7 +607,7 @@ namespace AGSUnpackerSharp.Room
       //TODO(adm244): parse stuff below as well
 
       // parse primary background
-      backgrounds[0] = AGSGraphicUtils.ParseLZWImage(r);
+      backgrounds[0] = AGSGraphicUtils.ParseLZ77Image(r);
       //Debug.Assert(r.BaseStream.Position == 0x54A1);
 
       // parse region mask
