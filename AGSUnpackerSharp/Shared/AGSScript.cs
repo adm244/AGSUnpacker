@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
+using AGSUnpackerSharp.Extensions;
 
 namespace AGSUnpackerSharp.Shared
 {
@@ -18,24 +19,107 @@ namespace AGSUnpackerSharp.Shared
     public Int32 offset;
   }
 
+  public struct AGSScriptFixup
+  {
+    public byte type;
+    public UInt32 value;
+  }
+
   public class AGSScript
   {
     private static readonly string HEAD_SIGNATURE = "SCOM";
     private static readonly UInt32 TAIL_SIGNATURE = 0xBEEFCAFE;
 
+    public Int32 version;
+    public byte[] globaldata;
     public Int32[] code;
     public string[] strings;
     public string[] imports;
     public AGSScriptExport[] exports;
     public AGSScriptSection[] sections;
+    public AGSScriptFixup[] fixups;
 
     public AGSScript()
     {
+      globaldata = new byte[0];
       code = new Int32[0];
       strings = new string[0];
       imports = new string[0];
       exports = new AGSScriptExport[0];
       sections = new AGSScriptSection[0];
+      fixups = new AGSScriptFixup[0];
+    }
+
+    private byte[] ConvertStringsToBlob(string[] strings)
+    {
+      MemoryStream stream = new MemoryStream();
+      for (int i = 0; i < strings.Length; ++i)
+      {
+        char[] chars = strings[i].ToCharArray();
+        byte[] bytes = Encoding.GetEncoding(1252).GetBytes(chars);
+
+        stream.Write(bytes, 0, bytes.Length);
+        stream.WriteByte(0);
+      }
+      return stream.ToArray();
+    }
+
+    public void WriteToStream(BinaryWriter w, int version)
+    {
+      w.Write(HEAD_SIGNATURE.ToCharArray());
+      w.Write((Int32)version);
+
+      // write section sizes
+      w.Write((UInt32)globaldata.Length);
+      w.Write((UInt32)code.Length);
+
+      byte[] stringsBlob = ConvertStringsToBlob(strings);
+      w.Write((UInt32)stringsBlob.Length);
+
+      // write main sections
+      w.Write(globaldata);
+      w.WriteArrayInt32(code);
+      w.Write(stringsBlob);
+
+      // write fixups section
+      w.Write((Int32)fixups.Length);
+      for (int i = 0; i < fixups.Length; ++i)
+      {
+        w.Write((byte)fixups[i].type);
+      }
+      for (int i = 0; i < fixups.Length; ++i)
+      {
+        w.Write((UInt32)fixups[i].value);
+      }
+
+      // write imports section
+      w.Write((Int32)imports.Length);
+      for (int i = 0; i < imports.Length; ++i)
+      {
+        w.WriteNullTerminatedString(imports[i], 300);
+      }
+
+      // write exports section
+      w.Write((Int32)exports.Length);
+      for (int i = 0; i < exports.Length; ++i)
+      {
+        w.WriteNullTerminatedString(exports[i].name, 300);
+        w.Write((Int32)exports[i].pointer);
+      }
+
+      // write script sections
+      if (version >= 83)
+      {
+        w.Write((Int32)sections.Length);
+        for (int i = 0; i < sections.Length; ++i)
+        {
+          w.WriteNullTerminatedString(sections[i].name, 300);
+          w.Write((Int32)sections[i].offset);
+        }
+      }
+
+      // write tail signature
+      w.Write((UInt32)TAIL_SIGNATURE);
     }
 
     public void LoadFromStream(BinaryReader r)
@@ -45,7 +129,7 @@ namespace AGSUnpackerSharp.Shared
       string scom_sig_string = new string(scom_sig);
       Debug.Assert(scom_sig_string == HEAD_SIGNATURE);
 
-      Int32 version = r.ReadInt32();
+      version = r.ReadInt32();
 
       // read section sizes
       Int32 globaldata_size = r.ReadInt32();
@@ -55,8 +139,7 @@ namespace AGSUnpackerSharp.Shared
       // parse global data section
       if (globaldata_size > 0)
       {
-        //NOTE(adm244): skip for now
-        r.BaseStream.Seek(globaldata_size, SeekOrigin.Current);
+        globaldata = r.ReadBytes(globaldata_size);
       }
 
       // parse code section
@@ -75,9 +158,15 @@ namespace AGSUnpackerSharp.Shared
 
       // parse fixups section
       Int32 fixups_count = r.ReadInt32();
-      //NOTE(adm244): skip for now
-      r.BaseStream.Seek(fixups_count, SeekOrigin.Current);
-      r.BaseStream.Seek(fixups_count * sizeof(Int32), SeekOrigin.Current);
+      fixups = new AGSScriptFixup[fixups_count];
+      for (int i = 0; i < fixups_count; ++i)
+      {
+        fixups[i].type = r.ReadByte();
+      }
+      for (int i = 0; i < fixups_count; ++i)
+      {
+        fixups[i].value = r.ReadUInt32();
+      }
 
       // parse imports section
       Int32 imports_count = r.ReadInt32();

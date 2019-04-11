@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
+using AGSUnpackerSharp.Extensions;
 
 namespace AGSUnpackerSharp.Shared
 {
   public class AGSPropertyStorage
   {
+    public Int32 version;
     public string[] names;
     public string[] values;
 
@@ -17,9 +19,31 @@ namespace AGSUnpackerSharp.Shared
       values = new string[0];
     }
 
+    public void WriteToStream(BinaryWriter w, int version)
+    {
+      w.Write((Int32)version);
+
+      Debug.Assert(names.Length == values.Length);
+
+      w.Write((Int32)names.Length);
+      for (int i = 0; i < names.Length; ++i)
+      {
+        if (version == 1)
+        {
+          w.WriteNullTerminatedString(names[i], 200);
+          w.WriteNullTerminatedString(values[i], 500);
+        }
+        else
+        {
+          w.WritePrefixedString32(names[i]);
+          w.WritePrefixedString32(values[i]);
+        }
+      }
+    }
+
     public void LoadFromStream(BinaryReader r)
     {
-      Int32 version = r.ReadInt32();
+      version = r.ReadInt32();
       Debug.Assert((version == 1) || (version == 2));
 
       Int32 count = r.ReadInt32();
@@ -35,11 +59,8 @@ namespace AGSUnpackerSharp.Shared
         }
         else
         {
-          Int32 strlen = r.ReadInt32();
-          names[i] = r.ReadFixedString(strlen);
-
-          strlen = r.ReadInt32();
-          values[i] = r.ReadFixedString(strlen);
+          names[i] = r.ReadPrefixedString32();
+          values[i] = r.ReadPrefixedString32();
         }
       }
     }

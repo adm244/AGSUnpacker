@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Shared;
 using AGSUnpackerSharp.Utils;
+using AGSUnpackerSharp.Extensions;
 using System.Drawing;
 
 namespace AGSUnpackerSharp.Room
@@ -21,6 +22,8 @@ namespace AGSUnpackerSharp.Room
     public Int16 version;
     public Int32 background_bpp;
     public Bitmap[] backgrounds;
+    public byte backgroundFrames;
+    public byte background_animation_speed;
     public AGSWalkBehindArea[] walkbehinds;
     public AGSHotspot[] hotspots;
     public AGSRoomEdge edge;
@@ -41,12 +44,19 @@ namespace AGSUnpackerSharp.Room
     public Int32 game_id;
     public AGSScript script;
     public AGSPropertyStorage properties;
+    public Bitmap regionMask;
+    public Bitmap walkableMask;
+    public Bitmap walkbehindMask;
+    public Bitmap hotspotMask;
+    public Int32 propertiesBlockVersion;
 
     public AGSRoom()
     {
       version = 29;
       background_bpp = 1;
       backgrounds = new Bitmap[5];
+      backgroundFrames = 0;
+      background_animation_speed = 4;
       walkbehinds = new AGSWalkBehindArea[0];
       hotspots = new AGSHotspot[0];
       edge.top = 0;
@@ -70,18 +80,33 @@ namespace AGSUnpackerSharp.Room
       game_id = 0;
       script = new AGSScript();
       properties = new AGSPropertyStorage();
+      regionMask = new Bitmap(width, height);
+      walkableMask = new Bitmap(width, height);
+      walkbehindMask = new Bitmap(width, height);
+      hotspotMask = new Bitmap(width, height);
+      propertiesBlockVersion = 1;
     }
 
-    /*public void SaveToFile(string filepath)
+    public void SaveToFile(string filepath, int room_version)
     {
       FileStream fs = new FileStream(filepath, FileMode.Create);
       BinaryWriter w = new BinaryWriter(fs, Encoding.GetEncoding(1252));
 
-      w.Write(version);
-      WriteRoomMainBlock(w);
+      w.Write((UInt16)room_version);
+
+      WriteRoomBlock(w, 0x01, room_version);
+      WriteRoomBlock(w, 0x05, room_version);
+      
+      if (backgroundFrames > 0)
+        WriteRoomBlock(w, 0x06, room_version);
+
+      WriteRoomBlock(w, 0x07, room_version);
+      WriteRoomBlock(w, 0x08, room_version);
+      WriteRoomBlock(w, 0x09, room_version);
+      WriteRoomBlock(w, 0xFF, room_version);
 
       w.Close();
-    }*/
+    }
 
     public void LoadFromFile(string filepath)
     {
@@ -104,8 +129,54 @@ namespace AGSUnpackerSharp.Room
       r.Close();
     }
 
+    private void WriteRoomBlock(BinaryWriter w, byte blockType, int room_version)
+    {
+      w.Write((byte)blockType);
+      if (blockType == 0xFF)
+        return;
+
+      w.Write((Int32)0);
+
+      long blockStart = w.BaseStream.Position;
+
+      switch (blockType)
+      {
+        case 0x01:
+          WriteRoomMainBlock(w, room_version);
+          break;
+        case 0x05:
+          WriteObjectNamesBlock(w, room_version);
+          break;
+        case 0x06:
+          WriteBackgroundAnimationBlock(w, room_version);
+          break;
+        case 0x07:
+          WriteSCOM3Block(w, script.version);
+          break;
+        case 0x08:
+          WritePropertiesBlock(w, propertiesBlockVersion, properties.version);
+          break;
+        case 0x09:
+          WriteObjectScriptNamesBlock(w, room_version);
+          break;
+
+        default:
+          Debug.Assert(false, "Unknown block is encountered!");
+          break;
+      }
+
+      long blockEnd = w.BaseStream.Position;
+      long blockLength = blockEnd - blockStart;
+      Debug.Assert(blockLength < Int32.MaxValue);
+
+      w.BaseStream.Seek(blockStart - sizeof(Int32), SeekOrigin.Begin);
+      w.Write((Int32)blockLength);
+      w.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
+    }
+
     private void ParseRoomBlock(BinaryReader r, byte blockType, int room_version)
     {
+      //TODO(adm244): confirm signed type
       Int32 length = r.ReadInt32();
 
       switch (blockType)
@@ -123,7 +194,7 @@ namespace AGSUnpackerSharp.Room
           ParseSCOM3Block(r, room_version);
           break;
         case 0x08:
-          ParsePropertiesBlock(r, room_version);
+          ParsePropertiesBlock(r);
           break;
         case 0x09:
           ParseObjectScriptNamesBlock(r, room_version);
@@ -135,18 +206,48 @@ namespace AGSUnpackerSharp.Room
       }
     }
 
+    private void WriteBackgroundAnimationBlock(BinaryWriter w, int room_version)
+    {
+      w.Write((byte)backgroundFrames);
+      w.Write((byte)background_animation_speed);
+
+      //TODO(adm244): palette share flags
+      w.Write(new byte[backgroundFrames]);
+
+      for (int i = 1; i < backgroundFrames; ++i)
+      {
+        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[i], background_bpp);
+      }
+    }
+
     private void ParseBackgroundAnimationBlock(BinaryReader r, int room_version)
     {
-      byte frames = r.ReadByte();
-      Debug.Assert(frames <= 5);
+      backgroundFrames = r.ReadByte();
+      Debug.Assert(backgroundFrames <= 5);
 
-      byte animation_speed = r.ReadByte();
+      background_animation_speed = r.ReadByte();
       // skip palette share flags
-      r.BaseStream.Seek(frames, SeekOrigin.Current);
+      r.BaseStream.Seek(backgroundFrames, SeekOrigin.Current);
 
-      for (int i = 1; i < frames; ++i)
+      for (int i = 1; i < backgroundFrames; ++i)
       {
-        backgrounds[i] = AGSGraphicUtils.ParseLZ77Image(r);
+        backgrounds[i] = AGSGraphicUtils.ParseLZ77Image(r, background_bpp);
+      }
+    }
+
+    private void WriteObjectScriptNamesBlock(BinaryWriter w, int room_version)
+    {
+      w.Write((byte)objects.Length);
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        if (room_version >= 31)
+        {
+          w.WritePrefixedString32(objects[i].scriptname);
+        }
+        else
+        {
+          w.WriteFixedString(objects[i].scriptname, 20);
+        }
       }
     }
 
@@ -165,6 +266,26 @@ namespace AGSUnpackerSharp.Room
         else
         {
           objects[i].scriptname = r.ReadFixedString(20);
+        }
+      }
+    }
+
+    private void WriteObjectNamesBlock(BinaryWriter w, int room_version)
+    {
+      w.Write((byte)objects.Length);
+
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        if (room_version >= 31)
+        {
+          w.Write((Int32)objects[i].name.Length);
+          w.Write(objects[i].name.ToCharArray());
+        }
+        else
+        {
+          //FIX(adm244): write FIXED string !!!
+          //w.WriteNullTerminatedString(objects[i].name, 30);
+          w.WriteFixedString(objects[i].name, 30);
         }
       }
     }
@@ -188,25 +309,50 @@ namespace AGSUnpackerSharp.Room
       }
     }
 
-    private void ParsePropertiesBlock(BinaryReader r, int room_version)
+    private void WritePropertiesBlock(BinaryWriter w, int blockVersion, int properiesVersion)
     {
-      Int32 version = r.ReadInt32();
-      Debug.Assert(version == 1);
+      w.Write((Int32)blockVersion);
+      
+      // write room properties
+      properties.WriteToStream(w, properiesVersion);
+
+      // write hotspots properties
+      for (int i = 0; i < hotspots.Length; ++i)
+      {
+        hotspots[i].properties.WriteToStream(w, properiesVersion);
+      }
+
+      // write objects properies
+      for (int i = 0; i < objects.Length; ++i)
+      {
+        objects[i].properties.WriteToStream(w, properiesVersion);
+      }
+    }
+
+    private void ParsePropertiesBlock(BinaryReader r)
+    {
+      propertiesBlockVersion = r.ReadInt32();
+      Debug.Assert(propertiesBlockVersion == 1);
 
       // parse room properties
       properties.LoadFromStream(r);
 
-      // parse hotspot properties
+      // parse hotspots properties
       for (int i = 0; i < hotspots.Length; ++i)
       {
         hotspots[i].properties.LoadFromStream(r);
       }
 
-      // parse object properties
+      // parse objects properties
       for (int i = 0; i < objects.Length; ++i)
       {
         objects[i].properties.LoadFromStream(r);
       }
+    }
+
+    private void WriteSCOM3Block(BinaryWriter w, int version)
+    {
+      script.WriteToStream(w, version);
     }
 
     private void ParseSCOM3Block(BinaryReader r, int room_version)
@@ -215,9 +361,9 @@ namespace AGSUnpackerSharp.Room
       script.LoadFromStream(r);
     }
 
-    /*private void WriteRoomMainBlock(BinaryWriter w)
+    private void WriteRoomMainBlock(BinaryWriter w, int room_version)
     {
-      w.Write((byte)0x01);
+      //w.Write((byte)0x01);
       w.Write(background_bpp);
       
       // write walk-behind baselines
@@ -237,29 +383,31 @@ namespace AGSUnpackerSharp.Room
 
       for (int i = 0; i < hotspots.Length; ++i)
       {
-        if (version >= 31)
+        if (room_version >= 31)
         {
           // DOUBLE CHECK IT!
           w.Write(hotspots[i].name);
         }
         else
         {
-          w.Write(hotspots[i].name.ToCharArray());
-          w.Write((byte)0x0);
+          //w.Write(hotspots[i].name.ToCharArray());
+          //w.Write((byte)0x0);
+          w.WriteNullTerminatedString(hotspots[i].name);
         }
       }
 
       for (int i = 0; i < hotspots.Length; ++i)
       {
-        if (version >= 31)
+        if (room_version >= 31)
         {
           // DOUBLE CHECK IT!
           w.Write(hotspots[i].scriptname);
         }
         else
         {
-          w.Write(hotspots[i].scriptname.ToCharArray());
-          w.Write((byte)0x0);
+          //w.Write(hotspots[i].scriptname.ToCharArray());
+          //w.Write((byte)0x0);
+          w.WriteFixedString(hotspots[i].scriptname, 20);
         }
       }
 
@@ -305,7 +453,6 @@ namespace AGSUnpackerSharp.Room
       // write region events
       for (int i = 0; i < regions.Length; ++i)
       {
-        regions[i] = new AGSRegion();
         regions[i].interactions.WriteToStream(w);
       }
 
@@ -396,21 +543,20 @@ namespace AGSUnpackerSharp.Room
       }
 
       // write primary background
-      AGSGraphicUtils.ParseLZWImage(r);
-      //AGSGraphicUtils.WriteLZWImage(w, );
+      AGSGraphicUtils.WriteLZ77Image(w, backgrounds[0], background_bpp);
 
       // parse region mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.WriteAllegroCompressedImage(w, regionMask);
 
       // parse walkable area mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.WriteAllegroCompressedImage(w, walkableMask);
 
       // parse walkbehind area mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      AGSGraphicUtils.WriteAllegroCompressedImage(w, walkbehindMask);
 
       // parse hotspot mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
-    }*/
+      AGSGraphicUtils.WriteAllegroCompressedImage(w, hotspotMask);
+    }
 
     private void ParseRoomMainBlock(BinaryReader r, int room_version)
     {
@@ -587,8 +733,8 @@ namespace AGSUnpackerSharp.Room
       Int16 room_animations_count = r.ReadInt16();
       Debug.Assert(room_animations_count == 0);
 
-      // parse walkable areas light level (unused)
-      for (int i = 0; i < 16; ++i)
+      // parse walkable areas light level (unused?)
+      for (int i = 0; i < walkareas.Length; ++i)
       {
         walkareas[i].light = r.ReadInt16();
       }
@@ -604,24 +750,22 @@ namespace AGSUnpackerSharp.Room
       }
       //Debug.Assert(r.BaseStream.Position == 0xC22);
 
-      //TODO(adm244): parse stuff below as well
-
       // parse primary background
-      backgrounds[0] = AGSGraphicUtils.ParseLZ77Image(r);
+      backgrounds[0] = AGSGraphicUtils.ParseLZ77Image(r, background_bpp);
       //Debug.Assert(r.BaseStream.Position == 0x54A1);
 
       // parse region mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      regionMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
       //Debug.Assert(r.BaseStream.Position == 0x5C55);
 
       // parse walkable area mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      walkableMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
 
       // parse walkbehind area mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      walkbehindMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
 
       // parse hotspot mask
-      AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      hotspotMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
       //Debug.Assert(r.BaseStream.Position == 0x7655);
     }
   }

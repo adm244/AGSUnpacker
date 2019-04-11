@@ -107,7 +107,6 @@ namespace AGSUnpackerSharp.Utils
           if (bufferPosition > 0)
           {
             stream.WriteByte((byte)(bufferPosition - 1));
-            //stream.Write(buffer, 0, bufferPosition);
             for (int j = 0; j < bufferPosition; ++j)
             {
               stream.WriteByte((byte)buffer[j]);
@@ -159,7 +158,6 @@ namespace AGSUnpackerSharp.Utils
           if (bufferPosition > 0)
           {
             stream.WriteByte((byte)(bufferPosition - 1));
-            //stream.Write(buffer, 0, bufferPosition);
             for (int j = 0; j < bufferPosition; ++j)
             {
               stream.WriteByte((byte)buffer[j]);
@@ -314,12 +312,13 @@ namespace AGSUnpackerSharp.Utils
       return image;
     }
 
-    public static void ParseAllegroCompressedImage(BinaryReader r)
+    public static Bitmap ParseAllegroCompressedImage(BinaryReader r)
     {
+      Int16 bpp = 1;
       Int16 width = r.ReadInt16();
       Int16 height = r.ReadInt16();
 
-      //TODO(adm244): do real parsing
+      MemoryStream stream = new MemoryStream();
       for (int y = 0; y < height; ++y)
       {
         int pixelsRead = 0;
@@ -330,26 +329,67 @@ namespace AGSUnpackerSharp.Utils
 
           if (index < 0)
           {
-            r.BaseStream.Seek(1, SeekOrigin.Current);
+            int count = (1 - index);
+            byte value = r.ReadByte();
+
+            while ((count--) > 0)
+              stream.WriteByte(value);
+
             pixelsRead += (1 - index);
           }
           else
           {
-            r.BaseStream.Seek(index + 1, SeekOrigin.Current);
+            byte[] buffer = r.ReadBytes(index + 1);
+            stream.Write(buffer, 0, buffer.Length);
             pixelsRead += (index + 1);
           }
         }
       }
 
-      // skip palette
-      // 768 = 256 * 3
-      r.BaseStream.Seek(768, SeekOrigin.Current);
+      byte[] data = stream.ToArray();
+      Debug.Assert(data.Length == (width * height * bpp));
+
+      byte[] palette = r.ReadBytes(256 * 3);
+
+      return ConvertToBitmap(data, width, height, bpp, palette, true);
     }
 
-    public static Bitmap ParseLZ77Image(BinaryReader r)
+    public static void WriteAllegroCompressedImage(BinaryWriter w, Bitmap image)
+    {
+      w.Write((Int16)image.Width);
+      w.Write((Int16)image.Height);
+
+      byte[] pixels = ConvertToRaw(image);
+      for (int y = 0; y < image.Height; ++y)
+      {
+        byte[] pixelsRow = new byte[image.Width];
+        Buffer.BlockCopy(pixels, y * image.Width, pixelsRow, 0, image.Width);
+
+        byte[] data = WriteRLEData8(pixelsRow);
+        w.Write(data, 0, data.Length);
+      }
+
+      byte[] palette = new byte[256 * 3];
+      if (image.PixelFormat == PixelFormat.Format8bppIndexed)
+      {
+        Debug.Assert(image.Palette.Entries.Length == 256);
+        for (int i = 0; i < image.Palette.Entries.Length; ++i)
+        {
+          palette[3 * i + 0] = image.Palette.Entries[i].R;
+          palette[3 * i + 1] = image.Palette.Entries[i].G;
+          palette[3 * i + 2] = image.Palette.Entries[i].B;
+        }
+      }
+
+      w.Write(palette);
+    }
+
+    public static Bitmap ParseLZ77Image(BinaryReader r, int bpp)
     {
       // skip palette
       //r.BaseStream.Seek(256 * sizeof(Int32), SeekOrigin.Current);
+      byte[] palette = r.ReadBytes(256 * sizeof(Int32));
+
       Int32 uncompressed_size = r.ReadInt32();
       Int32 compressed_size = r.ReadInt32();
 
@@ -450,34 +490,65 @@ namespace AGSUnpackerSharp.Utils
       //return new LZWImage(picture_maxsize, picture_data_size, rawBackground);
 
       //TODO(adm244): get from DTA info
-      int bpp = 4;
       int width = ((output[3] << 24) | (output[2] << 16) | (output[1] << 8) | output[0]) / bpp;
       int height = ((output[7] << 24) | (output[6] << 16) | (output[5] << 8) | output[4]);
 
       //bitmap.Save("room_background.bmp", ImageFormat.Bmp);
 
-      return ConvertToBitmap(output, width, height, bpp);
+      byte[] pixels = new byte[output.Length - 8];
+      Array.Copy(output, 8, pixels, 0, pixels.Length);
+
+      return ConvertToBitmap(pixels, width, height, bpp, palette, false);
     }
 
-    private static Bitmap ConvertToBitmap(byte[] data, int width, int height, int bpp)
+    private static Bitmap ConvertToBitmap(byte[] data, int width, int height, int bpp, byte[] palette, bool convertTo8bit)
     {
       //TODO(adm244): pick according to bpp
-      PixelFormat format = PixelFormat.Format32bppArgb;
+      //PixelFormat format = PixelFormat.Format32bppArgb;
+      PixelFormat format = GetPixelFormat(bpp);
 
       Bitmap bitmap = new Bitmap(width, height, format);
       BitmapData lockData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, format);
 
-      byte[] rawData = new byte[data.Length - 8];
-      Array.Copy(data, 8, rawData, 0, rawData.Length);
+      /*byte[] rawData = new byte[data.Length - 8];
+      Array.Copy(data, 8, rawData, 0, rawData.Length);*/
 
       IntPtr p = lockData.Scan0;
       for (int row = 0; row < height; ++row)
       {
-        Marshal.Copy(rawData, row * width * bpp, p, width * bpp);
+        Marshal.Copy(data, row * width * bpp, p, width * bpp);
         p = new IntPtr(p.ToInt64() + lockData.Stride);
       }
 
       bitmap.UnlockBits(lockData);
+
+      if ((bpp == 1) && (palette != null))
+      {
+        Color[] paletteColors = new Color[256];
+        for (int i = 0; i < paletteColors.Length; ++i)
+        {
+          int red = palette[3 * i];
+          int green = palette[3 * i + 1];
+          int blue = palette[3 * i + 2];
+
+          if (convertTo8bit)
+          {
+            //NOTE(adm244): AGS is using only 6-bits per channel, so we have to convert it to full 8-bit range
+            blue = (byte)((blue / 64f) * 256f);
+            green = (byte)((green / 64f) * 256f);
+            red = (byte)((red / 64f) * 256f);
+          }
+
+          paletteColors[i] = Color.FromArgb(red, green, blue);
+        }
+
+        ColorPalette bitmapPalette = bitmap.Palette;
+        for (int j = 0; j < bitmapPalette.Entries.Length; ++j)
+        {
+          bitmapPalette.Entries[j] = paletteColors[j];
+        }
+        bitmap.Palette = bitmapPalette;
+      }
 
       return bitmap;
     }
@@ -488,7 +559,8 @@ namespace AGSUnpackerSharp.Utils
       int height = image.Height;
 
       //TODO(adm244): extract from Bitmap
-      int bpp = 4;
+      //int bpp = 4;
+      int bpp = GetBytesPerPixel(image);
 
       byte[] pixels = new byte[width * height * bpp];
 
@@ -501,6 +573,11 @@ namespace AGSUnpackerSharp.Utils
       }
       image.UnlockBits(lockData);
 
+      return pixels;
+    }
+
+    private static byte[] AppendImageSize(int width, int height, int bpp, byte[] pixels)
+    {
       byte[] rawData = new byte[pixels.Length + 8];
 
       int newWidth = width * bpp;
@@ -521,15 +598,110 @@ namespace AGSUnpackerSharp.Utils
       return rawData;
     }
 
-    public static void WriteLZ77Image(BinaryWriter w, Bitmap image)
+    private static PixelFormat GetPixelFormat(int bpp)
+    {
+      PixelFormat format = PixelFormat.Undefined;
+      switch (bpp)
+      {
+        case 1:
+          format = PixelFormat.Format8bppIndexed;
+          break;
+        case 2:
+          format = PixelFormat.Format16bppRgb565;
+          break;
+        case 3:
+          format = PixelFormat.Format24bppRgb;
+          break;
+        case 4:
+          format = PixelFormat.Format32bppArgb;
+          break;
+
+        default:
+          Debug.Assert(false);
+          break;
+      }
+
+      return format;
+    }
+
+    private static int GetBytesPerPixel(Bitmap image)
+    {
+      int bpp = -1;
+      switch (image.PixelFormat)
+      {
+        case PixelFormat.Format8bppIndexed:
+          bpp = 1;
+          break;
+        case PixelFormat.Format16bppRgb565:
+          bpp = 2;
+          break;
+        case PixelFormat.Format24bppRgb:
+          bpp = 3;
+          break;
+        case PixelFormat.Format32bppRgb:
+        case PixelFormat.Format32bppArgb:
+          bpp = 4;
+          break;
+
+        default:
+          Debug.Assert(false);
+          break;
+      }
+
+      return bpp;
+    }
+
+    public static void WriteLZ77Image(BinaryWriter w, Bitmap image, int bpp)
     {
       /*w.Write((Int32)image.picture_maxsize);
       w.Write((Int32)image.picture_data_size);
       w.Write(image.rawBackground);*/
 
-      byte[] rawData = ConvertToRaw(image);
+      //FIX(adm244): 24-bit bitmaps are all messed up !!!
+
+      int image_bpp = GetBytesPerPixel(image);
+      if (image_bpp != bpp)
+      {
+        //NOTE(adm244): convert background image to room background format
+        PixelFormat newFormat = GetPixelFormat(bpp);
+        image = image.Clone(new Rectangle(0, 0, image.Width, image.Height), newFormat);
+        /*Bitmap newImage = new Bitmap(image.Width, image.Height, newFormat);
+
+        BitmapData lockData1 = newImage.LockBits(new Rectangle(0, 0, newImage.Width, newImage.Height), ImageLockMode.WriteOnly, newFormat);
+        BitmapData lockData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, newFormat);
+
+        IntPtr p1 = lockData1.Scan0;
+        IntPtr p = lockData.Scan0;
+        for (int row = 0; row < image.Height; ++row)
+        {
+          Marshal.Copy(p, row * image.Width * bpp, p1, image.Width * bpp);
+          p = new IntPtr(p.ToInt64() + lockData.Stride);
+          p1 = new IntPtr(p1.ToInt64() + lockData1.Stride);
+        }
+        image.UnlockBits(lockData);
+        newImage.UnlockBits(lockData1);*/
+      }
+
+      byte[] pixels = ConvertToRaw(image);
+      byte[] rawData = AppendImageSize(image.Width, image.Height, bpp, pixels);
       byte[] rawDataCompressed = LZ77Compress(rawData);
 
+      Debug.Assert(pixels.Length == (image.Width * image.Height * bpp));
+
+      byte[] palette = new byte[256 * sizeof(Int32)];
+      if (image.Palette.Entries.Length > 0)
+      {
+        Debug.Assert(image.Palette.Entries.Length == 256);
+        for (int i = 0; i < image.Palette.Entries.Length; ++i)
+        {
+          palette[4 * i + 0] = image.Palette.Entries[i].R;
+          palette[4 * i + 1] = image.Palette.Entries[i].G;
+          palette[4 * i + 2] = image.Palette.Entries[i].B;
+          palette[4 * i + 3] = image.Palette.Entries[i].A;
+        }
+      }
+
+      w.Write(palette);
       w.Write((UInt32)rawData.Length);
       w.Write((UInt32)rawDataCompressed.Length);
       w.Write(rawDataCompressed);

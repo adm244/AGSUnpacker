@@ -17,6 +17,38 @@ namespace AGSUnpackerSharp
       if (args.Length > 0)
       {
         string filepath = args[0];
+
+        string[] roomFiles = Directory.GetFiles(filepath, "room*.crm", SearchOption.TopDirectoryOnly);
+        string foldername = "resaved";
+        //NOTE(adm244): funny how Path.GetDirectoryName just finds last '/' slash symbol
+        // and cuts everything that is following after, essentially introducing a bug
+        // where you're trying to find a directory name of a filepath to a directory (not a file)
+        //string test = Path.GetDirectoryName(filepath);
+        string folderpath = Path.Combine(filepath, foldername);
+
+        if (!Directory.Exists(folderpath))
+        {
+          Directory.CreateDirectory(folderpath);
+        }
+
+        for (int i = 3; i < 4/*roomFiles.Length*/; ++i)
+        {
+          string filename = Path.GetFileNameWithoutExtension(roomFiles[i]);
+          string imagepath = filename + ".png";
+          AGSRoom room = new AGSRoom();
+          room.LoadFromFile(roomFiles[i]);
+
+          room.backgrounds[0] = (Bitmap)Bitmap.FromFile(imagepath);
+
+          string newfilepath = Path.Combine(folderpath, filename + ".crm");
+          room.SaveToFile(newfilepath, room.version);
+
+          room = new AGSRoom();
+          room.LoadFromFile(newfilepath);
+
+          room.backgrounds[0].Save(newfilepath + ".png", ImageFormat.Png);
+        }
+
         //string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath);
         /*for (int i = 0; i < files.Length; ++i)
         {
@@ -39,7 +71,7 @@ namespace AGSUnpackerSharp
         Convert16bitTo32bitImages(files);*/
 
         // open original file
-        FileStream file = new FileStream(filepath, FileMode.Open);
+        /*FileStream file = new FileStream(filepath, FileMode.Open);
         BinaryReader reader = new BinaryReader(file, Encoding.GetEncoding(1252));
         Bitmap image = AGSGraphicUtils.ParseLZ77Image(reader);
         reader.Close();
@@ -60,7 +92,7 @@ namespace AGSUnpackerSharp
         reader.Close();
 
         // save decompressed image into a file
-        image.Save(filepath + ".bmp.decompressed.bmp", ImageFormat.Bmp);
+        image.Save(filepath + ".bmp.decompressed.bmp", ImageFormat.Bmp);*/
 
         /*AGSGameData gameData = new AGSGameData();
         gameData.LoadFromFile(filepath);*/

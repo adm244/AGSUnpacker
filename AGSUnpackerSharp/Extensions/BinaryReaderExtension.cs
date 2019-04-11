@@ -38,6 +38,14 @@ namespace AGSUnpackerSharp
       return sb.ToString();
     }
 
+    public static string ReadPrefixedString32(this BinaryReader r)
+    {
+      Int32 length = r.ReadInt32();
+      char[] buffer = r.ReadChars(length);
+
+      return new string(buffer);
+    }
+
     public static Int16[] ReadArrayInt16(this BinaryReader r, int count)
     {
       Int16[] values = new Int16[count];
