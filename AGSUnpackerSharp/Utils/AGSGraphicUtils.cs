@@ -498,7 +498,11 @@ namespace AGSUnpackerSharp.Utils
       byte[] pixels = new byte[output.Length - 8];
       Array.Copy(output, 8, pixels, 0, pixels.Length);
 
-      return ConvertToBitmap(pixels, width, height, bpp, palette, false);
+      Bitmap bitmap = ConvertToBitmap(pixels, width, height, bpp, palette, false);
+      
+      //NOTE(adm244): since AGS doesn't use alpha-channel for room background it is nullyfied
+      // and we have to get rid of it by converting image into 24-bit pixel format
+      return bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format24bppRgb);
     }
 
     private static Bitmap ConvertToBitmap(byte[] data, int width, int height, int bpp, byte[] palette, bool convertTo8bit)
