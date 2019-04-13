@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Script;
 
 namespace AGSUnpackerSharp.Game
 {

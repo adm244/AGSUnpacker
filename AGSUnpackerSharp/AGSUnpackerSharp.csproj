@@ -49,6 +49,7 @@
     <Compile Include="Graphics\AGSSpritesCache.cs" />
     <Compile Include="Graphics\LZWImage.cs" />
     <Compile Include="Graphics\SpritesMeta.cs" />
+    <Compile Include="Shared\Script\AGSVirtualMachine.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />
     <Compile Include="Utils\AGSGraphicUtils.cs" />
@@ -91,7 +92,8 @@
     <Compile Include="Shared\InteractionScript\AGSInteractionScript.cs" />
     <Compile Include="Shared\InteractionScript\AGSInteractionScriptEvent.cs" />
     <Compile Include="Shared\AGSPropertyStorage.cs" />
-    <Compile Include="Shared\AGSScript.cs" />
+    <Compile Include="Shared\Script\AGSScript.cs" />
+    <Compile Include="Utils\IEEE754Utils.cs" />
     <Compile Include="Utils\TextExtractor.cs" />
   </ItemGroup>
   <ItemGroup />

@@ -7,6 +7,7 @@ using System.Drawing.Imaging;
 using AGSUnpackerSharp.Utils;
 using System.Text;
 using AGSUnpackerSharp.Game;
+using AGSUnpackerSharp.Extensions;
 
 namespace AGSUnpackerSharp
 {
@@ -18,7 +19,11 @@ namespace AGSUnpackerSharp
       {
         string filepath = args[0];
 
-        string[] roomFiles = Directory.GetFiles(filepath, "room*.crm", SearchOption.TopDirectoryOnly);
+        /*int a = 0x422E020C; // 43.502
+        float b = (float)a;
+        float c = BitConverter.ToSingle(BitConverter.GetBytes(a), 0);*/
+
+        /*string[] roomFiles = Directory.GetFiles(filepath, "room*.crm", SearchOption.TopDirectoryOnly);
         string foldername = "resaved";
         //NOTE(adm244): funny how Path.GetDirectoryName just finds last '/' slash symbol
         // and cuts everything that is following after, essentially introducing a bug
@@ -31,7 +36,7 @@ namespace AGSUnpackerSharp
           Directory.CreateDirectory(folderpath);
         }
 
-        for (int i = 3; i < 4/*roomFiles.Length*/; ++i)
+        for (int i = 0; i < roomFiles.Length; ++i)
         {
           string filename = Path.GetFileNameWithoutExtension(roomFiles[i]);
           string imagepath = filename + ".png";
@@ -46,10 +51,10 @@ namespace AGSUnpackerSharp
           room = new AGSRoom();
           room.LoadFromFile(newfilepath);
 
-          room.backgrounds[0].Save(newfilepath + ".png", ImageFormat.Png);
-        }
+          room.backgrounds[0].Save(imagepath, ImageFormat.Png);
+        }*/
 
-        //string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath);
+        string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath);
         /*for (int i = 0; i < files.Length; ++i)
         {
           string filename = files[i].Substring(files[i].LastIndexOf('/') + 1);
@@ -64,8 +69,69 @@ namespace AGSUnpackerSharp
         //AGSSpritesCache.ExtractSprites(filepath);
         /*string[] files = Directory.GetFiles(filepath, "spr*");
         AGSSpritesCache.PackSprites(files);*/
-        /*AGSRoom room = new AGSRoom();
-        room.LoadFromFile(filepath);*/
+        AGSRoom room = new AGSRoom();
+        room.LoadFromFile(filepath);
+
+        using (StreamWriter writer = new StreamWriter(filepath + ".dump", false, Encoding.GetEncoding(1252)))
+        {
+          room.script.DumpInstructions(writer);
+        }
+
+        /*// dump stringsBlob section
+        using (FileStream stream = new FileStream(filepath + ".strings", FileMode.Create))
+        {
+          using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+          {
+            writer.Write(room.script.StringsBlob);
+          }
+        }
+
+        // dump code section
+        using (FileStream stream = new FileStream(filepath + ".code", FileMode.Create))
+        {
+          using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+          {
+            writer.WriteArrayInt32(room.script.code);
+          }
+        }
+
+        // dump exports section
+        using (FileStream stream = new FileStream(filepath + ".exports", FileMode.Create))
+        {
+          using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+          {
+            for (int i = 0; i < room.script.exports.Length; ++i)
+            {
+              writer.WriteNullTerminatedString(room.script.exports[i].name, 300);
+              writer.Write((UInt32)room.script.exports[i].pointer);
+            }
+          }
+        }
+
+        // dump imports section
+        using (FileStream stream = new FileStream(filepath + ".imports", FileMode.Create))
+        {
+          using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+          {
+            for (int i = 0; i < room.script.imports.Length; ++i)
+            {
+              writer.WriteNullTerminatedString(room.script.imports[i], 300);
+            }
+          }
+        }
+
+        // dump fixups section
+        using (FileStream stream = new FileStream(filepath + ".fixups", FileMode.Create))
+        {
+          using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+          {
+            for (int i = 0; i < room.script.fixups.Length; ++i)
+            {
+              writer.Write((byte)room.script.fixups[i].type);
+              writer.Write((UInt32)room.script.fixups[i].value);
+            }
+          }
+        }*/
 
         /*string[] files = Directory.GetFiles(filepath);
         Convert16bitTo32bitImages(files);*/

@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Script;
 using AGSUnpackerSharp.Utils;
 using AGSUnpackerSharp.Extensions;
 using System.Drawing;
@@ -151,7 +152,7 @@ namespace AGSUnpackerSharp.Room
           WriteBackgroundAnimationBlock(w, room_version);
           break;
         case 0x07:
-          WriteSCOM3Block(w, script.version);
+          WriteSCOM3Block(w, script.Version);
           break;
         case 0x08:
           WritePropertiesBlock(w, propertiesBlockVersion, properties.version);

@@ -97,9 +97,9 @@ namespace AGSUnpackerSharp.Utils
 
       // script strings
       lines.Add("//   [script strings]");
-      for (int i = 0; i < room.script.strings.Length; ++i)
+      for (int i = 0; i < room.script.Strings.Length; ++i)
       {
-        PushIntoLines(room.script.strings[i]);
+        PushIntoLines(room.script.Strings[i]);
       }
     }
 
@@ -117,25 +117,25 @@ namespace AGSUnpackerSharp.Utils
 
       // global script strings
       lines.Add("//   [global script strings]");
-      for (int i = 0; i < data.globalScript.strings.Length; ++i)
+      for (int i = 0; i < data.globalScript.Strings.Length; ++i)
       {
-        PushIntoLines(data.globalScript.strings[i]);
+        PushIntoLines(data.globalScript.Strings[i]);
       }
 
       // dialog script strings
       lines.Add("//   [dialog script strings]");
-      for (int i = 0; i < data.dialogScript.strings.Length; ++i)
+      for (int i = 0; i < data.dialogScript.Strings.Length; ++i)
       {
-        PushIntoLines(data.dialogScript.strings[i]);
+        PushIntoLines(data.dialogScript.Strings[i]);
       }
 
       // module scritps strings
       for (int script_index = 0; script_index < data.scriptModules.Length; ++script_index)
       {
-        lines.Add(string.Format("//   [{0} strings]", data.scriptModules[script_index].sections[0].name));
-        for (int i = 0; i < data.scriptModules[script_index].strings.Length; ++i)
+        lines.Add(string.Format("//   [{0} strings]", data.scriptModules[script_index].Sections[0].Name));
+        for (int i = 0; i < data.scriptModules[script_index].Strings.Length; ++i)
         {
-          PushIntoLines(data.scriptModules[script_index].strings[i]);
+          PushIntoLines(data.scriptModules[script_index].Strings[i]);
         }
       }
 

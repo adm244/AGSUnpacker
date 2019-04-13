@@ -89,6 +89,7 @@ namespace AGSUnpackerSharp
       return assetInfos;
     }
 
+    //TODO(adm244): support for multifile packaging
     private static string[] ExtractAGSAssetFiles(BinaryReader r, AGSAssetInfo[] assetInfos, string targetpath)
     {
       string[] filenames = new string[assetInfos.Length];
@@ -119,6 +120,10 @@ namespace AGSUnpackerSharp
           int bytesLeftToRead = assetInfos[i].Size - bytesRead;
           int bytesToRead = Math.Min(buffer.Length, bytesLeftToRead);
           buffer = r.ReadBytes(bytesToRead);
+
+          //NOTE(adm244): check for end-of-stream
+          Debug.Assert(buffer.Length > 0);
+
           w.Write(buffer);
 
           bytesRead += bytesToRead;
