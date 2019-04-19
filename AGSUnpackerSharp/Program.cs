@@ -54,7 +54,7 @@ namespace AGSUnpackerSharp
           room.backgrounds[0].Save(imagepath, ImageFormat.Png);
         }*/
 
-        string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath);
+        //string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath);
         /*for (int i = 0; i < files.Length; ++i)
         {
           string filename = files[i].Substring(files[i].LastIndexOf('/') + 1);

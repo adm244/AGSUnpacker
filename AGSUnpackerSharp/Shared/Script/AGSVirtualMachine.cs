@@ -54,7 +54,6 @@ namespace AGSUnpackerSharp.Shared.Script
       switch (Type)
       {
         case AGSArgumentType.IntConstant:
-        case AGSArgumentType.FunctionOffset:
         case AGSArgumentType.StackOffset:
           result = IntValue.ToString();
           break;
@@ -63,6 +62,7 @@ namespace AGSUnpackerSharp.Shared.Script
           result = FloatValue.ToString();
           break;
 
+        case AGSArgumentType.FunctionOffset:
         case AGSArgumentType.RegisterIndex:
         case AGSArgumentType.ImportsOffset:
         case AGSArgumentType.StringsOffset:
@@ -310,7 +310,6 @@ namespace AGSUnpackerSharp.Shared.Script
       switch (fixuptype)
       {
         case AGSFixupType.Stack:
-        case AGSFixupType.Function:
         case AGSFixupType.Literal:
           {
             switch (argtype)
@@ -336,6 +335,10 @@ namespace AGSUnpackerSharp.Shared.Script
           type = AGSArgumentType.ImportsOffset;
           break;
 
+        case AGSFixupType.Function:
+          type = AGSArgumentType.FunctionOffset;
+          break;
+
         case AGSFixupType.String:
           type = AGSArgumentType.StringsOffset;
           break;
@@ -346,6 +349,23 @@ namespace AGSUnpackerSharp.Shared.Script
       }
 
       return type;
+    }
+
+    private static int GetExportIndex(AGSScript script, int offset)
+    {
+      int index = -1;
+      for (int i = 0; i < script.Exports.Length; ++i)
+      {
+        int functionOffset = script.Exports[i].Pointer & 0x00FFFFFF;
+        if (functionOffset == offset)
+        {
+          index = i;
+          break;
+        }
+      }
+
+      Debug.Assert(index != -1);
+      return index;
     }
 
     private static int GetStringIndex(AGSScript script, int offset)
@@ -405,7 +425,6 @@ namespace AGSUnpackerSharp.Shared.Script
                   switch (type)
                   {
                     case AGSArgumentType.IntConstant:
-                    case AGSArgumentType.FunctionOffset:
                     case AGSArgumentType.StackOffset:
                       instruction.Arguments[arg].IntValue = value;
                       break;
@@ -416,6 +435,11 @@ namespace AGSUnpackerSharp.Shared.Script
 
                     case AGSArgumentType.ImportsOffset:
                       instruction.Arguments[arg].Name = script.Imports[value];
+                      break;
+
+                    case AGSArgumentType.FunctionOffset:
+                      int exportIndex = GetExportIndex(script, value);
+                      instruction.Arguments[arg].Name = script.Exports[exportIndex].Name;
                       break;
 
                     case AGSArgumentType.StringsOffset:
