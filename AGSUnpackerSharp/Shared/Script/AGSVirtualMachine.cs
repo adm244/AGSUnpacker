@@ -8,7 +8,7 @@ namespace AGSUnpackerSharp.Shared.Script
   public struct AGSInstruction
   {
     public byte InstanceId;
-    public UInt32 Opcode;
+    public AGSOpcodes Opcode;
     public string Mnemonic;
     public AGSArgument[] Arguments;
 
@@ -389,11 +389,15 @@ namespace AGSUnpackerSharp.Shared.Script
       AGSInstruction instruction = new AGSInstruction();
 
       byte instanceId = (byte)((code[ip] >> 24) & 0xFF);
-      UInt32 opcode = (UInt32)(code[ip] & 0x00FFFFFF);
+      Int32 opcodeRaw = (Int32)(code[ip] & 0x00FFFFFF);
+
+      Debug.Assert(Enum.IsDefined(typeof(AGSOpcodes), opcodeRaw));
+
+      AGSOpcodes opcode = (AGSOpcodes)(opcodeRaw);
 
       for (int i = 0; i < Instructions.Length; ++i)
       {
-        if (Instructions[i].Opcode == (AGSOpcodes)(opcode))
+        if (Instructions[i].Opcode == opcode)
         {
           instruction.InstanceId = instanceId;
           instruction.Opcode = opcode;
@@ -469,6 +473,16 @@ namespace AGSUnpackerSharp.Shared.Script
 
           break;
         }
+      }
+
+      //NOTE(adm244): swap arguments to match "mov <dest>, <src>" pattern
+      if (instruction.Opcode == AGSOpcodes.REGTOREG)
+      {
+        Debug.Assert(instruction.ArgumentsCount == 2);
+
+        AGSArgument temp = instruction.Arguments[0];
+        instruction.Arguments[0] = instruction.Arguments[1];
+        instruction.Arguments[1] = temp;
       }
 
       return instruction;
