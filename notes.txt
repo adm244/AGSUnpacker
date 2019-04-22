@@ -2,6 +2,39 @@
 ####### AGS disassembler notes #######
 ######################################
 
+########### Literal types ############
+"number":
+  "int": 12
+  "float": 3.1415
+
+"string": "Ouch!"
+  A sequence of characters enclosed in '"' symbols.
+
+"identifier": player, oLever, gInventory
+  A simple symbolic name of an object.
+
+"function": IsTimerExpired
+  Simple symbolic name of a function that does not have a "this" pointer.
+  Looks like it's NOT mangled, so we cannot tell a difference between
+  a function name and an identifier without looking at how this value is used.
+  Also, we have no information is it imported or exported function.
+
+"method": Character::ChangeRoom^3, hToRoom_Interact$0
+  A member function name, that requires to set a "this" pointer.
+  Looks like it is always mangled, so we CAN tell a difference between
+  imported and exported method (imported methods use '^' symbol instead of a '$').
+  We also know the object name (goes before '::' symbol).
+  Because it's mangled we always know a number of parameters that are passed.
+
+"property": DynamicSprite::get_Height, DynamicSprite::set_Height
+  A member function that has 'get' and\or 'set' variants.
+  It's not mangled, but a function name has a prefix of 'set_' or 'get_'.
+  There's no information if this is an imported or exported method,
+  but I don't remember if you can declare your own properties in AGS (probably not).
+
+######### Instruction layout #########
+TODO: A column based layout???
+
 ############# Registers ##############
   0x00, null
   0x01, sp  - stack pointer
