@@ -448,7 +448,7 @@ namespace AGSUnpackerSharp.Shared.Script
 
                     case AGSArgumentType.StringsOffset:
                       int stringIndex = GetStringIndex(script, value);
-                      instruction.Arguments[arg].Name = script.Strings[stringIndex];
+                      instruction.Arguments[arg].Name = '"' + script.Strings[stringIndex] + '"';
                       break;
 
                     default:
