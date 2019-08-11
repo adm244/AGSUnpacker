@@ -8,6 +8,7 @@ using AGSUnpackerSharp.Utils;
 using System.Text;
 using AGSUnpackerSharp.Game;
 using AGSUnpackerSharp.Extensions;
+using AGSUnpackerSharp.Translation;
 
 namespace AGSUnpackerSharp
 {
@@ -18,6 +19,20 @@ namespace AGSUnpackerSharp
       if (args.Length > 0)
       {
         string filepath = args[0];
+        string filename = Path.GetFileNameWithoutExtension(filepath);
+        string folderpath = Path.GetDirectoryName(filepath);
+        string translationpath = Path.Combine(folderpath, filename + ".trs");
+
+        AGSTranslation translation = new AGSTranslation();
+        translation.Decompile(filepath);
+        //TextExtractor.WriteTranslationFile(translationpath, translation.OriginalLines);
+
+        StreamWriter writer = new StreamWriter(translationpath, false, Encoding.GetEncoding(1252));
+        for (int i = 0; i < translation.OriginalLines.Count; ++i)
+        {
+          writer.WriteLine(translation.OriginalLines[i]);
+          writer.WriteLine(translation.TranslatedLines[i]);
+        }
 
         /*int a = 0x422E020C; // 43.502
         float b = (float)a;
@@ -69,13 +84,13 @@ namespace AGSUnpackerSharp
         //AGSSpritesCache.ExtractSprites(filepath);
         /*string[] files = Directory.GetFiles(filepath, "spr*");
         AGSSpritesCache.PackSprites(files);*/
-        AGSRoom room = new AGSRoom();
+        /*AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);
 
         using (StreamWriter writer = new StreamWriter(filepath + ".dump", false, Encoding.GetEncoding(1252)))
         {
           room.script.DumpInstructions(writer);
-        }
+        }*/
 
         /*// dump stringsBlob section
         using (FileStream stream = new FileStream(filepath + ".strings", FileMode.Create))

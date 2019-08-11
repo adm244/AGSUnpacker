@@ -21,7 +21,7 @@ namespace AGSUnpackerSharp.Shared.Script
 
   public struct AGSScriptFixup
   {
-    public byte Type;
+    public AGSFixupType Type;
     public UInt32 Value;
   }
 
@@ -55,14 +55,14 @@ namespace AGSUnpackerSharp.Shared.Script
     public void DumpInstructions(TextWriter writer)
     {
       //NOTE(adm244): pre-process fixups data
-      byte[] fixups = new byte[Code.Length];
+      AGSFixupType[] fixups = new AGSFixupType[Code.Length];
       for (int i = 0; i < Fixups.Length; ++i)
       {
         //NOTE(adm244): it looks like it's treated as a usual literal, so skip it
-        if (Fixups[i].Type == (byte)AGSFixupType.DataData)
+        if (Fixups[i].Type == AGSFixupType.DataData)
           continue;
 
-        if (Fixups[i].Type == (byte)AGSFixupType.GlobalData)
+        if (Fixups[i].Type == AGSFixupType.GlobalData)
         {
           //Debug.Assert(false, "GlobalData fixup type is not supported yet!");
           continue;
@@ -200,7 +200,7 @@ namespace AGSUnpackerSharp.Shared.Script
       Fixups = new AGSScriptFixup[fixups_count];
       for (int i = 0; i < fixups_count; ++i)
       {
-        Fixups[i].Type = r.ReadByte();
+        Fixups[i].Type = (AGSFixupType)r.ReadByte();
       }
       for (int i = 0; i < fixups_count; ++i)
       {

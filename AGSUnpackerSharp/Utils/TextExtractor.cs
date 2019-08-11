@@ -37,7 +37,7 @@ namespace AGSUnpackerSharp.Utils
         }
 
         PrepareTranslationLines();
-        WriteTranslationFile("text.trs");
+        WriteTranslationFile("text.trs", lines);
 
         return true;
       }
@@ -210,7 +210,7 @@ namespace AGSUnpackerSharp.Utils
       return true;
     }
 
-    private static void WriteTranslationFile(string filename)
+    public static void WriteTranslationFile(string filename, List<string> lines)
     {
       string filepath = Path.Combine(Environment.CurrentDirectory, filename);
       FileStream f = new FileStream(filepath, FileMode.Create);

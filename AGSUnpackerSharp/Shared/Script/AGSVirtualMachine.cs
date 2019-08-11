@@ -20,6 +20,7 @@ namespace AGSUnpackerSharp.Shared.Script
 
   public enum AGSArgumentType
   {
+    None = 0,
     IntConstant,
     FloatConstant,
     RegisterIndex,
@@ -384,7 +385,8 @@ namespace AGSUnpackerSharp.Shared.Script
       return i;
     }
 
-    public static AGSInstruction DisassembleInstruction(AGSScript script, byte[] fixups, int[] code, int ip)
+    //TODO(adm244): parse fixups in AGSScript and convert them, so that we only pass here AGSScript and ip
+    public static AGSInstruction DisassembleInstruction(AGSScript script, AGSFixupType[] fixups, int[] code, int ip)
     {
       AGSInstruction instruction = new AGSInstruction();
 
@@ -411,30 +413,28 @@ namespace AGSUnpackerSharp.Shared.Script
             int index = ip + arg + 1;
             int value = code[index];
 
+            instruction.Arguments[arg].Type = AGSArgumentType.None;
+            instruction.Arguments[arg].IntValue = 0;
+            instruction.Arguments[arg].FloatValue = float.NaN;
+            instruction.Arguments[arg].Name = string.Empty;
+
             switch (Instructions[i].Arguments[arg])
             {
+              //NOTE(adm244): integer literal can also store a float number
+              // e.g. movlit instruction can load floats as well as ints
               case AGSBinaryArgumentType.IntLiteral:
                 {
-                  //FIX(adm244): type IS AGSFixupType !!!
-                  AGSFixupType fixuptype = (AGSFixupType)fixups[index];
+                  AGSFixupType fixuptype = fixups[index];
                   //Debug.Assert(Enum.IsDefined(typeof(AGSArgumentType), type));
 
                   AGSArgumentType type = GetArgumentType(fixuptype, Instructions[i].Arguments[arg]);
-
                   instruction.Arguments[arg].Type = type;
-                  instruction.Arguments[arg].IntValue = 0;
-                  instruction.Arguments[arg].FloatValue = float.NaN;
-                  instruction.Arguments[arg].Name = string.Empty;
 
                   switch (type)
                   {
                     case AGSArgumentType.IntConstant:
                     case AGSArgumentType.StackOffset:
                       instruction.Arguments[arg].IntValue = value;
-                      break;
-
-                    case AGSArgumentType.FloatConstant:
-                      instruction.Arguments[arg].FloatValue = IEEE754Utils.Int32BitsToFloat(value);
                       break;
 
                     case AGSArgumentType.ImportsOffset:
@@ -458,10 +458,14 @@ namespace AGSUnpackerSharp.Shared.Script
                 }
                 break;
 
+              case AGSBinaryArgumentType.FloatLiteral:
+                instruction.Arguments[arg].Type = AGSArgumentType.FloatConstant;
+                instruction.Arguments[arg].FloatValue = IEEE754Utils.Int32BitsToFloat(value);
+                break;
+
               case AGSBinaryArgumentType.Register:
                 instruction.Arguments[arg].Type = AGSArgumentType.RegisterIndex;
                 instruction.Arguments[arg].IntValue = value;
-                instruction.Arguments[arg].FloatValue = float.NaN;
                 instruction.Arguments[arg].Name = RegisterNames[value];
                 break;
 
@@ -469,6 +473,8 @@ namespace AGSUnpackerSharp.Shared.Script
                 Debug.Assert(false, "Unknown binary argument type!");
                 break;
             }
+
+            Debug.Assert(instruction.Arguments[arg].Type != AGSArgumentType.None);
           }
 
           break;
