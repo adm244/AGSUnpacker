@@ -30,7 +30,7 @@ namespace AGSUnpackerSharp.Utils
       return filenames;
     }
 
-    private static AGSAssetInfo[] ParseAGSAssetInfos(BinaryReader r)
+    public static AGSAssetInfo[] ParseAGSAssetInfos(BinaryReader r)
     {
       // verify tail signature
       r.BaseStream.Seek(-CLIB_TAIL_SIGNATURE.Length, SeekOrigin.End);

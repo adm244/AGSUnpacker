@@ -102,6 +102,16 @@ namespace AGSUnpackerGUI
 
         button.Enabled = state;
       }
+
+      //TODO(adm244): parse splitContainterMain.Panel1.Controls
+      for (int i = 0; i < gbExtra.Controls.Count; ++i)
+      {
+        Button button = (gbExtra.Controls[i] as Button);
+        if (button == null)
+          continue;
+
+        button.Enabled = state;
+      }
     }
 
     private void btnExtractExe_Click(object sender, EventArgs e)
@@ -186,6 +196,20 @@ namespace AGSUnpackerGUI
       }
 
       tbLogOutput.AppendText(value);
+    }
+
+    private void btnGetUIDName_Click(object sender, EventArgs e)
+    {
+      ExtractFromFile("Select AGS game executable", "AGS game executable|*.exe",
+        "Select destination folder", GetUniqueIDNameProc);
+    }
+
+    private void GetUniqueIDNameProc(object procParams)
+    {
+      UnpackParams p = (procParams as UnpackParams);
+      bool result = AGSIdentityExtractor.ExtractIdentity(p.FilePath, p.TargetFolder);
+
+      p.OnUnpackFinished(result);
     }
   }
 }

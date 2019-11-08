@@ -7,7 +7,7 @@ using AGSUnpackerSharp.Room;
 
 namespace AGSUnpackerSharp.Utils
 {
-  public class TextExtractor
+  public static class TextExtractor
   {
     private static AGSGameData gameData = new AGSGameData();
     private static List<AGSRoom> rooms = new List<AGSRoom>();

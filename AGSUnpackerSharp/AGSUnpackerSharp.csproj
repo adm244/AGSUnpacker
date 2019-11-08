@@ -6,7 +6,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{7A73DACB-1AC5-4501-B400-1BA32B514D09}</ProjectGuid>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AGSUnpackerSharp</RootNamespace>
     <AssemblyName>AGSUnpackerSharp</AssemblyName>
@@ -37,7 +37,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>AGSUnpackerSharp.Program</StartupObject>
+    <StartupObject>
+    </StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -81,6 +82,7 @@
     <Compile Include="Shared\Script\AGSVirtualMachine.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />
+    <Compile Include="Utils\AGSIdentityExtractor.cs" />
     <Compile Include="Utils\AGSGraphicUtils.cs" />
     <Compile Include="Utils\CLIB\AGSAssetInfo.cs" />
     <Compile Include="Game\AGSCursorInfo.cs" />

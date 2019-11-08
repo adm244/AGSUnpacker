@@ -94,9 +94,17 @@ namespace AGSUnpackerSharp.Game
 
     public void LoadFromFile(string filepath)
     {
-      FileStream fs = new FileStream(filepath, FileMode.Open);
-      BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
+      using (FileStream fs = new FileStream(filepath, FileMode.Open))
+      {
+        using (BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252)))
+        {
+          LoadFromStream(r);
+        }
+      }
+    }
 
+    public void LoadFromStream(BinaryReader r)
+    {
       // verify signature
       char[] dta_sig = r.ReadChars(DTA_SIGNATURE.Length);
       string dta_sig_string = new string(dta_sig);
@@ -339,8 +347,6 @@ namespace AGSUnpackerSharp.Game
       {
         ParseRoomsDebugInfo(r);
       }
-      
-      r.Close();
     }
 
     private void ParseRoomsDebugInfo(BinaryReader r)

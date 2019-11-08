@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Drawing;
 using System.IO;
 using System.Text;
+using AGSUnpackerSharp.Utils;
 
 namespace AGSUnpackerSharp.Graphics
 {
@@ -15,6 +17,7 @@ namespace AGSUnpackerSharp.Graphics
     public Int16 Version { get; set; }
     public byte Compression { get; set; }
     public UInt32 FileID { get; set; }
+    public Color[] Palette { get; set; }
 
     public SpritesMeta()
     {
@@ -40,6 +43,15 @@ namespace AGSUnpackerSharp.Graphics
       w.Write(Compression);
       w.Write(FileID);
 
+      if (Version < 5)
+      {
+        for (int i = 0; i < Palette.Length; ++i)
+        {
+          Int32 color = AGSGraphicUtils.ToABGR(Palette[i]);
+          w.Write(color);
+        }
+      }
+
       w.Close();
     }
 
@@ -51,6 +63,16 @@ namespace AGSUnpackerSharp.Graphics
       Version = r.ReadInt16();
       Compression = r.ReadByte();
       FileID = r.ReadUInt32();
+
+      if (Version < 5)
+      {
+        Palette = new Color[256];
+        for (int i = 0; i < Palette.Length; ++i)
+        {
+          Int32 color = r.ReadInt32();
+          Palette[i] = AGSGraphicUtils.FromABGR(color);
+        }
+      }
 
       r.Close();
     }

@@ -36,11 +36,14 @@
       this.tbLogOutput = new System.Windows.Forms.TextBox();
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
       this.ctrlStatus = new System.Windows.Forms.ToolStripStatusLabel();
+      this.gbExtra = new System.Windows.Forms.GroupBox();
+      this.btnGetUIDName = new System.Windows.Forms.Button();
       this.gbUnpacking.SuspendLayout();
       this.splitContainer.Panel1.SuspendLayout();
       this.splitContainer.Panel2.SuspendLayout();
       this.splitContainer.SuspendLayout();
       this.statusStrip1.SuspendLayout();
+      this.gbExtra.SuspendLayout();
       this.SuspendLayout();
       // 
       // gbUnpacking
@@ -48,26 +51,30 @@
       this.gbUnpacking.Controls.Add(this.btnExtractTrsExe);
       this.gbUnpacking.Controls.Add(this.btnUnpackSprites);
       this.gbUnpacking.Controls.Add(this.btnExtractExe);
-      this.gbUnpacking.Location = new System.Drawing.Point(12, 12);
+      this.gbUnpacking.Dock = System.Windows.Forms.DockStyle.Top;
+      this.gbUnpacking.Location = new System.Drawing.Point(5, 5);
       this.gbUnpacking.Name = "gbUnpacking";
-      this.gbUnpacking.Size = new System.Drawing.Size(200, 108);
+      this.gbUnpacking.Padding = new System.Windows.Forms.Padding(12);
+      this.gbUnpacking.Size = new System.Drawing.Size(212, 108);
       this.gbUnpacking.TabIndex = 0;
       this.gbUnpacking.TabStop = false;
       this.gbUnpacking.Text = "Unpacking";
       // 
       // btnExtractTrsExe
       // 
-      this.btnExtractTrsExe.Location = new System.Drawing.Point(6, 77);
+      this.btnExtractTrsExe.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnExtractTrsExe.Location = new System.Drawing.Point(12, 71);
       this.btnExtractTrsExe.Name = "btnExtractTrsExe";
       this.btnExtractTrsExe.Size = new System.Drawing.Size(188, 23);
       this.btnExtractTrsExe.TabIndex = 2;
-      this.btnExtractTrsExe.Text = "Extract TRS from EXE";
+      this.btnExtractTrsExe.Text = "Extract TRS from Assets";
       this.btnExtractTrsExe.UseVisualStyleBackColor = true;
       this.btnExtractTrsExe.Click += new System.EventHandler(this.btnExtractTrsExe_Click);
       // 
       // btnUnpackSprites
       // 
-      this.btnUnpackSprites.Location = new System.Drawing.Point(6, 48);
+      this.btnUnpackSprites.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnUnpackSprites.Location = new System.Drawing.Point(12, 48);
       this.btnUnpackSprites.Name = "btnUnpackSprites";
       this.btnUnpackSprites.Size = new System.Drawing.Size(188, 23);
       this.btnUnpackSprites.TabIndex = 1;
@@ -77,7 +84,8 @@
       // 
       // btnExtractExe
       // 
-      this.btnExtractExe.Location = new System.Drawing.Point(6, 19);
+      this.btnExtractExe.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnExtractExe.Location = new System.Drawing.Point(12, 25);
       this.btnExtractExe.Name = "btnExtractExe";
       this.btnExtractExe.Size = new System.Drawing.Size(188, 23);
       this.btnExtractExe.TabIndex = 0;
@@ -95,7 +103,9 @@
       // 
       // splitContainer.Panel1
       // 
+      this.splitContainer.Panel1.Controls.Add(this.gbExtra);
       this.splitContainer.Panel1.Controls.Add(this.gbUnpacking);
+      this.splitContainer.Panel1.Padding = new System.Windows.Forms.Padding(5);
       // 
       // splitContainer.Panel2
       // 
@@ -118,7 +128,7 @@
       this.tbLogOutput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
       this.tbLogOutput.Size = new System.Drawing.Size(348, 250);
       this.tbLogOutput.TabIndex = 0;
-      this.tbLogOutput.Text = "AGSUnpacker v0.1 Log Output\r\n\r\n> ";
+      this.tbLogOutput.Text = "AGSUnpacker v0.2 Log Output\r\n\r\n> ";
       this.tbLogOutput.WordWrap = false;
       // 
       // statusStrip1
@@ -136,6 +146,29 @@
       this.ctrlStatus.Size = new System.Drawing.Size(42, 17);
       this.ctrlStatus.Text = "Ready.";
       // 
+      // gbExtra
+      // 
+      this.gbExtra.Controls.Add(this.btnGetUIDName);
+      this.gbExtra.Dock = System.Windows.Forms.DockStyle.Top;
+      this.gbExtra.Location = new System.Drawing.Point(5, 113);
+      this.gbExtra.Name = "gbExtra";
+      this.gbExtra.Padding = new System.Windows.Forms.Padding(12);
+      this.gbExtra.Size = new System.Drawing.Size(212, 100);
+      this.gbExtra.TabIndex = 1;
+      this.gbExtra.TabStop = false;
+      this.gbExtra.Text = "Extra";
+      // 
+      // btnGetUIDName
+      // 
+      this.btnGetUIDName.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnGetUIDName.Location = new System.Drawing.Point(12, 25);
+      this.btnGetUIDName.Name = "btnGetUIDName";
+      this.btnGetUIDName.Size = new System.Drawing.Size(188, 23);
+      this.btnGetUIDName.TabIndex = 0;
+      this.btnGetUIDName.Text = "Get UniqueID and Game Name";
+      this.btnGetUIDName.UseVisualStyleBackColor = true;
+      this.btnGetUIDName.Click += new System.EventHandler(this.btnGetUIDName_Click);
+      // 
       // MainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -145,7 +178,7 @@
       this.Controls.Add(this.statusStrip1);
       this.MinimumSize = new System.Drawing.Size(590, 310);
       this.Name = "MainForm";
-      this.Text = "AGSUnpacker v0.1";
+      this.Text = "AGSUnpacker v0.2";
       this.Load += new System.EventHandler(this.MainForm_Load);
       this.gbUnpacking.ResumeLayout(false);
       this.splitContainer.Panel1.ResumeLayout(false);
@@ -154,6 +187,7 @@
       this.splitContainer.ResumeLayout(false);
       this.statusStrip1.ResumeLayout(false);
       this.statusStrip1.PerformLayout();
+      this.gbExtra.ResumeLayout(false);
       this.ResumeLayout(false);
       this.PerformLayout();
 
@@ -169,6 +203,8 @@
     private System.Windows.Forms.TextBox tbLogOutput;
     private System.Windows.Forms.StatusStrip statusStrip1;
     private System.Windows.Forms.ToolStripStatusLabel ctrlStatus;
+    private System.Windows.Forms.GroupBox gbExtra;
+    private System.Windows.Forms.Button btnGetUIDName;
   }
 }
 

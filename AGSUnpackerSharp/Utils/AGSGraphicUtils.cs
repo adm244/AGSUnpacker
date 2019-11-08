@@ -1,10 +1,9 @@
 ﻿using System;
-using System.IO;
-using AGSUnpackerSharp.Graphics;
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.InteropServices;
-using System.Diagnostics;
 
 namespace AGSUnpackerSharp.Utils
 {
@@ -37,6 +36,21 @@ namespace AGSUnpackerSharp.Utils
 
   public static class AGSGraphicUtils
   {
+    public static int ToABGR(Color color)
+    {
+      return (color.A << 24) | (color.B << 16) | (color.G << 8) | color.R;
+    }
+
+    public static Color FromABGR(int abgr)
+    {
+      int red = (abgr & 0xFF);
+      int green = ((abgr >> 8) & 0xFF);
+      int blue = ((abgr >> 16) & 0xFF);
+      int alpha = ((abgr >> 24) & 0xFF);
+
+      return Color.FromArgb(alpha, red, green, blue);
+    }
+
     public static byte[] WriteRLEData8(byte[] data)
     {
       const int maxRuns = 128;

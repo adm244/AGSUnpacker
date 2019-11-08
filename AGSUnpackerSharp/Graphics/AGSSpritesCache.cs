@@ -255,9 +255,7 @@ namespace AGSUnpackerSharp.Graphics
         }
 
         if (meta.Version >= 5)
-        {
           w.Write(rawData.Length);
-        }
 
         w.Write(rawData);
       }
@@ -279,17 +277,13 @@ namespace AGSUnpackerSharp.Graphics
       w.Write((UInt32)spritesData.Length);
 
       for (int i = 0; i < spritesData.Length; ++i)
-      {
         w.Write((UInt16)spritesData[i].Width);
-      }
+
       for (int i = 0; i < spritesData.Length; ++i)
-      {
         w.Write((UInt16)spritesData[i].Height);
-      }
+
       for (int i = 0; i < spritesData.Length; ++i)
-      {
         w.Write((UInt32)spritesData[i].Offset);
-      }
 
       w.Close();
     }
@@ -311,40 +305,34 @@ namespace AGSUnpackerSharp.Graphics
       Debug.Assert(signature == SPRITESET_SIGNATURE);
 
       if (meta.Version == 4)
-      {
         meta.Compression = 0;
-      }
       else if (meta.Version == 5)
-      {
         meta.Compression = 1;
-      }
       else if (meta.Version >= 6)
       {
         meta.Compression = r.ReadByte();
         meta.FileID = r.ReadUInt32();
       }
 
-      //TODO(adm244): read compressed images
-      //Debug.Assert(meta.Compression == 0);
-
-      Color[] palette = null;
       if (meta.Version < 5)
       {
-        // skip palette
-        r.BaseStream.Seek(256 * 3, SeekOrigin.Current);
-
         //TODO(adm244): it seems like we should take paluses into consideration here
-        /*byte[] rawPalette = r.ReadBytes(256 * 3);
+        byte[] rawPalette = r.ReadBytes(256 * 3);
 
-        palette = new Color[256];
-        for (int i = 0; i < palette.Length; ++i)
+        meta.Palette = new Color[256];
+        for (int i = 0; i < meta.Palette.Length; ++i)
         {
           int red = rawPalette[3 * i + 0];
           int green = rawPalette[3 * i + 1];
           int blue = rawPalette[3 * i + 2];
 
-          palette[i] = Color.FromArgb(red, green, blue);
-        }*/
+          //NOTE(adm244): AGS is using only 6-bits per channel, so we have to convert it to full 8-bit range
+          blue = (byte)((blue / 64f) * 256f);
+          green = (byte)((green / 64f) * 256f);
+          red = (byte)((red / 64f) * 256f);
+
+          meta.Palette[i] = Color.FromArgb(red, green, blue);
+        }
       }
 
       UInt16 spritesCount = r.ReadUInt16();
@@ -357,9 +345,7 @@ namespace AGSUnpackerSharp.Graphics
       {
         foldername = "acsprset";
         if (!Directory.Exists(foldername))
-        {
           Directory.CreateDirectory(foldername);
-        }
       }
 
       //TODO(adm244): read sprindex.dat
@@ -452,16 +438,16 @@ namespace AGSUnpackerSharp.Graphics
 
         if (format == PixelFormat.Format8bppIndexed)
         {
-          if (palette == null)
+          if (meta.Palette == null)
           {
             //TODO(adm244): use default palette (read from dta file)
-            palette = DefaultPalette;
+            meta.Palette = DefaultPalette;
           }
 
           ColorPalette bitmapPalette = bitmap.Palette;
           for (int j = 0; j < bitmapPalette.Entries.Length; ++j)
           {
-            bitmapPalette.Entries[j] = palette[j];
+            bitmapPalette.Entries[j] = meta.Palette[j];
           }
           bitmap.Palette = bitmapPalette;
         }
