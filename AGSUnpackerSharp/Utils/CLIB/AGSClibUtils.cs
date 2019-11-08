@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace AGSUnpackerSharp
+namespace AGSUnpackerSharp.Utils
 {
   public static class AGSClibUtils
   {
@@ -12,7 +12,7 @@ namespace AGSUnpackerSharp
 
     private static readonly Int32 EncryptionRandSeed = 9338638;
 
-    public static string[] UnpackAGSAssetFiles(string agsfile)
+    public static string[] UnpackAGSAssetFiles(string agsfile, string targetFolder)
     {
       FileStream fs = new FileStream(agsfile, FileMode.Open, FileAccess.Read, FileShare.Read);
       BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
@@ -22,7 +22,7 @@ namespace AGSUnpackerSharp
       Console.WriteLine(" Done!");
 
       Console.WriteLine("Extracting data files...");
-      string[] filenames = ExtractAGSAssetFiles(r, assetInfos, "Data");
+      string[] filenames = ExtractAGSAssetFiles(r, assetInfos, targetFolder);
       Console.WriteLine("Done!");
 
       r.Close();
@@ -39,51 +39,142 @@ namespace AGSUnpackerSharp
       Debug.Assert(CLIB_TAIL_SIGNATURE == tail_sig_string);
 
       // get clib offset
-      r.BaseStream.Seek(-(CLIB_TAIL_SIGNATURE.Length + 4), SeekOrigin.End);
+      r.BaseStream.Seek(-(CLIB_TAIL_SIGNATURE.Length + sizeof(UInt32)), SeekOrigin.End);
       UInt32 clib_offset = r.ReadUInt32();
-      r.BaseStream.Seek(clib_offset, SeekOrigin.Begin);
-      Debug.Assert(r.BaseStream.Position == clib_offset);
+
+      r.BaseStream.Seek(-(CLIB_TAIL_SIGNATURE.Length + sizeof(UInt64)), SeekOrigin.End);
+      UInt64 clib_offset_64 = r.ReadUInt64();
+
+      r.BaseStream.Seek((long)clib_offset_64, SeekOrigin.Begin);
+      //Debug.Assert(r.BaseStream.Position == clib_offset);
 
       // verify clib signature
       char[] head_sig = r.ReadChars(CLIB_HEAD_SIGNATURE.Length);
       string head_sig_string = new string(head_sig);
-      Debug.Assert(CLIB_HEAD_SIGNATURE == head_sig_string);
+      //Debug.Assert(CLIB_HEAD_SIGNATURE == head_sig_string);
+
+      // using old 32-bit offset
+      if (CLIB_HEAD_SIGNATURE != head_sig_string)
+      {
+        r.BaseStream.Seek(clib_offset, SeekOrigin.Begin);
+        head_sig = r.ReadChars(CLIB_HEAD_SIGNATURE.Length);
+        head_sig_string = new string(head_sig);
+        Debug.Assert(CLIB_HEAD_SIGNATURE == head_sig_string);
+      }
 
       // parse clib
+      //TODO(adm244): list all released CLIB versions
       byte clib_version = r.ReadByte();
-      Debug.Assert(clib_version == 0x15);
+      //Debug.Assert(clib_version == 0x15);
 
       byte asset_index = r.ReadByte();
       Debug.Assert(asset_index == 0);
 
-      Int32 rand_val = r.ReadInt32() + EncryptionRandSeed;
+      AGSAssetInfo[] assetInfos = new AGSAssetInfo[0];
+      if (clib_version < 0x1E) // pre 30
+      {
+        if (clib_version < 0x15) // pre 21, 3.1.2
+        {
+          if (clib_version == 0x14) // 20, 3.1
+          {
+            Int32 files_count = r.ReadInt32();
+            string[] lib_filenames = new string[files_count];
+            for (int i = 0; i < lib_filenames.Length; ++i)
+              lib_filenames[i] = r.ReadNullTerminatedString(50);
 
-      AGSEncoder encoder = new AGSEncoder(rand_val);
-      Int32 files_count = encoder.ReadInt32(r);
+            Int32 asset_count = r.ReadInt32();
+            assetInfos = new AGSAssetInfo[asset_count];
+            for (int i = 0; i < assetInfos.Length; ++i)
+            {
+              Int16 length = r.ReadInt16();
+              length /= 5;
+              byte[] jibzler = r.ReadBytes(length);
+              assetInfos[i].Filename = AGSStringUtils.DejibzleString(jibzler);
+            }
+          }
+          else // 2.72 and older
+          {
+            Int32 files_count = r.ReadInt32();
+            string[] lib_filenames = new string[files_count];
+            for (int i = 0; i < lib_filenames.Length; ++i)
+              lib_filenames[i] = r.ReadFixedString(20);
 
-      string[] lib_filenames = new string[files_count];
-      for (int i = 0; i < files_count; ++i)
-      {
-        lib_filenames[i] = encoder.ReadString(r);
-      }
+            Int32 asset_count = r.ReadInt32();
+            assetInfos = new AGSAssetInfo[asset_count];
+            for (int i = 0; i < assetInfos.Length; ++i)
+            {
+              if (clib_version < 11) // unk version
+                assetInfos[i].Filename = r.ReadFixedString(25);
+              else
+              {
+                byte[] jibzler = r.ReadBytes(25);
+                assetInfos[i].Filename = AGSStringUtils.DejibzleString(jibzler);
+              }
+            }
+          }
 
-      Int32 asset_count = encoder.ReadInt32(r);
-      AGSAssetInfo[] assetInfos = new AGSAssetInfo[asset_count];
-      for (int i = 0; i < asset_count; ++i)
-      {
-        assetInfos[i].Filename = encoder.ReadString(r);
+          //NOTE(adm244): this file format is quite a jibzler, eh?
+
+          for (int i = 0; i < assetInfos.Length; ++i)
+            assetInfos[i].Offset = r.ReadInt32() + (Int32)clib_offset;
+          for (int i = 0; i < assetInfos.Length; ++i)
+            assetInfos[i].Size = r.ReadInt32();
+          for (int i = 0; i < assetInfos.Length; ++i)
+            assetInfos[i].UId = r.ReadByte();
+        }
+        else
+        {
+          Int32 rand_val = r.ReadInt32() + EncryptionRandSeed;
+
+          AGSEncoder encoder = new AGSEncoder(rand_val);
+          Int32 files_count = encoder.ReadInt32(r);
+
+          string[] lib_filenames = new string[files_count];
+          for (int i = 0; i < files_count; ++i)
+          {
+            lib_filenames[i] = encoder.ReadString(r);
+          }
+
+          Int32 asset_count = encoder.ReadInt32(r);
+          assetInfos = new AGSAssetInfo[asset_count];
+          for (int i = 0; i < asset_count; ++i)
+          {
+            assetInfos[i].Filename = encoder.ReadString(r);
+          }
+          for (int i = 0; i < asset_count; ++i)
+          {
+            assetInfos[i].Offset = encoder.ReadInt32(r) + (Int32)clib_offset;
+          }
+          for (int i = 0; i < asset_count; ++i)
+          {
+            assetInfos[i].Size = encoder.ReadInt32(r);
+          }
+          for (int i = 0; i < asset_count; ++i)
+          {
+            assetInfos[i].UId = encoder.ReadInt8(r);
+          }
+        }
       }
-      for (int i = 0; i < asset_count; ++i)
+      else // 30+
       {
-        assetInfos[i].Offset = encoder.ReadInt32(r) + (Int32)clib_offset;
-      }
-      for (int i = 0; i < asset_count; ++i)
-      {
-        assetInfos[i].Size = encoder.ReadInt32(r);
-      }
-      for (int i = 0; i < asset_count; ++i)
-      {
-        assetInfos[i].UId = encoder.ReadInt8(r);
+        Int32 rand_val = r.ReadInt32();
+        
+        Int32 files_count = r.ReadInt32();
+        string[] lib_filenames = new string[files_count];
+        for (int i = 0; i < files_count; ++i)
+        {
+          lib_filenames[i] = r.ReadNullTerminatedString();
+        }
+
+        Int32 asset_count = r.ReadInt32();
+        assetInfos = new AGSAssetInfo[asset_count];
+        for (int i = 0; i < asset_count; ++i)
+        {
+          assetInfos[i].Filename = r.ReadNullTerminatedString();
+          assetInfos[i].UId = r.ReadByte();
+          assetInfos[i].Offset = r.ReadInt64() + (Int64)clib_offset_64;
+          assetInfos[i].Size = r.ReadInt64();
+        }
       }
 
       return assetInfos;
@@ -114,12 +205,14 @@ namespace AGSUnpackerSharp
 
         // 1048576 bytes = 1 mb
         byte[] buffer = new byte[1048576];
-        int bytesRead = 0;
+        long bytesRead = 0;
         while (bytesRead < assetInfos[i].Size)
         {
-          int bytesLeftToRead = assetInfos[i].Size - bytesRead;
-          int bytesToRead = Math.Min(buffer.Length, bytesLeftToRead);
-          buffer = r.ReadBytes(bytesToRead);
+          long bytesLeftToRead = assetInfos[i].Size - bytesRead;
+          long bytesToRead = Math.Min(buffer.Length, bytesLeftToRead);
+
+          // make sure buffer length is within 32-bit boundary
+          buffer = r.ReadBytes((int)bytesToRead);
 
           //NOTE(adm244): check for end-of-stream
           Debug.Assert(buffer.Length > 0);

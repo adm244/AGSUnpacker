@@ -13,11 +13,13 @@ namespace AGSUnpackerSharp.Utils
     private static List<AGSRoom> rooms = new List<AGSRoom>();
     private static List<string> lines = new List<string>();
 
-    public static bool Extract(string filepath)
+    public static bool Extract(string sourceFolder, string targetFile)
     {
-      if (File.Exists(filepath))
+      if (Directory.Exists(sourceFolder))
       {
-        string[] filenames = AGSClibUtils.UnpackAGSAssetFiles(filepath);
+        string[] filenames = Directory.GetFiles(sourceFolder);
+
+        Console.WriteLine("Searching asset files...");
 
         for (int i = 0; i < filenames.Length; ++i)
         {
@@ -26,24 +28,37 @@ namespace AGSUnpackerSharp.Utils
 
           if (fileExtension == "dta")
           {
+            Console.Write("\tParsing {0} data file...", Path.GetFileName(filenames[i]));
+            
             gameData.LoadFromFile(filenames[i]);
+            
+            Console.WriteLine(" Done!");
           }
           else if (fileExtension == "crm")
           {
+            Console.Write("\tParsing {0} room file...", Path.GetFileName(filenames[i]));
+
             AGSRoom room = new AGSRoom();
             room.LoadFromFile(filenames[i]);
             rooms.Add(room);
+
+            Console.WriteLine(" Done!");
           }
         }
 
+        Console.Write("Extracting text lines...");
         PrepareTranslationLines();
-        WriteTranslationFile("text.trs", lines);
+        Console.WriteLine(" Done!");
+
+        Console.Write("Writing translation source file...");
+        WriteTranslationFile(targetFile, lines);
+        Console.WriteLine(" Done!");
 
         return true;
       }
       else
       {
-        Console.WriteLine(string.Format("ERROR: File {0} does not exist.", filepath));
+        Console.WriteLine(string.Format("ERROR: Folder {0} does not exist.", sourceFolder));
         return false;
       }
     }

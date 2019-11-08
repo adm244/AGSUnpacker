@@ -3,16 +3,32 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGSUnpackerSharp", "AGSUnpackerSharp\AGSUnpackerSharp.csproj", "{7A73DACB-1AC5-4501-B400-1BA32B514D09}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGSUnpackerGUI", "AGSUnpackerGUI\AGSUnpackerGUI.csproj", "{CEDE6123-B975-44C4-A909-1B3D3C662E0B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Debug|x64.ActiveCfg = Debug|x64
+		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Debug|x64.Build.0 = Debug|x64
 		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Debug|x86.ActiveCfg = Debug|x86
 		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Debug|x86.Build.0 = Debug|x86
+		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Release|x64.ActiveCfg = Release|x64
+		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Release|x64.Build.0 = Release|x64
 		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Release|x86.ActiveCfg = Release|x86
 		{7A73DACB-1AC5-4501-B400-1BA32B514D09}.Release|x86.Build.0 = Release|x86
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Debug|x64.ActiveCfg = Debug|x64
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Debug|x64.Build.0 = Debug|x64
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Debug|x86.ActiveCfg = Debug|x86
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Debug|x86.Build.0 = Debug|x86
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Release|x64.ActiveCfg = Release|x64
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Release|x64.Build.0 = Release|x64
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Release|x86.ActiveCfg = Release|x86
+		{CEDE6123-B975-44C4-A909-1B3D3C662E0B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

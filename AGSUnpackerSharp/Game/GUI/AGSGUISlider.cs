@@ -26,21 +26,27 @@ namespace AGSUnpackerSharp.Game
       background_image = 0;
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void LoadFromStream(BinaryReader r, int gui_version)
     {
-      base.LoadFromStream(r);
+      base.LoadFromStream(r, gui_version);
 
       // parse slider info
       value_min = r.ReadInt32();
       value_max = r.ReadInt32();
       value = r.ReadInt32();
 
-      // parse savegame info
-      is_mouse_pressed = r.ReadInt32();
+      if (gui_version < 119) // 3.5.0
+      {
+        // parse savegame info
+        is_mouse_pressed = r.ReadInt32();
+      }
 
-      handle_image = r.ReadInt32();
-      handle_offset = r.ReadInt32();
-      background_image = r.ReadInt32();
+      if (gui_version >= 104) // ???
+      {
+        handle_image = r.ReadInt32();
+        handle_offset = r.ReadInt32();
+        background_image = r.ReadInt32();
+      }
     }
   }
 }

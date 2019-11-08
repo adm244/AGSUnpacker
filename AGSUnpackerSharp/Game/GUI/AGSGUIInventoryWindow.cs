@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace AGSUnpackerSharp.Game
 {
@@ -20,17 +18,30 @@ namespace AGSUnpackerSharp.Game
       item_top = 0;
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void LoadFromStream(BinaryReader r, int gui_version)
     {
-      base.LoadFromStream(r);
+      base.LoadFromStream(r, gui_version);
 
-      // parse inventory window info
-      character_id = r.ReadInt32();
-      item_width = r.ReadInt32();
-      item_height = r.ReadInt32();
+      if (gui_version > 109) // ???
+      {
+        // parse inventory window info
+        character_id = r.ReadInt32();
+        item_width = r.ReadInt32();
+        item_height = r.ReadInt32();
 
-      // parse savegame info
-      item_top = r.ReadInt32();
+        if (gui_version < 119) // 3.5.0
+        {
+          // parse savegame info
+          item_top = r.ReadInt32();
+        }
+      }
+      else
+      {
+        character_id = -1;
+        item_width = 40;
+        item_height = 22;
+        item_top = 0;
+      }
     }
   }
 }

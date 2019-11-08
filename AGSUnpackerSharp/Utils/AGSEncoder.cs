@@ -42,6 +42,14 @@ namespace AGSUnpackerSharp
       return (Int32)((bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0]);
     }
 
+    public Int64 ReadInt64(BinaryReader r)
+    {
+      byte[] bytes = ReadArray(r, sizeof(Int64));
+      Int32 bottom = (Int32)((bytes[3] << 24) | (bytes[2] << 16) | (bytes[1] << 8) | bytes[0]);
+      Int32 top = (Int32)((bytes[7] << 24) | (bytes[6] << 16) | (bytes[5] << 8) | bytes[4]);
+      return (Int64)((top << 32) | bottom);
+    }
+
     public string ReadString(BinaryReader r)
     {
       char[] buffer = new char[MaxDataFileLen];

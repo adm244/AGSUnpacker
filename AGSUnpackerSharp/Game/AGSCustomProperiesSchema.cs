@@ -8,9 +8,17 @@ namespace AGSUnpackerSharp.Game
 {
   public class AGSCustomProperiesSchema
   {
+    public string Name;
+    public string Description;
+    public string DefaultValue;
+    public Int32 Type;
+
     public AGSCustomProperiesSchema()
     {
-      //NOTE(adm244): empty for now
+      Name = string.Empty;
+      Description = string.Empty;
+      DefaultValue = string.Empty;
+      Type = 0;
     }
 
     public void LoadFromStream(BinaryReader r)
@@ -21,18 +29,19 @@ namespace AGSUnpackerSharp.Game
       Int32 count = r.ReadInt32();
       for (int i = 0; i < count; ++i)
       {
-        if (version == 2)
+        if (version == 1)
         {
-          Int32 strlen = r.ReadInt32();
-          string name = r.ReadFixedString(strlen);
-
-          Int32 type = r.ReadInt32();
-
-          strlen = r.ReadInt32();
-          string description = r.ReadFixedString(strlen);
-
-          strlen = r.ReadInt32();
-          string default_value = r.ReadFixedString(strlen);
+          Name = r.ReadNullTerminatedString(20);
+          Description = r.ReadNullTerminatedString(100);
+          DefaultValue = r.ReadNullTerminatedString(500);
+          Type = r.ReadInt32();
+        }
+        else
+        {
+          Name = r.ReadPrefixedString32();
+          Type = r.ReadInt32();
+          Description = r.ReadPrefixedString32();
+          DefaultValue = r.ReadPrefixedString32();
         }
       }
     }

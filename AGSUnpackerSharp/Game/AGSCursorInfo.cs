@@ -12,7 +12,7 @@ namespace AGSUnpackerSharp
     public Int16 hotspot_y;
     public Int16 view;
     public string name;
-    public Int32 flags;
+    public byte flags;
 
     public AGSCursorInfo()
     {
@@ -31,9 +31,10 @@ namespace AGSUnpackerSharp
       hotspot_y = ar.ReadInt16();
       view = ar.ReadInt16();
       name = ar.ReadFixedString(10);
-      //NOTE(adm244): in engine source it's int8, but in the actual dta file it's an int32
-      // might just be a padding issue here, double check that
-      flags = ar.ReadInt32();
+      
+      //NOTE(adm244): structure is aligned at 4-byte boundary,
+      // read with a padding and discard it
+      flags = (byte)ar.ReadInt32();
     }
   }
 }

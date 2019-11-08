@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Interaction;
 
 namespace AGSUnpackerSharp
 {
@@ -14,9 +12,10 @@ namespace AGSUnpackerSharp
     public Int32 hotspot_x;
     public Int32 hotspot_y;
     public Int32[] reserved;
-    public Int32 flag;
+    public byte flag;
     public string scriptName;
 
+    public AGSInteraction interactions_old;
     public AGSInteractionScript interactions;
     public AGSPropertyStorage properties;
 
@@ -31,6 +30,7 @@ namespace AGSUnpackerSharp
       flag = 0;
       scriptName = string.Empty;
 
+      interactions_old = new AGSInteraction();
       interactions = new AGSInteractionScript();
       properties = new AGSPropertyStorage();
     }
@@ -55,9 +55,9 @@ namespace AGSUnpackerSharp
       reserved = ar.ReadArrayInt32(5);
       //Debug.Assert(r.BaseStream.Position == 0x8545);
 
-      //NOTE(adm244): in engine source it's int8, but in the actual dta file it's an int32
-      // might just be a padding issue here, double check that
-      flag = ar.ReadInt32();
+      //NOTE(adm244): structure is aligned at 4-byte boundary,
+      // read with a padding and discard it
+      flag = (byte)ar.ReadInt32();
       //Debug.Assert(r.BaseStream.Position == 0x8549);
     }
   }

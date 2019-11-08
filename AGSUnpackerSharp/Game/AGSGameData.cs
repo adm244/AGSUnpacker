@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
+using AGSUnpackerSharp.Game.View;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Interaction;
 using AGSUnpackerSharp.Shared.Script;
 
 namespace AGSUnpackerSharp.Game
@@ -41,6 +43,10 @@ namespace AGSUnpackerSharp.Game
     public AGSAudioStorage audioStorage;
     public AGSCustomProperiesSchema customPropertiesSchema;
     public AGSRoomDebugInfo[] roomsDebugInfo;
+    public AGSInteractionVariable[] globalvars;
+
+    public AGSView272[] views272;
+    public List<string> oldDialogStrings;
 
     public AGSGUI[] guis;
     public AGSGUIButton[] buttons;
@@ -72,6 +78,10 @@ namespace AGSUnpackerSharp.Game
       audioStorage = new AGSAudioStorage();
       customPropertiesSchema = new AGSCustomProperiesSchema();
       roomsDebugInfo = new AGSRoomDebugInfo[0];
+      globalvars = new AGSInteractionVariable[0];
+
+      views272 = new AGSView272[0];
+      oldDialogStrings = new List<string>();
 
       guis = new AGSGUI[0];
       buttons = new AGSGUIButton[0];
@@ -110,36 +120,50 @@ namespace AGSUnpackerSharp.Game
       // parse game setup struct base
       AGSAlignedStream ar = new AGSAlignedStream(r);
       setup.LoadFromStream(ar, dta_version);
-      //Debug.Assert(r.BaseStream.Position == 0xF6A);
 
-      // parse extended game setup struct (dtaver > 32)
-      // parse save game info
-      save_guid = r.ReadChars(40);
-      save_extension = r.ReadChars(20);
-      save_folder = r.ReadChars(50);
-      //Debug.Assert(r.BaseStream.Position == 0xFD8);
+      if (dta_version > 32) // 3.x
+      {
+        // parse save game info
+        save_guid = r.ReadChars(40);
+        save_extension = r.ReadChars(20);
+        save_folder = r.ReadChars(50);
+      }
 
       // parse font info
-      font_flags = r.ReadBytes(setup.fonts_count);
-      font_outlines = r.ReadBytes(setup.fonts_count);
-      if (dta_version >= 48) // 3.4.1
+      if (dta_version < 50)
       {
-        for (int i = 0; i < setup.fonts_count; ++i)
+        font_flags = r.ReadBytes(setup.fonts_count);
+        font_outlines = r.ReadBytes(setup.fonts_count);
+        if (dta_version >= 48) // 3.4.1
         {
-          Int32 font_offset_y = r.ReadInt32();
-          if (dta_version >= 49) // 3.4.1_2
+          for (int i = 0; i < setup.fonts_count; ++i)
           {
-            Int32 font_linespacing = r.ReadInt32();
+            Int32 font_offset_y = r.ReadInt32();
+            if (dta_version >= 49) // 3.4.1_2
+            {
+              Int32 font_linespacing = r.ReadInt32();
+            }
           }
         }
       }
-      //Debug.Assert(r.BaseStream.Position == 0x1096);
+      else
+      {
+        for (int i = 0; i < setup.fonts_count; ++i)
+        {
+          Int32 flags = r.ReadInt32();
+          Int32 sizePt = r.ReadInt32();
+          Int32 outline = r.ReadInt32();
+          Int32 yOffset = r.ReadInt32();
+          Int32 lineSpacing = Math.Max(0, r.ReadInt32());
+        }
+      }
 
       // parse sprite flags
-      // dtaver >= 24
-      Int32 sprites_count_max = r.ReadInt32();
+      Int32 sprites_count_max = 6000;
+      if (dta_version >= 24) // pre 2.5.6
+        sprites_count_max = r.ReadInt32();
+
       sprite_flags = r.ReadBytes(sprites_count_max);
-      //Debug.Assert(r.BaseStream.Position == 0x85CA);
 
       // parse inventory items info
       inventoryItems = new AGSInventoryItem[setup.inventory_items_count];
@@ -150,7 +174,6 @@ namespace AGSUnpackerSharp.Game
         inventoryItems[i].LoadFromStream(ar1);
         //NOTE(adm244): reset aligned stream??
       }
-      //Debug.Assert(r.BaseStream.Position == 0x992E);
 
       // parse cursors info
       AGSAlignedStream ar2 = new AGSAlignedStream(r);
@@ -160,42 +183,58 @@ namespace AGSUnpackerSharp.Game
         cursors[i] = new AGSCursorInfo();
         cursors[i].LoadFromStream(ar2);
       }
-      //Debug.Assert(r.BaseStream.Position == 0x9A36);
 
-      // parse characters interaction scripts
       characters = new AGSCharacter[setup.characters_count];
-      for (int i = 0; i < characters.Length; ++i)
-      {
-        characters[i] = new AGSCharacter();
-        characters[i].interactions.LoadFromStream(r);
-      }
-      //Debug.Assert(r.BaseStream.Position == 0xA3D0);
 
-      // parse inventory items interaction scripts
-      for (int i = 1; i < setup.inventory_items_count; ++i)
+      if (dta_version > 32) // 3.x
       {
-        inventoryItems[i] = new AGSInventoryItem();
-        inventoryItems[i].interactions.LoadFromStream(r);
+        // parse characters interaction scripts
+        for (int i = 0; i < characters.Length; ++i)
+        {
+          characters[i] = new AGSCharacter();
+          characters[i].interactions.LoadFromStream(r);
+        }
+
+        // parse inventory items interaction scripts
+        for (int i = 1; i < inventoryItems.Length; ++i)
+        {
+          inventoryItems[i] = new AGSInventoryItem();
+          inventoryItems[i].interactions.LoadFromStream(r);
+        }
       }
-      //Debug.Assert(r.BaseStream.Position == 0xA81C);
+      else // 2.72 and older
+      {
+        for (int i = 0; i < characters.Length; ++i)
+        {
+          characters[i] = new AGSCharacter();
+          characters[i].interactions_old.LoadFromStream(r);
+        }
+
+        for (int i = 0; i < inventoryItems.Length; ++i)
+        {
+          inventoryItems[i] = new AGSInventoryItem();
+          inventoryItems[i].interactions_old.LoadFromStream(r);
+        }
+
+        Int32 globalvars_count = r.ReadInt32();
+        globalvars = new AGSInteractionVariable[globalvars_count];
+        for (int i = 0; i < globalvars.Length; ++i)
+        {
+          globalvars[i] = new AGSInteractionVariable();
+          globalvars[i].LoadFromStream(r);
+        }
+      }
 
       // parse dictionary
       if (setup.load_dictionary != 0)
-      {
         dictionary.LoadFromStream(r);
-      }
-      //Debug.Assert(r.BaseStream.Position == 0xA96B);
 
       // parse global script
       globalScript.LoadFromStream(r);
-      //Debug.Assert(r.BaseStream.Position == 0xAFA44);
 
       // parse dialog script
       if (dta_version > 37) // 3.1.0
-      {
         dialogScript.LoadFromStream(r);
-        //Debug.Assert(r.BaseStream.Position == 0x404CD3);
-      }
 
       // parse other scripts
       if (dta_version >= 31) // 2.7.0
@@ -207,11 +246,10 @@ namespace AGSUnpackerSharp.Game
           scriptModules[i] = new AGSScript();
           scriptModules[i].LoadFromStream(r);
         }
-        //Debug.Assert(r.BaseStream.Position == 0x639860);
       }
 
       // parse views
-      if (dta_version > 32) // 2.7.2
+      if (dta_version > 32) // 3.x
       {
         views = new AGSView[setup.views_count];
         for (int i = 0; i < views.Length; ++i)
@@ -219,7 +257,15 @@ namespace AGSUnpackerSharp.Game
           views[i] = new AGSView();
           views[i].LoadFromStream(r);
         }
-        //Debug.Assert(r.BaseStream.Position == 0x6BEB3A);
+      }
+      else // 2.7.2 and older
+      {
+        views272 = new AGSView272[setup.views_count];
+        for (int i = 0; i < views272.Length; ++i)
+        {
+          views272[i] = new AGSView272();
+          views272[i].LoadFromStream(r);
+        }
       }
 
       // parse characters
@@ -229,48 +275,70 @@ namespace AGSUnpackerSharp.Game
         characters[i].LoadFromStream(ar3);
         ar.Reset();
       }
-      //Debug.Assert(r.BaseStream.Position == 0x6D0CAE);
 
-      // parse lipsync
       if (dta_version >= 21) // 2.54
       {
         //TODO(adm244): real parsing
         r.BaseStream.Seek(20 * 50, SeekOrigin.Current);
-        //Debug.Assert(r.BaseStream.Position == 0x6D1096);
       }
 
-      // parse global messages
       ParseGlobalMessages(r);
-      //Debug.Assert(r.BaseStream.Position == 0x6D1096);
 
-      // parse dialogs
       ParseDialogs(r);
-      //Debug.Assert(r.BaseStream.Position == 0x7DB056);
 
-      // parse guis
-      ParseGUIs(r);
+      if (dta_version <= 37) // 3.0 and older
+      {
+        for (int i = 0; i < dialogs.Length; ++i)
+        {
+          dialogs[i].old_dialog_code = r.ReadBytes(dialogs[i].code_size);
 
-      // parse gui controls
-      ParseGUIControls(r);
-      //Debug.Assert(r.BaseStream.Position == 0x7E8738);
+          Int32 scriptSize = r.ReadInt32();
+          byte[] encodedStr = r.ReadBytes(scriptSize);
+          dialogs[i].old_dialog_script = AGSStringUtils.DecryptString(encodedStr);
+        }
 
-      // parse plugins
-      ParsePlugins(r);
-      //Debug.Assert(r.BaseStream.Position == 0x7E8758);
+        if (dta_version <= 25) // 2.60 and older
+        {
+          throw new NotImplementedException("DTA 2.60: Dialog text blob parser not implemented.");
+        }
+        else
+        {
+          while (true)
+          {
+            Int32 length = r.ReadInt32();
+            if ((UInt32)length == GUI_SIGNATURE)
+            {
+              r.BaseStream.Seek(-sizeof(UInt32), SeekOrigin.Current);
+              break;
+            }
 
-      // parse custom properties
-      ParseCustomProperties(r);
-      ParseObjectsScriptNames(r);
-      //Debug.Assert(r.BaseStream.Position == 0x7EAE1D);
+            byte[] encodedStr = r.ReadBytes(length);
+            oldDialogStrings.Add(AGSStringUtils.DecryptString(encodedStr));
+          }
+        }
+      }
 
-      // parse audio clips
-      audioStorage = new AGSAudioStorage();
-      audioStorage.LoadFromStream(r);
-      //Debug.Assert(r.BaseStream.Position == 0x7FEBC9);
+      int gui_version = ParseGUIs(r);
+      ParseGUIControls(r, gui_version);
 
-      // parse rooms debug info
-      ParseRoomsDebugInfo(r);
-      //Debug.Assert(r.BaseStream.Position == 0x7FEBC9);
+      if (dta_version >= 25) // 2.60+
+      {
+        ParsePlugins(r);
+
+        ParseCustomProperties(r);
+        ParseObjectsScriptNames(r, dta_version);
+      }
+
+      if (dta_version >= 41) // 3.2.0+
+      {
+        audioStorage = new AGSAudioStorage();
+        audioStorage.LoadFromStream(r);
+      }
+
+      if (dta_version >= 36) // 2.8 ???
+      {
+        ParseRoomsDebugInfo(r);
+      }
       
       r.Close();
     }
@@ -288,12 +356,15 @@ namespace AGSUnpackerSharp.Game
       }
     }
 
-    private void ParseObjectsScriptNames(BinaryReader r)
+    private void ParseObjectsScriptNames(BinaryReader r, int dta_version)
     {
       // parse views script names
       for (int i = 0; i < setup.views_count; ++i)
       {
-        views[i].scriptName = r.ReadNullTerminatedString();
+        if (dta_version > 32) // 3.x
+          views[i].scriptName = r.ReadNullTerminatedString();
+        else
+          views272[i].scriptName = r.ReadNullTerminatedString();
       }
 
       // parse inventory items script names
@@ -328,7 +399,6 @@ namespace AGSUnpackerSharp.Game
         inventoryItems[i].properties = new AGSPropertyStorage();
         inventoryItems[i].properties.LoadFromStream(r);
       }
-      //Debug.Assert(r.BaseStream.Position == 0x7E912D);
     }
 
     private void ParsePlugins(BinaryReader r)
@@ -348,7 +418,7 @@ namespace AGSUnpackerSharp.Game
       }
     }
 
-    private void ParseGUIControls(BinaryReader r)
+    private void ParseGUIControls(BinaryReader r, int gui_version)
     {
       // parse controls
       Int32 buttons_count = r.ReadInt32();
@@ -356,9 +426,8 @@ namespace AGSUnpackerSharp.Game
       for (int i = 0; i < buttons.Length; ++i)
       {
         buttons[i] = new AGSGUIButton();
-        buttons[i].LoadFromStream(r);
+        buttons[i].LoadFromStream(r, gui_version);
       }
-      //Debug.Assert(r.BaseStream.Position == 0x7E63FD);
 
       Int32 labels_count = r.ReadInt32();
       labels = new AGSGUILabel[labels_count];
@@ -366,50 +435,55 @@ namespace AGSUnpackerSharp.Game
       {
         //TODO(adm244): test that on a real dta file
         labels[i] = new AGSGUILabel();
-        labels[i].LoadFromStream(r);
+        labels[i].LoadFromStream(r, gui_version);
       }
-      //Debug.Assert(r.BaseStream.Position == 0x7E7D3C);
 
       Int32 invwindows_count = r.ReadInt32();
       inventoryWindows = new AGSGUIInventoryWindow[invwindows_count];
       for (int i = 0; i < inventoryWindows.Length; ++i)
       {
         inventoryWindows[i] = new AGSGUIInventoryWindow();
-        inventoryWindows[i].LoadFromStream(r);
+        inventoryWindows[i].LoadFromStream(r, gui_version);
       }
-      //Debug.Assert(r.BaseStream.Position == 0x7E7D81);
 
-      Int32 sliders_count = r.ReadInt32();
-      sliders = new AGSGUISlider[sliders_count];
-      for (int i = 0; i < sliders.Length; ++i)
+      if (gui_version >= 100)
       {
-        //TODO(adm244): test that on a real dta file
-        sliders[i] = new AGSGUISlider();
-        sliders[i].LoadFromStream(r);
+        Int32 sliders_count = r.ReadInt32();
+        sliders = new AGSGUISlider[sliders_count];
+        for (int i = 0; i < sliders.Length; ++i)
+        {
+          //TODO(adm244): test that on a real dta file
+          sliders[i] = new AGSGUISlider();
+          sliders[i].LoadFromStream(r, gui_version);
+        }
       }
-      //Debug.Assert(r.BaseStream.Position == 0x7E80BF);
 
-      Int32 textboxes_count = r.ReadInt32();
-      textboxes = new AGSGUITextBox[textboxes_count];
-      for (int i = 0; i < textboxes.Length; ++i)
+      if (gui_version >= 101)
       {
-        //TODO(adm244): test that on a real dta file
-        textboxes[i] = new AGSGUITextBox();
-        textboxes[i].LoadFromStream(r);
+        Int32 textboxes_count = r.ReadInt32();
+        textboxes = new AGSGUITextBox[textboxes_count];
+        for (int i = 0; i < textboxes.Length; ++i)
+        {
+          //TODO(adm244): test that on a real dta file
+          textboxes[i] = new AGSGUITextBox();
+          textboxes[i].LoadFromStream(r, gui_version);
+        }
       }
-      //Debug.Assert(r.BaseStream.Position == 0x7E8537);
 
-      Int32 listboxes_count = r.ReadInt32();
-      listboxes = new AGSGUIListBox[listboxes_count];
-      for (int i = 0; i < listboxes.Length; ++i)
+      if (gui_version >= 102)
       {
-        //TODO(adm244): test that on a real dta file
-        listboxes[i] = new AGSGUIListBox();
-        listboxes[i].LoadFromStream(r);
+        Int32 listboxes_count = r.ReadInt32();
+        listboxes = new AGSGUIListBox[listboxes_count];
+        for (int i = 0; i < listboxes.Length; ++i)
+        {
+          //TODO(adm244): test that on a real dta file
+          listboxes[i] = new AGSGUIListBox();
+          listboxes[i].LoadFromStream(r, gui_version);
+        }
       }
     }
 
-    private void ParseGUIs(BinaryReader r)
+    private int ParseGUIs(BinaryReader r)
     {
       // verify signature
       Int32 signature = r.ReadInt32();
@@ -427,6 +501,8 @@ namespace AGSUnpackerSharp.Game
         guis[i] = new AGSGUI();
         guis[i].LoadFromStream(r, version);
       }
+
+      return version;
     }
 
     private void ParseDialogs(BinaryReader r)
@@ -444,8 +520,9 @@ namespace AGSUnpackerSharp.Game
       globalMessages = new string[LIMIT_MAX_GLOBAL_MESSAGES];
       for (int i = 0; i < LIMIT_MAX_GLOBAL_MESSAGES; ++i)
       {
-        if (setup.global_messages[i] == 0) continue;
-        // read encrypted string
+        if (setup.global_messages[i] == 0)
+          continue;
+
         globalMessages[i] = AGSStringUtils.ReadEncryptedString(r);
       }
     }

@@ -294,10 +294,15 @@ namespace AGSUnpackerSharp.Graphics
       w.Close();
     }
 
-    public static void ExtractSprites(string spritefile)
+    public static bool ExtractSprites(string spritefile, string targetFolder)
     {
+      Console.Write("Opening {0}...", spritefile);
+
       FileStream fs = new FileStream(spritefile, FileMode.Open);
       BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
+
+      Console.WriteLine(" Done!");
+      Console.Write("Parsing {0}...", spritefile);
 
       SpritesMeta meta = new SpritesMeta();
 
@@ -344,12 +349,31 @@ namespace AGSUnpackerSharp.Graphics
 
       UInt16 spritesCount = r.ReadUInt16();
 
+      Console.WriteLine(" Done!");
+      Console.WriteLine("Extracting...");
+
+      string foldername = targetFolder;
+      if (string.IsNullOrEmpty(targetFolder))
+      {
+        foldername = "acsprset";
+        if (!Directory.Exists(foldername))
+        {
+          Directory.CreateDirectory(foldername);
+        }
+      }
+
       //TODO(adm244): read sprindex.dat
 
       for (int i = 0; i <= spritesCount; ++i)
       {
+        Console.Write(string.Format("\tExtracting spr{0:D5}...", i));
+
         UInt16 bytesPerPixel = r.ReadUInt16();
-        if (bytesPerPixel == 0) continue;
+        if (bytesPerPixel == 0)
+        {
+          Console.WriteLine(" Skipped (empty).");
+          continue;
+        }
 
         UInt16 width = r.ReadUInt16();
         UInt16 height = r.ReadUInt16();
@@ -453,12 +477,6 @@ namespace AGSUnpackerSharp.Graphics
 
         bitmap.UnlockBits(lockData);
 
-        string foldername = "acsprset";
-        if (!Directory.Exists(foldername))
-        {
-          Directory.CreateDirectory(foldername);
-        }
-
         ImageFormat imageFormat;
         switch (format)
         {
@@ -474,11 +492,20 @@ namespace AGSUnpackerSharp.Graphics
         string filename = string.Format("spr{0:D5}.{1}", i, (imageFormat == ImageFormat.Png) ? "png" : "bmp");
         string filepath = Path.Combine(foldername, filename);
         bitmap.Save(filepath, imageFormat);
+
+        Console.WriteLine(" Done!");
       }
 
       r.Close();
 
-      meta.WriteMetaFile("acsprset");
+      Console.WriteLine("Done!");
+      Console.Write("Writting meta file...");
+
+      meta.WriteMetaFile(foldername);
+
+      Console.WriteLine(" Done!");
+
+      return spritesCount > 0;
     }
   }
 }

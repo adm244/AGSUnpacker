@@ -8,8 +8,30 @@ namespace AGSUnpackerSharp
   public static class AGSStringUtils
   {
     private const string password = "Avis Durgan";
+    private const string hisJibzle = "My\x1\xde\x4Jibzle";
+
+    public static string DejibzleString(byte[] str)
+    {
+      int jibzlerIndex = 0;
+      char[] buffer = new char[str.Length];
+
+      int i;
+      for (i = 0; i < str.Length; ++i)
+      {
+        byte dejibzledChar = (byte)(str[i] - (byte)hisJibzle[jibzlerIndex++]);
+        if (dejibzledChar == 0)
+          break;
+
+        buffer[i] = (char)dejibzledChar;
+        if (jibzlerIndex > 10)
+          jibzlerIndex = 0;
+      }
+
+      return new string(buffer, 0, i);
+    }
 
     //FIX(adm244): don't modify the passed-in array, make a copy!
+    //TODO(adm244): is this correct???
     public static unsafe string DecryptString(byte[] str)
     {
       int passlen = password.Length;
@@ -45,7 +67,8 @@ namespace AGSUnpackerSharp
     public static string ReadEncryptedString(BinaryReader r)
     {
       Int32 length = r.ReadInt32();
-      if ((length < 0) || (length > 5000000)) return null;
+      if ((length <= 0) || (length > 5000000))
+        throw new IndexOutOfRangeException();
 
       //NOTE(adm244): ASCII ReadChars is not reliable in this case since it replaces bytes > 0x7F
       // https://referencesource.microsoft.com/#mscorlib/system/text/asciiencoding.cs,879

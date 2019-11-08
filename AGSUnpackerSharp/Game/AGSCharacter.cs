@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Interaction;
 
 namespace AGSUnpackerSharp.Game
 {
@@ -55,6 +53,7 @@ namespace AGSUnpackerSharp.Game
     public string name_script;
     public Int16 on;
 
+    public AGSInteraction interactions_old;
     public AGSInteractionScript interactions;
     public AGSPropertyStorage properties;
 
@@ -107,6 +106,7 @@ namespace AGSUnpackerSharp.Game
       name_script = string.Empty;
       on = 0;
 
+      interactions_old = new AGSInteraction();
       interactions = new AGSInteractionScript();
       properties = new AGSPropertyStorage();
     }

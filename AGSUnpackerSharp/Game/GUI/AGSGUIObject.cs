@@ -30,7 +30,7 @@ namespace AGSUnpackerSharp.Game
       events = new string[0];
     }
 
-    protected void LoadFromStream(BinaryReader r)
+    protected void LoadFromStream(BinaryReader r, int gui_version)
     {
       // parse gui object info
       flags = r.ReadInt32();
@@ -39,14 +39,18 @@ namespace AGSUnpackerSharp.Game
       width = r.ReadInt32();
       height = r.ReadInt32();
       z_order = r.ReadInt32();
-      is_activated = r.ReadInt32();
-      name = r.ReadNullTerminatedString();
+      if (gui_version < 119) // 3.5.0
+        is_activated = r.ReadInt32();
 
-      Int32 events_count = r.ReadInt32();
-      events = new string[events_count];
-      for (int i = 0; i < events.Length; ++i)
+      if (gui_version >= 106)
+        name = r.ReadNullTerminatedString();
+
+      if (gui_version >= 108) // ???
       {
-        events[i] = r.ReadNullTerminatedString();
+        Int32 events_count = r.ReadInt32();
+        events = new string[events_count];
+        for (int i = 0; i < events.Length; ++i)
+          events[i] = r.ReadNullTerminatedString();
       }
     }
   }

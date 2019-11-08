@@ -1,31 +1,33 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace AGSUnpackerSharp.Game
 {
   public class AGSGUITextBox : AGSGUIObject
   {
-    public char[] text;
+    public string text;
     public Int32 font;
     public Int32 text_color;
     public Int32 flags;
 
     public AGSGUITextBox()
     {
-      text = new char[0];
+      text = string.Empty;
       font = 0;
       text_color = 0;
       flags = 0;
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void LoadFromStream(BinaryReader r, int gui_version)
     {
-      base.LoadFromStream(r);
+      base.LoadFromStream(r, gui_version);
 
       // parse textbox info
-      text = r.ReadChars(200);
+      if (gui_version < 119) // 3.5.0
+        text = r.ReadFixedString(200);
+      else
+        text = r.ReadPrefixedString32();
+
       font = r.ReadInt32();
       text_color = r.ReadInt32();
       flags = r.ReadInt32();

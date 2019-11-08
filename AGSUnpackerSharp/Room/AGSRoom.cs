@@ -177,8 +177,7 @@ namespace AGSUnpackerSharp.Room
 
     private void ParseRoomBlock(BinaryReader r, byte blockType, int room_version)
     {
-      //TODO(adm244): confirm signed type
-      Int32 length = r.ReadInt32();
+      Int64 length = (room_version < 32) ? r.ReadInt32() : r.ReadInt64();
 
       switch (blockType)
       {

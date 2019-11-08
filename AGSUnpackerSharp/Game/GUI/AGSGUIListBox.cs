@@ -40,39 +40,55 @@ namespace AGSUnpackerSharp.Game
       items = new string[0];
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void LoadFromStream(BinaryReader r, int gui_version)
     {
-      base.LoadFromStream(r);
+      base.LoadFromStream(r, gui_version);
 
       // parse listbox info
       Int32 item_count = r.ReadInt32();
       items = new string[item_count];
 
-      // parse savegame info
-      item_selected = r.ReadInt32();
-      item_top = r.ReadInt32();
-      mouse_x = r.ReadInt32();
-      mouse_y = r.ReadInt32();
-      row_height = r.ReadInt32();
-      visible_items_count = r.ReadInt32();
+      if (gui_version < 119) // 3.5.0
+      {
+        // parse savegame info
+        item_selected = r.ReadInt32();
+        item_top = r.ReadInt32();
+        mouse_x = r.ReadInt32();
+        mouse_y = r.ReadInt32();
+        row_height = r.ReadInt32();
+        visible_items_count = r.ReadInt32();
+      }
 
       font = r.ReadInt32();
       text_color = r.ReadInt32();
       text_color_selected = r.ReadInt32();
       flags = r.ReadInt32();
-      text_aligment = r.ReadInt32();
-      reserved1 = r.ReadInt32();
-      background_color_selected = r.ReadInt32();
+
+      if (gui_version >= 112)
+      {
+        text_aligment = r.ReadInt32();
+        if (gui_version < 119) // 3.5.0
+          reserved1 = r.ReadInt32();
+      }
+
+      if (gui_version > 107)
+        background_color_selected = r.ReadInt32();
 
       for (int i = 0; i < items.Length; ++i)
       {
         items[i] = r.ReadNullTerminatedString();
       }
 
-      if ((flags & 4) != 0)
+      if (gui_version >= 114)
       {
-        // skip savegame info
-        r.BaseStream.Seek(item_count * sizeof(Int16), SeekOrigin.Current);
+        if (gui_version < 119) // 3.5.0
+        {
+          if ((flags & 4) != 0)
+          {
+            // skip savegame info
+            r.BaseStream.Seek(item_count * sizeof(Int16), SeekOrigin.Current);
+          }
+        }
       }
     }
   }

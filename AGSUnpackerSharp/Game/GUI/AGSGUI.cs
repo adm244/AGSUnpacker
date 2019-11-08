@@ -69,9 +69,10 @@ namespace AGSUnpackerSharp.Game
 
     public void LoadFromStream(BinaryReader r, int gui_version)
     {
-      //NOTE(adm244): I'm starting to suspect that the source for 3.3.4 Engine.App is
-      // actually older than 3.3.4, because it doesn't contain some of these unknown int32's
-      Int32 unknown1 = r.ReadInt32();
+      if (gui_version < 119) // 3.5.0
+      {
+        Int32 textWindowTag = r.ReadInt32();
+      }
 
       if (gui_version < 118) // 3.4.0
       {

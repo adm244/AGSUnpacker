@@ -19,7 +19,26 @@ namespace AGSUnpackerSharp
       if (args.Length > 0)
       {
         string filepath = args[0];
-        string filename = Path.GetFileNameWithoutExtension(filepath);
+
+        /*AGSRoom room = new AGSRoom();
+        room.LoadFromFile(filepath);
+        room.backgrounds[0].Save(filepath + ".bmp", ImageFormat.Bmp);
+
+        using (StreamWriter writer = new StreamWriter(new FileStream(filepath + ".asm", FileMode.Create)))
+        {
+          room.script.DumpInstructions(writer);
+        }*/
+
+        /*AGSGameData dta = new AGSGameData();
+        dta.LoadFromFile(filepath);*/
+
+        /*using (BinaryWriter writer = new BinaryWriter(new FileStream(filepath + ".o", FileMode.Create)))
+        {
+          //dta.globalScript.DumpInstructions(writer);
+          dta.globalScript.WriteToStream(writer, dta.globalScript.Version);
+        }*/
+
+        /*string filename = Path.GetFileNameWithoutExtension(filepath);
         string folderpath = Path.GetDirectoryName(filepath);
         string translationpath = Path.Combine(folderpath, filename + ".trs");
 
@@ -32,14 +51,14 @@ namespace AGSUnpackerSharp
         {
           writer.WriteLine(translation.OriginalLines[i]);
           writer.WriteLine(translation.TranslatedLines[i]);
-        }
+        }*/
 
         /*int a = 0x422E020C; // 43.502
         float b = (float)a;
         float c = BitConverter.ToSingle(BitConverter.GetBytes(a), 0);*/
 
-        /*string[] roomFiles = Directory.GetFiles(filepath, "room*.crm", SearchOption.TopDirectoryOnly);
-        string foldername = "resaved";
+        //string[] roomFiles = Directory.GetFiles(filepath, "room*.crm", SearchOption.TopDirectoryOnly);
+        /*string foldername = "resaved";
         //NOTE(adm244): funny how Path.GetDirectoryName just finds last '/' slash symbol
         // and cuts everything that is following after, essentially introducing a bug
         // where you're trying to find a directory name of a filepath to a directory (not a file)
@@ -49,18 +68,18 @@ namespace AGSUnpackerSharp
         if (!Directory.Exists(folderpath))
         {
           Directory.CreateDirectory(folderpath);
-        }
+        }*/
 
-        for (int i = 0; i < roomFiles.Length; ++i)
+        /*for (int i = 0; i < roomFiles.Length; ++i)
         {
           string filename = Path.GetFileNameWithoutExtension(roomFiles[i]);
-          string imagepath = filename + ".png";
+          string imagepath = filename + ".bmp";
           AGSRoom room = new AGSRoom();
           room.LoadFromFile(roomFiles[i]);
 
           room.backgrounds[0] = (Bitmap)Bitmap.FromFile(imagepath);
 
-          string newfilepath = Path.Combine(folderpath, filename + ".crm");
+          /*string newfilepath = Path.Combine(folderpath, filename + ".crm");
           room.SaveToFile(newfilepath, room.version);
 
           room = new AGSRoom();
@@ -69,7 +88,7 @@ namespace AGSUnpackerSharp
           room.backgrounds[0].Save(imagepath, ImageFormat.Png);
         }*/
 
-        //string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath);
+        //string[] files = AGSClibUtils.UnpackAGSAssetFiles(filepath, "Data");
         /*for (int i = 0; i < files.Length; ++i)
         {
           string filename = files[i].Substring(files[i].LastIndexOf('/') + 1);

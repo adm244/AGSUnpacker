@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -7,13 +6,24 @@ namespace AGSUnpackerSharp
 {
   public static class BinaryReaderExtension
   {
+    public static bool EOF(this BinaryReader reader)
+    {
+      return (reader.BaseStream.Position >= reader.BaseStream.Length);
+    }
+
     public static string ReadNullTerminatedString(this BinaryReader r)
     {
+      if (r.EOF())
+        return string.Empty;
+
       return ReadNullTerminatedString(r, 5000000);
     }
 
     public static string ReadNullTerminatedString(this BinaryReader r, int maxLength)
     {
+      if (r.EOF())
+        return string.Empty;
+
       StringBuilder sb = new StringBuilder(maxLength / 4);
       for (int i = 0; i < maxLength; ++i)
       {
@@ -27,6 +37,9 @@ namespace AGSUnpackerSharp
 
     public static string ReadFixedString(this BinaryReader r, int length)
     {
+      if (r.EOF())
+        return string.Empty;
+
       char[] buffer = r.ReadChars(length);
       StringBuilder sb = new StringBuilder(length);
       for (int i = 0; i < length; ++i)
@@ -40,6 +53,9 @@ namespace AGSUnpackerSharp
 
     public static string ReadPrefixedString32(this BinaryReader r)
     {
+      if (r.EOF())
+        return string.Empty;
+
       Int32 length = r.ReadInt32();
       char[] buffer = r.ReadChars(length);
 

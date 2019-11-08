@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace AGSUnpackerSharp.Game
 {
@@ -20,13 +18,19 @@ namespace AGSUnpackerSharp.Game
       text_aligment = 0;
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void LoadFromStream(BinaryReader r, int gui_version)
     {
-      base.LoadFromStream(r);
+      base.LoadFromStream(r, gui_version);
 
       // parse label info
-      Int32 strlen = r.ReadInt32();
-      text = r.ReadFixedString(strlen);
+      if (gui_version >= 113)
+      {
+        Int32 strlen = r.ReadInt32();
+        text = r.ReadFixedString(strlen);
+      }
+      else
+        text = r.ReadFixedString(200);
+
       font = r.ReadInt32();
       text_color = r.ReadInt32();
       text_aligment = r.ReadInt32();
