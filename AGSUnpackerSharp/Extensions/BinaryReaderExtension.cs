@@ -57,9 +57,11 @@ namespace AGSUnpackerSharp
         return string.Empty;
 
       Int32 length = r.ReadInt32();
-      char[] buffer = r.ReadChars(length);
+      byte[] buffer = r.ReadBytes(length);
+      //char[] buffer = r.ReadChars(length);
 
-      return new string(buffer);
+      Encoding encoding = Encoding.GetEncoding(1252);
+      return encoding.GetString(buffer);
     }
 
     public static Int16[] ReadArrayInt16(this BinaryReader r, int count)

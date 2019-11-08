@@ -42,26 +42,31 @@ namespace AGSUnpackerSharp
 
       //NOTE(AdamJensen): all this nonsence just to get a pointer? I never asked for this.
       fixed (byte* p = &str[0])
-      {
         return new string((sbyte*)(p));
-      }
     }
 
     public static byte[] EncryptString(string str)
     {
       byte[] buffer = new byte[str.Length];
       for (int i = 0; i < str.Length; ++i)
-      {
         buffer[i] = (byte)str[i];
-      }
 
+      return EncryptString(buffer);
+    }
+
+    public static byte[] EncryptString(byte[] buffer)
+    {
       int passlen = password.Length;
-      for (int i = 0; i < str.Length; ++i)
-      {
+      for (int i = 0; i < buffer.Length; ++i)
         buffer[i] += (byte)password[i % passlen];
-      }
 
       return buffer;
+    }
+
+    public static string ToString(byte[] buffer)
+    {
+      Encoding encoding = Encoding.GetEncoding(1252);
+      return encoding.GetString(buffer);
     }
 
     public static string ReadEncryptedString(BinaryReader r)

@@ -225,7 +225,7 @@ namespace AGSUnpackerSharp.Shared.Script
       }
 
       // parse script sections
-      if (Version >= 83)
+      if (Version >= 83) // ???
       {
         Int32 sections_count = r.ReadInt32();
         Sections = new AGSScriptSection[sections_count];

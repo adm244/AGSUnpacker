@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Interaction;
 
 namespace AGSUnpackerSharp.Room
 {
@@ -15,6 +13,8 @@ namespace AGSUnpackerSharp.Room
     public AGSInteractionScript interactions;
     public AGSPropertyStorage properties;
 
+    public AGSInteraction interactions_old;
+
     public AGSHotspot()
     {
       walkto_x = 0;
@@ -23,6 +23,8 @@ namespace AGSUnpackerSharp.Room
       scriptname = string.Empty;
       interactions = new AGSInteractionScript();
       properties = new AGSPropertyStorage();
+
+      interactions_old = new AGSInteraction();
     }
   }
 }

@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using AGSUnpackerSharp.Shared;
+using AGSUnpackerSharp.Shared.Interaction;
 
 namespace AGSUnpackerSharp.Room
 {
@@ -20,6 +18,8 @@ namespace AGSUnpackerSharp.Room
     public string scriptname;
     public AGSPropertyStorage properties;
 
+    public AGSInteraction interactions_old;
+
     public AGSObject()
     {
       sprite = 0;
@@ -33,6 +33,8 @@ namespace AGSUnpackerSharp.Room
       name = string.Empty;
       scriptname = string.Empty;
       properties = new AGSPropertyStorage();
+
+      interactions_old = new AGSInteraction();
     }
   }
 }

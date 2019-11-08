@@ -32,6 +32,9 @@ namespace AGSUnpackerSharp
         /*AGSGameData dta = new AGSGameData();
         dta.LoadFromFile(filepath);*/
 
+        /*AGSRoom room = new AGSRoom();
+        room.LoadFromFile(filepath);*/
+
         /*using (BinaryWriter writer = new BinaryWriter(new FileStream(filepath + ".o", FileMode.Create)))
         {
           //dta.globalScript.DumpInstructions(writer);
