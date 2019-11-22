@@ -1,14 +1,7 @@
 ﻿using System;
-using AGSUnpackerSharp.Graphics;
-using AGSUnpackerSharp.Room;
-using System.IO;
 using System.Drawing;
 using System.Drawing.Imaging;
-using AGSUnpackerSharp.Utils;
-using System.Text;
-using AGSUnpackerSharp.Game;
-using AGSUnpackerSharp.Extensions;
-using AGSUnpackerSharp.Translation;
+using AGSUnpackerSharp.Room;
 
 namespace AGSUnpackerSharp
 {
@@ -32,13 +25,40 @@ namespace AGSUnpackerSharp
         /*AGSGameData dta = new AGSGameData();
         dta.LoadFromFile(filepath);*/
 
-        /*AGSRoom room = new AGSRoom();
-        room.LoadFromFile(filepath);*/
+        /*string[][] exports = new string[dta.scriptModules.Length][];
+        for (int i = 0; i < dta.scriptModules.Length; ++i)
+        {
+          exports[i] = new string[dta.scriptModules[i].Exports.Length];
+          for (int j = 0; j < dta.scriptModules[i].Exports.Length; ++j)
+          {
+            exports[i][j] = dta.scriptModules[i].Exports[j].Name;
+          }
+        }
 
-        /*using (BinaryWriter writer = new BinaryWriter(new FileStream(filepath + ".o", FileMode.Create)))
+        int k = 0;*/
+
+        /*string[] files = Directory.GetFiles(filepath);
+
+        for (int i = 0; i < files.Length; ++i)
+        {
+          if (Path.GetExtension(files[i]) != ".crm")
+            continue;
+
+          AGSRoom room = new AGSRoom();
+          room.LoadFromFile(files[i]);
+
+          string filename = Path.GetFileNameWithoutExtension(files[i]);
+          using (StreamWriter writer = new StreamWriter(new FileStream(filename + ".asm", FileMode.Create)))
+          {
+            room.script.DumpInstructions(writer);
+          }
+        }*/
+        
+        /*using (BinaryWriter writer = new BinaryWriter(new FileStream("Dialog.o", FileMode.Create)))
         {
           //dta.globalScript.DumpInstructions(writer);
-          dta.globalScript.WriteToStream(writer, dta.globalScript.Version);
+          //dta.globalScript.WriteToStream(writer, dta.globalScript.Version);
+          dta.scriptModules[5].WriteToStream(writer, dta.scriptModules[5].Version);
         }*/
 
         /*string filename = Path.GetFileNameWithoutExtension(filepath);
@@ -106,10 +126,10 @@ namespace AGSUnpackerSharp
         //AGSSpritesCache.ExtractSprites(filepath);
         /*string[] files = Directory.GetFiles(filepath, "spr*");
         AGSSpritesCache.PackSprites(files);*/
-        /*AGSRoom room = new AGSRoom();
+        AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);
 
-        using (StreamWriter writer = new StreamWriter(filepath + ".dump", false, Encoding.GetEncoding(1252)))
+        /*using (StreamWriter writer = new StreamWriter(filepath + ".dump", false, Encoding.GetEncoding(1252)))
         {
           room.script.DumpInstructions(writer);
         }*/

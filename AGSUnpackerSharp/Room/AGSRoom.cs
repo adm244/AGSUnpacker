@@ -21,9 +21,11 @@ namespace AGSUnpackerSharp.Room
 
   public class AGSRoom
   {
+    public string name;
     public Int16 version;
     public Int32 background_bpp;
     public Bitmap[] backgrounds;
+    public byte[] paletteShareFlags;
     public byte backgroundFrames;
     public byte background_animation_speed;
     public AGSWalkBehindArea[] walkbehinds;
@@ -56,10 +58,17 @@ namespace AGSUnpackerSharp.Room
     public string script_text;
 
     public AGSRoom()
+      : this(string.Empty)
     {
+    }
+
+    public AGSRoom(string name)
+    {
+      this.name = name;
       version = 29;
       background_bpp = 1;
       backgrounds = new Bitmap[5];
+      paletteShareFlags = new byte[0];
       backgroundFrames = 0;
       background_animation_speed = 4;
       walkbehinds = new AGSWalkBehindArea[0];
@@ -103,6 +112,10 @@ namespace AGSUnpackerSharp.Room
       w.Write((UInt16)room_version);
 
       WriteRoomBlock(w, 0x01, room_version);
+
+      if (!string.IsNullOrEmpty(script_text))
+        WriteRoomBlock(w, 0x02, room_version);
+
       WriteRoomBlock(w, 0x05, room_version);
       
       if (backgroundFrames > 0)
@@ -110,7 +123,10 @@ namespace AGSUnpackerSharp.Room
 
       WriteRoomBlock(w, 0x07, room_version);
       WriteRoomBlock(w, 0x08, room_version);
-      WriteRoomBlock(w, 0x09, room_version);
+
+      if (room_version >= 24)
+        WriteRoomBlock(w, 0x09, room_version);
+
       WriteRoomBlock(w, 0xFF, room_version);
 
       w.Close();
@@ -151,6 +167,9 @@ namespace AGSUnpackerSharp.Room
         case 0x01:
           WriteRoomMainBlock(w, room_version);
           break;
+        case 0x02:
+          WriteScriptTextBlock(w, room_version);
+          break;
         case 0x05:
           WriteObjectNamesBlock(w, room_version);
           break;
@@ -161,7 +180,7 @@ namespace AGSUnpackerSharp.Room
           WriteSCOM3Block(w, script.Version);
           break;
         case 0x08:
-          WritePropertiesBlock(w, propertiesBlockVersion, properties.version);
+          WritePropertiesBlock(w, properties.version);
           break;
         case 0x09:
           WriteObjectScriptNamesBlock(w, room_version);
@@ -191,7 +210,7 @@ namespace AGSUnpackerSharp.Room
           ParseRoomMainBlock(r, room_version);
           break;
         case 0x02:
-          ParseScriptText(r, room_version);
+          ParseScriptTextBlock(r, room_version);
           break;
         case 0x05:
           ParseObjectNamesBlock(r, room_version);
@@ -220,11 +239,11 @@ namespace AGSUnpackerSharp.Room
       w.Write((byte)backgroundFrames);
       w.Write((byte)background_animation_speed);
 
-      //TODO(adm244): palette share flags
-      w.Write(new byte[backgroundFrames]);
+      if (room_version >= 20) // ???
+        w.Write((byte[])paletteShareFlags);
 
       for (int i = 1; i < backgroundFrames; ++i)
-        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[i], background_bpp);
+        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[i], background_bpp, true);
     }
 
     private void ParseBackgroundAnimationBlock(BinaryReader r, int room_version)
@@ -233,10 +252,7 @@ namespace AGSUnpackerSharp.Room
       background_animation_speed = r.ReadByte();
 
       if (room_version >= 20)
-      {
-        //TODO(adm244): do real parsing
-        r.BaseStream.Seek(backgroundFrames, SeekOrigin.Current);
-      }
+        paletteShareFlags = r.ReadBytes(backgroundFrames);
 
       for (int i = 1; i < backgroundFrames; ++i)
         backgrounds[i] = AGSGraphicUtils.ParseLZ77Image(r, background_bpp);
@@ -247,7 +263,7 @@ namespace AGSUnpackerSharp.Room
       w.Write((byte)objects.Length);
       for (int i = 0; i < objects.Length; ++i)
       {
-        if (room_version >= 31)
+        if (room_version >= 31) // 3.4.1.5
           w.WritePrefixedString32(objects[i].scriptname);
         else
           w.WriteFixedString(objects[i].scriptname, 20);
@@ -262,10 +278,7 @@ namespace AGSUnpackerSharp.Room
       for (int i = 0; i < objects.Length; ++i)
       {
         if (room_version >= 31) // 3.4.1.5
-        {
-          Int32 strlen = r.ReadInt32();
-          objects[i].scriptname = r.ReadFixedString(strlen);
-        }
+          objects[i].scriptname = r.ReadPrefixedString32();
         else
           objects[i].scriptname = r.ReadFixedString(20);
       }
@@ -277,11 +290,8 @@ namespace AGSUnpackerSharp.Room
 
       for (int i = 0; i < objects.Length; ++i)
       {
-        if (room_version >= 31)
-        {
-          w.Write((Int32)objects[i].name.Length);
-          w.Write(objects[i].name.ToCharArray());
-        }
+        if (room_version >= 31) // 3.4.1.5
+          w.WritePrefixedString32(objects[i].name);
         else
           w.WriteFixedString(objects[i].name, 30);
       }
@@ -295,18 +305,15 @@ namespace AGSUnpackerSharp.Room
       for (int i = 0; i < objects.Length; ++i)
       {
         if (room_version >= 31) // 3.4.1.5
-        {
-          Int32 strlen = r.ReadInt32();
-          objects[i].name = r.ReadFixedString(strlen);
-        }
+          objects[i].name = r.ReadPrefixedString32();
         else
           objects[i].name = r.ReadFixedString(30);
       }
     }
 
-    private void WritePropertiesBlock(BinaryWriter w, int blockVersion, int properiesVersion)
+    private void WritePropertiesBlock(BinaryWriter w, int properiesVersion)
     {
-      w.Write((Int32)blockVersion);
+      w.Write((Int32)propertiesBlockVersion);
       
       // write room properties
       properties.WriteToStream(w, properiesVersion);
@@ -351,8 +358,8 @@ namespace AGSUnpackerSharp.Room
 
     private void WriteRoomMainBlock(BinaryWriter w, int room_version)
     {
-      //w.Write((byte)0x01);
-      w.Write(background_bpp);
+      if (room_version >= 12) // 2.08+
+        w.Write(background_bpp);
       
       // write walk-behind baselines
       w.Write((Int16)walkbehinds.Length);
@@ -369,20 +376,23 @@ namespace AGSUnpackerSharp.Room
 
       for (int i = 0; i < hotspots.Length; ++i)
       {
-        // DOUBLE CHECK IT!
-        if (room_version >= 31)
-          w.Write(hotspots[i].name);
-        else
+        if (room_version >= 31) // 3.4.1.5
+          w.WritePrefixedString32(hotspots[i].name);
+        else if (room_version >= 28) // ???
           w.WriteNullTerminatedString(hotspots[i].name);
+        else
+          w.WriteFixedString(hotspots[i].name, 30);
       }
 
-      for (int i = 0; i < hotspots.Length; ++i)
+      if (room_version >= 24) // ???
       {
-        // DOUBLE CHECK IT!
-        if (room_version >= 31)
-          w.Write(hotspots[i].scriptname);
-        else
-          w.WriteFixedString(hotspots[i].scriptname, 20);
+        for (int i = 0; i < hotspots.Length; ++i)
+        {
+          if (room_version >= 31)
+            w.WritePrefixedString32(hotspots[i].scriptname);
+          else
+            w.WriteFixedString(hotspots[i].scriptname, 20);
+        }
       }
 
       // write polypoints count
@@ -405,58 +415,115 @@ namespace AGSUnpackerSharp.Room
         w.Write((Int16)objects[i].visible);
       }
 
-      // write interaction variables count
-      w.Write((Int32)0x0);
+      if (room_version >= 19) // ???
+        w.Write((Int32)0x0);
 
-      w.Write((Int32)regions.Length);
+      if (room_version >= 15) // ???
+      {
+        if (room_version < 26) // ???
+        {
+          for (int i = 0; i < hotspots.Length; ++i)
+            hotspots[i].interactions_old.WriteToStream(w);
 
-      interactions.WriteToStream(w);
+          for (int i = 0; i < objects.Length; ++i)
+            objects[i].interactions_old.WriteToStream(w);
 
-      // write hotspot events
-      for (int i = 0; i < hotspots.Length; ++i)
-        hotspots[i].interactions.WriteToStream(w);
+          interactions_old.WriteToStream(w);
+        }
 
-      // write object events
-      for (int i = 0; i < objects.Length; ++i)
-        objects[i].interactions.WriteToStream(w);
+        if (room_version >= 21) // ???
+        {
+          w.Write((Int32)regions.Length);
 
-      // write region events
-      for (int i = 0; i < regions.Length; ++i)
-        regions[i].interactions.WriteToStream(w);
+          if (room_version < 26) // ???
+          {
+            for (int i = 0; i < regions.Length; ++i)
+              regions[i].interactions_old.WriteToStream(w);
+          }
+        }
 
-      // write objects baselines
-      for (int i = 0; i < objects.Length; ++i)
-        w.Write((Int32)objects[i].baseline);
+        if (room_version >= 26) // ???
+        {
+          interactions.WriteToStream(w);
 
-      // write room dimensions
-      w.Write((Int16)width);
-      w.Write((Int16)height);
+          // write hotspot events
+          for (int i = 0; i < hotspots.Length; ++i)
+            hotspots[i].interactions.WriteToStream(w);
 
-      // write objects flags
-      for (int i = 0; i < objects.Length; ++i)
-        w.Write((Int16)objects[i].flags);
+          // write object events
+          for (int i = 0; i < objects.Length; ++i)
+            objects[i].interactions.WriteToStream(w);
 
-      w.Write((Int16)resolution_type);
+          // write region events
+          for (int i = 0; i < regions.Length; ++i)
+            regions[i].interactions.WriteToStream(w);
+        }
+      }
 
-      // write walkable areas info
-      w.Write((Int32)walkareas.Length);
-      for (int i = 0; i < walkareas.Length; ++i)
-        w.Write((Int16)walkareas[i].scale_far);
+      if (room_version >= 9) // ???
+      {
+        // write objects baselines
+        for (int i = 0; i < objects.Length; ++i)
+          w.Write((Int32)objects[i].baseline);
 
-      for (int i = 0; i < walkareas.Length; ++i)
-        w.Write((Int16)walkareas[i].light);
+        // write room dimensions
+        w.Write((Int16)width);
+        w.Write((Int16)height);
+      }
 
-      for (int i = 0; i < walkareas.Length; ++i)
-        w.Write((Int16)walkareas[i].scale_near);
+      if (room_version >= 23) // ???
+      {
+        // write objects flags
+        for (int i = 0; i < objects.Length; ++i)
+          w.Write((Int16)objects[i].flags);
+      }
 
-      for (int i = 0; i < walkareas.Length; ++i)
-        w.Write((Int16)walkareas[i].top_y);
+      if (room_version >= 11) // ???
+        w.Write((Int16)resolution_type);
 
-      for (int i = 0; i < walkareas.Length; ++i)
-        w.Write((Int16)walkareas[i].bottom_y);
+      if (room_version >= 14) // ???
+        w.Write((Int32)walkareas.Length);
+
+      if (room_version >= 10) // ???
+      {
+        for (int i = 0; i < walkareas.Length; ++i)
+          w.Write((Int16)walkareas[i].scale_far);
+      }
+
+      if (room_version >= 13) // ???
+      {
+        for (int i = 0; i < walkareas.Length; ++i)
+          w.Write((Int16)walkareas[i].light);
+      }
+
+      if (room_version >= 18) // ???
+      {
+        for (int i = 0; i < walkareas.Length; ++i)
+          w.Write((Int16)walkareas[i].scale_near);
+
+        for (int i = 0; i < walkareas.Length; ++i)
+          w.Write((Int16)walkareas[i].top_y);
+
+        for (int i = 0; i < walkareas.Length; ++i)
+          w.Write((Int16)walkareas[i].bottom_y);
+      }
+
+      byte[] password_encrypted = new byte[password.Length];
+      if (room_version < 9)
+      {
+        for (int i = 0; i < password_encrypted.Length; ++i)
+          password_encrypted[i] = (byte)(password[i] - (byte)60);
+      }
+      else
+      {
+        string passwordString = AGSStringUtils.DecryptString(password);
+        Encoding windows1252 = Encoding.GetEncoding(1252);
+        password_encrypted = windows1252.GetBytes(passwordString);
+        Debug.Assert(password_encrypted.Length == password.Length);
+      }
 
       // write room settings
-      w.Write(password);
+      w.Write(password_encrypted);
       w.Write((byte)startup_music);
       w.Write((byte)saveload_disabled);
       w.Write((byte)player_invisible);
@@ -466,36 +533,58 @@ namespace AGSUnpackerSharp.Room
 
       w.Write((Int16)messages.Length);
 
-      w.Write((Int32)game_id);
+      if (room_version >= 25) // ???
+        w.Write((Int32)game_id);
 
-      // write messages flags
-      for (int i = 0; i < messages.Length; ++i)
+      if (room_version >= 3) // ???
       {
-        w.Write((byte)messages[i].display_as);
-        w.Write((byte)messages[i].flags);
+        // write messages flags
+        for (int i = 0; i < messages.Length; ++i)
+        {
+          w.Write((byte)messages[i].display_as);
+          w.Write((byte)messages[i].flags);
+        }
       }
 
       // write messages text
       for (int i = 0; i < messages.Length; ++i)
-        AGSStringUtils.WriteEncryptedString(w, messages[i].text);
+      {
+        if (room_version >= 22) // ???
+          AGSStringUtils.WriteEncryptedString(w, messages[i].text);
+        else
+          w.WriteNullTerminatedString(messages[i].text, 2999);
+      }
 
       // write legacy room animations
-      w.Write((Int16)0x0);
+      if (room_version >= 6)
+        w.Write((Int16)0x0);
 
-      // write walkable areas light level (unused)
-      for (int i = 0; i < 16; ++i)
-        w.Write((Int16)walkareas[i].light);
+      if ((room_version >= 4) && (room_version < 16)) // ???
+        throw new NotImplementedException("CRM: Legacy graphical scripts writer is not implement.");
 
-      // write regions light level
-      for (int i = 0; i < regions.Length; ++i)
-        w.Write((Int16)regions[i].light);
+      if (room_version >= 8) // ???
+      {
+        // write walkable areas light level (unused)
+        for (int i = 0; i < 16; ++i)
+          w.Write((Int16)walkareas[i].light);
+      }
 
-      // write regions tint colors
-      for (int i = 0; i < regions.Length; ++i)
-        w.Write((Int32)regions[i].tint);
+      if (room_version >= 21) // ???
+      {
+        // write regions light level
+        for (int i = 0; i < regions.Length; ++i)
+          w.Write((Int16)regions[i].light);
+
+        // write regions tint colors
+        for (int i = 0; i < regions.Length; ++i)
+          w.Write((Int32)regions[i].tint);
+      }
 
       // write primary background
-      AGSGraphicUtils.WriteLZ77Image(w, backgrounds[0], background_bpp);
+      if (room_version >= 5)
+        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[0], background_bpp, true);
+      else
+        AGSGraphicUtils.WriteAllegroCompressedImage(w, backgrounds[0]);
 
       // parse region mask
       AGSGraphicUtils.WriteAllegroCompressedImage(w, regionMask);
@@ -587,7 +676,7 @@ namespace AGSUnpackerSharp.Room
       {
         // parse interaction variables
         Int32 interactionvars_count = r.ReadInt32();
-        if (polypoints_count > 0)
+        if (interactionvars_count > 0)
           throw new NotImplementedException("CRM: Interaction variables parser is not implemented.");
       }
 
@@ -793,7 +882,18 @@ namespace AGSUnpackerSharp.Room
         password = AGSStringUtils.EncryptString(password);
     }
 
-    private void ParseScriptText(BinaryReader r, int room_version)
+    private void WriteScriptTextBlock(BinaryWriter w, int room_version)
+    {
+      Encoding windows1252 = Encoding.GetEncoding(1252);
+      byte[] buffer = windows1252.GetBytes(script_text);
+
+      buffer = AGSStringUtils.DecryptStringByte(buffer);
+
+      w.Write((Int32)buffer.Length);
+      w.Write((byte[])buffer);
+    }
+
+    private void ParseScriptTextBlock(BinaryReader r, int room_version)
     {
       Int32 script_length = r.ReadInt32();
       byte[] buffer = r.ReadBytes(script_length);

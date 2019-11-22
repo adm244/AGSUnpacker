@@ -365,7 +365,14 @@ namespace AGSUnpackerSharp.Utils
 
       byte[] palette = r.ReadBytes(256 * 3);
 
-      return ConvertToBitmap(data, width, height, bpp, palette, true);
+      Int32[] palette32 = new Int32[256];
+      for (int i = 0; i < palette32.Length; ++i)
+      {
+        //TODO(adm244): check if that's correct
+        palette32[i] = (palette[i * 3 + 2] << 16) | (palette[i * 3 + 1] << 8) | (palette[i * 3 + 0]);
+      }
+
+      return ConvertToBitmap(data, width, height, bpp, palette32, true);
     }
 
     public static void WriteAllegroCompressedImage(BinaryWriter w, Bitmap image)
@@ -402,7 +409,7 @@ namespace AGSUnpackerSharp.Utils
     {
       // skip palette
       //r.BaseStream.Seek(256 * sizeof(Int32), SeekOrigin.Current);
-      byte[] palette = r.ReadBytes(256 * sizeof(Int32));
+      Int32[] palette = r.ReadArrayInt32(256);
 
       Int32 uncompressed_size = r.ReadInt32();
       Int32 compressed_size = r.ReadInt32();
@@ -512,14 +519,19 @@ namespace AGSUnpackerSharp.Utils
       byte[] pixels = new byte[output.Length - 8];
       Array.Copy(output, 8, pixels, 0, pixels.Length);
 
-      Bitmap bitmap = ConvertToBitmap(pixels, width, height, bpp, palette, false);
-      
-      //NOTE(adm244): since AGS doesn't use alpha-channel for room background it is nullyfied
-      // and we have to get rid of it by converting image into 24-bit pixel format
-      return bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format24bppRgb);
+      Bitmap bitmap = ConvertToBitmap(pixels, width, height, bpp, palette, (bpp == 1));
+
+      if (bpp == 4)
+      {
+        //NOTE(adm244): since AGS doesn't use alpha-channel for room background it is nullyfied
+        // and we have to get rid of it by converting image into 24-bit pixel format
+        return bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format24bppRgb);
+      }
+
+      return bitmap;
     }
 
-    private static Bitmap ConvertToBitmap(byte[] data, int width, int height, int bpp, byte[] palette, bool convertTo8bit)
+    public static Bitmap ConvertToBitmap(byte[] data, int width, int height, int bpp, Int32[] palette, bool convertTo8bit)
     {
       //TODO(adm244): pick according to bpp
       //PixelFormat format = PixelFormat.Format32bppArgb;
@@ -545,9 +557,12 @@ namespace AGSUnpackerSharp.Utils
         Color[] paletteColors = new Color[256];
         for (int i = 0; i < paletteColors.Length; ++i)
         {
-          int red = palette[3 * i];
-          int green = palette[3 * i + 1];
-          int blue = palette[3 * i + 2];
+          int abgr = palette[i];
+
+          int red = (abgr & 0xFF);
+          int green = ((abgr >> 8) & 0xFF);
+          int blue = ((abgr >> 16) & 0xFF);
+          int alpha = ((abgr >> 24) & 0xFF);
 
           if (convertTo8bit)
           {
@@ -571,13 +586,10 @@ namespace AGSUnpackerSharp.Utils
       return bitmap;
     }
 
-    private static byte[] ConvertToRaw(Bitmap image)
+    public static byte[] ConvertToRaw(Bitmap image)
     {
       int width = image.Width;
       int height = image.Height;
-
-      //TODO(adm244): extract from Bitmap
-      //int bpp = 4;
       int bpp = GetBytesPerPixel(image);
 
       byte[] pixels = new byte[width * height * bpp];
@@ -642,7 +654,7 @@ namespace AGSUnpackerSharp.Utils
       return format;
     }
 
-    private static int GetBytesPerPixel(Bitmap image)
+    public static int GetBytesPerPixel(Bitmap image)
     {
       int bpp = -1;
       switch (image.PixelFormat)
@@ -669,7 +681,7 @@ namespace AGSUnpackerSharp.Utils
       return bpp;
     }
 
-    public static void WriteLZ77Image(BinaryWriter w, Bitmap image, int bpp)
+    public static void WriteLZ77Image(BinaryWriter w, Bitmap image, int bpp, bool convertTo6bit)
     {
       /*w.Write((Int32)image.picture_maxsize);
       w.Write((Int32)image.picture_data_size);
@@ -712,10 +724,20 @@ namespace AGSUnpackerSharp.Utils
         Debug.Assert(image.Palette.Entries.Length == 256);
         for (int i = 0; i < image.Palette.Entries.Length; ++i)
         {
-          palette[4 * i + 0] = image.Palette.Entries[i].R;
-          palette[4 * i + 1] = image.Palette.Entries[i].G;
-          palette[4 * i + 2] = image.Palette.Entries[i].B;
-          palette[4 * i + 3] = image.Palette.Entries[i].A;
+          if (convertTo6bit)
+          {
+            palette[4 * i + 0] = (byte)((image.Palette.Entries[i].R / 255f) * 64f);
+            palette[4 * i + 1] = (byte)((image.Palette.Entries[i].G / 255f) * 64f);
+            palette[4 * i + 2] = (byte)((image.Palette.Entries[i].B / 255f) * 64f);
+            palette[4 * i + 3] = (byte)((image.Palette.Entries[i].A / 255f) * 64f);
+          }
+          else
+          {
+            palette[4 * i + 0] = image.Palette.Entries[i].R;
+            palette[4 * i + 1] = image.Palette.Entries[i].G;
+            palette[4 * i + 2] = image.Palette.Entries[i].B;
+            palette[4 * i + 3] = image.Palette.Entries[i].A;
+          }
         }
       }
 

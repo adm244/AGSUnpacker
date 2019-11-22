@@ -55,6 +55,8 @@ namespace AGSUnpackerSharp.Extensions
     public static void WritePrefixedString32(this BinaryWriter w, string str)
     {
       w.Write((Int32)str.Length);
+      //FIX(adm244): use Encoding with 1252 or something like this
+      // otherwise can't guarantee it will be "1 char = 1 byte"
       w.Write(str.ToCharArray());
     }
   }

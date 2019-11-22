@@ -24,11 +24,9 @@ namespace AGSUnpackerSharp.Shared.Interaction
       Int32 events_count = r.ReadInt32();
       events = new AGSInteractionCommandsList[events_count];
 
+      Int32[] types = new Int32[events.Length];
       for (int i = 0; i < events.Length; ++i)
-      {
-        events[i] = new AGSInteractionCommandsList();
-        events[i].type = r.ReadInt32();
-      }
+        types[i] = r.ReadInt32();
 
       event_responses = r.ReadArrayInt32(events.Length);
       for (int i = 0; i < event_responses.Length; ++i)
@@ -40,6 +38,7 @@ namespace AGSUnpackerSharp.Shared.Interaction
 
         events[i] = new AGSInteractionCommandsList();
         events[i].LoadFromStream(r);
+        events[i].type = types[i];
       }
     }
 
@@ -49,7 +48,12 @@ namespace AGSUnpackerSharp.Shared.Interaction
       w.Write((Int32)events.Length);
 
       for (int i = 0; i < events.Length; ++i)
-        w.Write((Int32)events[i].type);
+      {
+        if (events[i] == null)
+          w.Write((Int32)0x0);
+        else
+          w.Write((Int32)events[i].type);
+      }
 
       for (int i = 0; i < event_responses.Length; ++i)
         w.Write((Int32)event_responses[i]);

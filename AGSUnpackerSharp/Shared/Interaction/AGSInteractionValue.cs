@@ -18,7 +18,7 @@ namespace AGSUnpackerSharp.Shared.Interaction
 
     public void LoadFromStream(BinaryReader r)
     {
-      //NOTE(adm244): read and discard paddign
+      //NOTE(adm244): read and discard padding
       type = (byte)r.ReadInt32();
       value = r.ReadInt32();
       extra = r.ReadInt32();

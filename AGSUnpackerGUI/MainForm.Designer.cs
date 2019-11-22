@@ -33,17 +33,18 @@
       this.btnUnpackSprites = new System.Windows.Forms.Button();
       this.btnExtractExe = new System.Windows.Forms.Button();
       this.splitContainer = new System.Windows.Forms.SplitContainer();
+      this.gbExtra = new System.Windows.Forms.GroupBox();
+      this.btnChangeRoomBackground = new System.Windows.Forms.Button();
+      this.btnGetUIDName = new System.Windows.Forms.Button();
       this.tbLogOutput = new System.Windows.Forms.TextBox();
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
       this.ctrlStatus = new System.Windows.Forms.ToolStripStatusLabel();
-      this.gbExtra = new System.Windows.Forms.GroupBox();
-      this.btnGetUIDName = new System.Windows.Forms.Button();
       this.gbUnpacking.SuspendLayout();
       this.splitContainer.Panel1.SuspendLayout();
       this.splitContainer.Panel2.SuspendLayout();
       this.splitContainer.SuspendLayout();
-      this.statusStrip1.SuspendLayout();
       this.gbExtra.SuspendLayout();
+      this.statusStrip1.SuspendLayout();
       this.SuspendLayout();
       // 
       // gbUnpacking
@@ -114,6 +115,41 @@
       this.splitContainer.SplitterDistance = 222;
       this.splitContainer.TabIndex = 1;
       // 
+      // gbExtra
+      // 
+      this.gbExtra.Controls.Add(this.btnChangeRoomBackground);
+      this.gbExtra.Controls.Add(this.btnGetUIDName);
+      this.gbExtra.Dock = System.Windows.Forms.DockStyle.Top;
+      this.gbExtra.Location = new System.Drawing.Point(5, 113);
+      this.gbExtra.Name = "gbExtra";
+      this.gbExtra.Padding = new System.Windows.Forms.Padding(12);
+      this.gbExtra.Size = new System.Drawing.Size(212, 100);
+      this.gbExtra.TabIndex = 1;
+      this.gbExtra.TabStop = false;
+      this.gbExtra.Text = "Extra";
+      // 
+      // btnChangeRoomBackground
+      // 
+      this.btnChangeRoomBackground.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnChangeRoomBackground.Location = new System.Drawing.Point(12, 48);
+      this.btnChangeRoomBackground.Name = "btnChangeRoomBackground";
+      this.btnChangeRoomBackground.Size = new System.Drawing.Size(188, 23);
+      this.btnChangeRoomBackground.TabIndex = 1;
+      this.btnChangeRoomBackground.Text = "Change Room Background";
+      this.btnChangeRoomBackground.UseVisualStyleBackColor = true;
+      this.btnChangeRoomBackground.Click += new System.EventHandler(this.btnChangeRoomBackground_Click);
+      // 
+      // btnGetUIDName
+      // 
+      this.btnGetUIDName.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnGetUIDName.Location = new System.Drawing.Point(12, 25);
+      this.btnGetUIDName.Name = "btnGetUIDName";
+      this.btnGetUIDName.Size = new System.Drawing.Size(188, 23);
+      this.btnGetUIDName.TabIndex = 0;
+      this.btnGetUIDName.Text = "Get UniqueID and Game Name";
+      this.btnGetUIDName.UseVisualStyleBackColor = true;
+      this.btnGetUIDName.Click += new System.EventHandler(this.btnGetUIDName_Click);
+      // 
       // tbLogOutput
       // 
       this.tbLogOutput.AcceptsReturn = true;
@@ -128,7 +164,7 @@
       this.tbLogOutput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
       this.tbLogOutput.Size = new System.Drawing.Size(348, 250);
       this.tbLogOutput.TabIndex = 0;
-      this.tbLogOutput.Text = "AGSUnpacker v0.2 Log Output\r\n\r\n> ";
+      this.tbLogOutput.Text = "AGSUnpacker v0.3 Log Output\r\n\r\n> ";
       this.tbLogOutput.WordWrap = false;
       // 
       // statusStrip1
@@ -146,29 +182,6 @@
       this.ctrlStatus.Size = new System.Drawing.Size(42, 17);
       this.ctrlStatus.Text = "Ready.";
       // 
-      // gbExtra
-      // 
-      this.gbExtra.Controls.Add(this.btnGetUIDName);
-      this.gbExtra.Dock = System.Windows.Forms.DockStyle.Top;
-      this.gbExtra.Location = new System.Drawing.Point(5, 113);
-      this.gbExtra.Name = "gbExtra";
-      this.gbExtra.Padding = new System.Windows.Forms.Padding(12);
-      this.gbExtra.Size = new System.Drawing.Size(212, 100);
-      this.gbExtra.TabIndex = 1;
-      this.gbExtra.TabStop = false;
-      this.gbExtra.Text = "Extra";
-      // 
-      // btnGetUIDName
-      // 
-      this.btnGetUIDName.Dock = System.Windows.Forms.DockStyle.Top;
-      this.btnGetUIDName.Location = new System.Drawing.Point(12, 25);
-      this.btnGetUIDName.Name = "btnGetUIDName";
-      this.btnGetUIDName.Size = new System.Drawing.Size(188, 23);
-      this.btnGetUIDName.TabIndex = 0;
-      this.btnGetUIDName.Text = "Get UniqueID and Game Name";
-      this.btnGetUIDName.UseVisualStyleBackColor = true;
-      this.btnGetUIDName.Click += new System.EventHandler(this.btnGetUIDName_Click);
-      // 
       // MainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -178,16 +191,16 @@
       this.Controls.Add(this.statusStrip1);
       this.MinimumSize = new System.Drawing.Size(590, 310);
       this.Name = "MainForm";
-      this.Text = "AGSUnpacker v0.2";
+      this.Text = "AGSUnpacker v0.3";
       this.Load += new System.EventHandler(this.MainForm_Load);
       this.gbUnpacking.ResumeLayout(false);
       this.splitContainer.Panel1.ResumeLayout(false);
       this.splitContainer.Panel2.ResumeLayout(false);
       this.splitContainer.Panel2.PerformLayout();
       this.splitContainer.ResumeLayout(false);
+      this.gbExtra.ResumeLayout(false);
       this.statusStrip1.ResumeLayout(false);
       this.statusStrip1.PerformLayout();
-      this.gbExtra.ResumeLayout(false);
       this.ResumeLayout(false);
       this.PerformLayout();
 
@@ -205,6 +218,7 @@
     private System.Windows.Forms.ToolStripStatusLabel ctrlStatus;
     private System.Windows.Forms.GroupBox gbExtra;
     private System.Windows.Forms.Button btnGetUIDName;
+    private System.Windows.Forms.Button btnChangeRoomBackground;
   }
 }
 

@@ -46,6 +46,12 @@ namespace AGSUnpackerSharp.Shared.Interaction
 
       for (int i = 0; i < commands.Length; ++i)
         commands[i].WriteToStream(w);
+
+      for (int i = 0; i < commands.Length; ++i)
+      {
+        if (commands[i].children != null)
+          commands[i].children.WriteToStream(w);
+      }
     }
   }
 }

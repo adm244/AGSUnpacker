@@ -30,6 +30,19 @@ namespace AGSUnpackerSharp
       return new string(buffer, 0, i);
     }
 
+    public static byte[] DecryptStringByte(byte[] str)
+    {
+      byte[] buffer = new byte[str.Length];
+
+      int passlen = password.Length;
+      for (int i = 0; i < str.Length; ++i)
+      {
+        buffer[i] = (byte)(str[i] - (byte)password[i % passlen]);
+      }
+
+      return buffer;
+    }
+
     //FIX(adm244): don't modify the passed-in array, make a copy!
     //TODO(adm244): is this correct???
     public static unsafe string DecryptString(byte[] str)

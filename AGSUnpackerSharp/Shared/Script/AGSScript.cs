@@ -123,20 +123,15 @@ namespace AGSUnpackerSharp.Shared.Script
       // write fixups section
       w.Write((Int32)Fixups.Length);
       for (int i = 0; i < Fixups.Length; ++i)
-      {
         w.Write((byte)Fixups[i].Type);
-      }
+
       for (int i = 0; i < Fixups.Length; ++i)
-      {
         w.Write((UInt32)Fixups[i].Value);
-      }
 
       // write imports section
       w.Write((Int32)Imports.Length);
       for (int i = 0; i < Imports.Length; ++i)
-      {
         w.WriteNullTerminatedString(Imports[i], 300);
-      }
 
       // write exports section
       w.Write((Int32)Exports.Length);
@@ -147,7 +142,7 @@ namespace AGSUnpackerSharp.Shared.Script
       }
 
       // write script sections
-      if (version >= 83)
+      if (version >= 83) // ???
       {
         w.Write((Int32)Sections.Length);
         for (int i = 0; i < Sections.Length; ++i)

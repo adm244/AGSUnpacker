@@ -38,7 +38,7 @@ namespace AGSUnpackerSharp.Utils
           {
             Console.Write("\tParsing {0} room file...", Path.GetFileName(filenames[i]));
 
-            AGSRoom room = new AGSRoom();
+            AGSRoom room = new AGSRoom(Path.GetFileNameWithoutExtension(filenames[i]));
             room.LoadFromFile(filenames[i]);
             rooms.Add(room);
 
@@ -75,11 +75,11 @@ namespace AGSUnpackerSharp.Utils
         string metadata = string.Empty;
         if (gameData.roomsDebugInfo.Length == 0)
         {
-          metadata = string.Format("// [room{0}.crm]", (i + 1));
+          metadata = string.Format("// [{0}.crm]", rooms[i].name);
         }
         else
         {
-          metadata = string.Format("// [room{0}.crm - {1}]", (i + 1), gameData.roomsDebugInfo[i].name);
+          metadata = string.Format("// [{0}.crm - {1}]", rooms[i].name, gameData.roomsDebugInfo[i].name);
         }
 
         lines.Add(metadata);

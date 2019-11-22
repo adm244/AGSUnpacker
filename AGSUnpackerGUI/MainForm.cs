@@ -211,5 +211,11 @@ namespace AGSUnpackerGUI
 
       p.OnUnpackFinished(result);
     }
+
+    private void btnChangeRoomBackground_Click(object sender, EventArgs e)
+    {
+      RoomViewer roomViewer = new RoomViewer();
+      roomViewer.Show();
+    }
   }
 }
