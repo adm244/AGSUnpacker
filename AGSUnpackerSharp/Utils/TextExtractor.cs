@@ -144,7 +144,14 @@ namespace AGSUnpackerSharp.Utils
         PushIntoLines(data.dialogScript.Strings[i]);
       }
 
-      // module scritps strings
+      // old dialog strings
+      lines.Add("//   [old dialog strings]");
+      for (int i = 0; i < data.oldDialogStrings.Count; ++i)
+      {
+        PushIntoLines(data.oldDialogStrings[i]);
+      }
+
+      // module scripts strings
       for (int script_index = 0; script_index < data.scriptModules.Length; ++script_index)
       {
         lines.Add(string.Format("//   [{0} strings]", data.scriptModules[script_index].Sections[0].Name));
@@ -198,6 +205,13 @@ namespace AGSUnpackerSharp.Utils
       {
         if (data.setup.global_messages[i] == 0) continue;
         PushIntoLines(data.globalMessages[i]);
+      }
+
+      // dictionary
+      lines.Add("//   [dictionary]");
+      for (int i = 0; i < data.dictionary.words.Length; ++i)
+      {
+        PushIntoLines(data.dictionary.words[i].text);
       }
     }
 

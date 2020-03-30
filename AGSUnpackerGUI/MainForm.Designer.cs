@@ -164,7 +164,7 @@
       this.tbLogOutput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
       this.tbLogOutput.Size = new System.Drawing.Size(348, 250);
       this.tbLogOutput.TabIndex = 0;
-      this.tbLogOutput.Text = "AGSUnpacker v0.3 Log Output\r\n\r\n> ";
+      this.tbLogOutput.Text = "AGSUnpacker v0.4 Log Output\r\n\r\n> ";
       this.tbLogOutput.WordWrap = false;
       // 
       // statusStrip1
@@ -191,7 +191,7 @@
       this.Controls.Add(this.statusStrip1);
       this.MinimumSize = new System.Drawing.Size(590, 310);
       this.Name = "MainForm";
-      this.Text = "AGSUnpacker v0.3";
+      this.Text = "AGSUnpacker v0.4";
       this.Load += new System.EventHandler(this.MainForm_Load);
       this.gbUnpacking.ResumeLayout(false);
       this.splitContainer.Panel1.ResumeLayout(false);
