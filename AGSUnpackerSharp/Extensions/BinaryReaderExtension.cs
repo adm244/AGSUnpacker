@@ -6,6 +6,8 @@ namespace AGSUnpackerSharp
 {
   public static class BinaryReaderExtension
   {
+    //TODO(adm244): redo this nonsense to propely handle encoding (use win1251)
+
     public static bool EOF(this BinaryReader reader)
     {
       return (reader.BaseStream.Position >= reader.BaseStream.Length);

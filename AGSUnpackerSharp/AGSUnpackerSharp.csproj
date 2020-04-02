@@ -6,7 +6,7 @@
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{7A73DACB-1AC5-4501-B400-1BA32B514D09}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AGSUnpackerSharp</RootNamespace>
     <AssemblyName>AGSUnpackerSharp</AssemblyName>
@@ -37,8 +37,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>AGSUnpackerSharp.Program</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
@@ -71,6 +70,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\BinaryWriterExtension.cs" />
+    <Compile Include="Extractors\SourceExtractors\SourceExtractor262.cs" />
     <Compile Include="Game\View\AGSView272.cs" />
     <Compile Include="Graphics\AGSSpritesCache.cs" />
     <Compile Include="Graphics\SpritesMeta.cs" />
@@ -125,6 +125,7 @@
     <Compile Include="Shared\AGSPropertyStorage.cs" />
     <Compile Include="Shared\Script\AGSScript.cs" />
     <Compile Include="Utils\IEEE754Utils.cs" />
+    <Compile Include="Extractors\SourceExtractor.cs" />
     <Compile Include="Utils\TextExtractor.cs" />
   </ItemGroup>
   <ItemGroup />

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using AGSUnpackerSharp.Room;
+using AGSUnpackerSharp.Extractors;
 
 namespace AGSUnpackerSharp
 {
@@ -12,6 +12,9 @@ namespace AGSUnpackerSharp
       if (args.Length > 0)
       {
         string filepath = args[0];
+
+        SourceExtractor extractor = SourceExtractor.Create(AGSVersion.AGS262);
+        bool result = extractor.Extract(filepath);
 
         /*AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);
@@ -126,8 +129,8 @@ namespace AGSUnpackerSharp
         //AGSSpritesCache.ExtractSprites(filepath);
         /*string[] files = Directory.GetFiles(filepath, "spr*");
         AGSSpritesCache.PackSprites(files);*/
-        AGSRoom room = new AGSRoom();
-        room.LoadFromFile(filepath);
+        //AGSRoom room = new AGSRoom();
+        //room.LoadFromFile(filepath);
 
         /*using (StreamWriter writer = new StreamWriter(filepath + ".dump", false, Encoding.GetEncoding(1252)))
         {
