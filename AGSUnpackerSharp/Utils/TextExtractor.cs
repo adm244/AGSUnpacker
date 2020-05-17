@@ -124,7 +124,7 @@ namespace AGSUnpackerSharp.Utils
       for (int i = 0; i < data.dialogs.Length; ++i)
       {
         lines.Add(string.Format("//   [dialog topic {0}]", (i + 1)));
-        for (int j = 0; j < data.dialogs[i].options.Length; ++j)
+        for (int j = 0; j < data.dialogs[i].options_number; ++j)
         {
           PushIntoLines(data.dialogs[i].options[j]);
         }
@@ -219,6 +219,10 @@ namespace AGSUnpackerSharp.Utils
     {
       if (line == null) return false;
 
+      //FIX(adm244): disassemble script to find all string references
+      // for now we just parse sequentially which reads garbage inbetween strings
+      // so we use a hack here to try and remove this garbage...
+
       // cut non printable characters at the beginning
       int trim_index = 0;
       for (int i = 0; i < line.Length; ++i)
@@ -230,7 +234,9 @@ namespace AGSUnpackerSharp.Utils
       if (trim_index > 0) line = line.Substring(trim_index + 1);
 
       // check if string is valid
-      if (string.IsNullOrEmpty(line)) return false;
+      if (string.IsNullOrWhiteSpace(line)) return false;
+
+      // check if a duplicate
       if (lines.IndexOf(line) < 0)
       {
         lines.Add(line);

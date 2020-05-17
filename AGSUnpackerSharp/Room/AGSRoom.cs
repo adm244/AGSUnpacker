@@ -243,7 +243,7 @@ namespace AGSUnpackerSharp.Room
         w.Write((byte[])paletteShareFlags);
 
       for (int i = 1; i < backgroundFrames; ++i)
-        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[i], background_bpp, true);
+        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[i], background_bpp);
     }
 
     private void ParseBackgroundAnimationBlock(BinaryReader r, int room_version)
@@ -255,7 +255,7 @@ namespace AGSUnpackerSharp.Room
         paletteShareFlags = r.ReadBytes(backgroundFrames);
 
       for (int i = 1; i < backgroundFrames; ++i)
-        backgrounds[i] = AGSGraphicUtils.ParseLZ77Image(r, background_bpp);
+        backgrounds[i] = AGSGraphicUtils.ReadLZ77Image(r, background_bpp);
     }
 
     private void WriteObjectScriptNamesBlock(BinaryWriter w, int room_version)
@@ -582,21 +582,21 @@ namespace AGSUnpackerSharp.Room
 
       // write primary background
       if (room_version >= 5)
-        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[0], background_bpp, true);
+        AGSGraphicUtils.WriteLZ77Image(w, backgrounds[0], background_bpp);
       else
-        AGSGraphicUtils.WriteAllegroCompressedImage(w, backgrounds[0]);
+        AGSGraphicUtils.WriteAllegroImage(w, backgrounds[0]);
 
       // parse region mask
-      AGSGraphicUtils.WriteAllegroCompressedImage(w, regionMask);
+      AGSGraphicUtils.WriteAllegroImage(w, regionMask);
 
       // parse walkable area mask
-      AGSGraphicUtils.WriteAllegroCompressedImage(w, walkableMask);
+      AGSGraphicUtils.WriteAllegroImage(w, walkableMask);
 
       // parse walkbehind area mask
-      AGSGraphicUtils.WriteAllegroCompressedImage(w, walkbehindMask);
+      AGSGraphicUtils.WriteAllegroImage(w, walkbehindMask);
 
       // parse hotspot mask
-      AGSGraphicUtils.WriteAllegroCompressedImage(w, hotspotMask);
+      AGSGraphicUtils.WriteAllegroImage(w, hotspotMask);
     }
 
     private void ParseRoomMainBlock(BinaryReader r, int room_version)
@@ -857,21 +857,21 @@ namespace AGSUnpackerSharp.Room
 
       // parse primary background
       if (room_version >= 5) // ???
-        backgrounds[0] = AGSGraphicUtils.ParseLZ77Image(r, background_bpp);
+        backgrounds[0] = AGSGraphicUtils.ReadLZ77Image(r, background_bpp);
       else
-        backgrounds[0] = AGSGraphicUtils.ParseAllegroCompressedImage(r);
+        backgrounds[0] = AGSGraphicUtils.ReadAllegroImage(r);
 
       // parse region mask
-      regionMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      regionMask = AGSGraphicUtils.ReadAllegroImage(r);
 
       // parse walkable area mask
-      walkableMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      walkableMask = AGSGraphicUtils.ReadAllegroImage(r);
 
       // parse walkbehind area mask
-      walkbehindMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      walkbehindMask = AGSGraphicUtils.ReadAllegroImage(r);
 
       // parse hotspot mask
-      hotspotMask = AGSGraphicUtils.ParseAllegroCompressedImage(r);
+      hotspotMask = AGSGraphicUtils.ReadAllegroImage(r);
 
       if (room_version < 9) // ???
       {

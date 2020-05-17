@@ -1,0 +1,17 @@
+
+v05:
+Re-added: AGSSpriteSet outputs sprindex.dat
+Fixed: AGSSpriteSet::Pack now properly packs sprites based on their index
+Fixed: AGSSpriteSet::Pack writting compression type for file version below 6
+Refactor: cleaned up AGSSpriteSet, AGSGraphicUtils code
+Refactor: renamed AGSSpritesCache -> AGSSpriteSet
+Added: TRA file compiler
+Added: TRS file reader
+Fixed: WriteEncryptedString is now null-terminates strings as it should
+Fixed: Removed garbage from dialog options
+Fixed: TextExtractor only extracts valid dialog options
+Fixed: Incorrect data reading from a MemoryStream
+
+v04:
+Fixed: TextExtractor now extracts old dialog script strings
+Fixed: TextExtractor now extracts dictionary strings

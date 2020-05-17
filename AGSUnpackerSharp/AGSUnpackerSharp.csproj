@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>AGSUnpackerSharp</RootNamespace>
     <AssemblyName>AGSUnpackerSharp</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -70,16 +71,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Extensions\BinaryWriterExtension.cs" />
+    <Compile Include="Extensions\BitmapExtension.cs" />
     <Compile Include="Extractors\SourceExtractors\SourceExtractor262.cs" />
     <Compile Include="Game\View\AGSView272.cs" />
-    <Compile Include="Graphics\AGSSpritesCache.cs" />
-    <Compile Include="Graphics\SpritesMeta.cs" />
+    <Compile Include="Graphics\AGSSpriteSet.cs" />
+    <Compile Include="Graphics\SpriteSetHeader.cs" />
     <Compile Include="Shared\Interaction\AGSInteraction.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionCommand.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionCommandsList.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionValue.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionVariable.cs" />
-    <Compile Include="Shared\Script\AGSVirtualMachine.cs" />
+    <Compile Include="Shared\Script\AGSScriptDecoder.cs" />
+    <Compile Include="Shared\Script\Deprecated\AGSVirtualMachine.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />
     <Compile Include="Utils\AGSIdentityExtractor.cs" />
@@ -128,7 +131,9 @@
     <Compile Include="Extractors\SourceExtractor.cs" />
     <Compile Include="Utils\TextExtractor.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <None Include="app.config" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

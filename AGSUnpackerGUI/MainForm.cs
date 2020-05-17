@@ -143,7 +143,7 @@ namespace AGSUnpackerGUI
     private static void UnpackSpritesProc(object procParams)
     {
       UnpackParams p = (procParams as UnpackParams);
-      bool result = AGSSpritesCache.ExtractSprites(p.FilePath, p.TargetFolder);
+      bool result = AGSSpriteSet.UnpackSprites(p.FilePath, p.TargetFolder);
 
       p.OnUnpackFinished(result);
     }

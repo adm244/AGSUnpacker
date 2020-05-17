@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using AGSUnpackerSharp.Extractors;
+using AGSUnpackerSharp.Graphics;
+using AGSUnpackerSharp.Translation;
 
 namespace AGSUnpackerSharp
 {
@@ -13,8 +14,11 @@ namespace AGSUnpackerSharp
       {
         string filepath = args[0];
 
-        SourceExtractor extractor = SourceExtractor.Create(AGSVersion.AGS262);
-        bool result = extractor.Extract(filepath);
+        AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
+        translation.Compile(filepath + ".tra", 5934168, "Kathy Rain");
+
+        //SourceExtractor extractor = SourceExtractor.Create(AGSVersion.AGS262);
+        //bool result = extractor.Extract(filepath);
 
         /*AGSRoom room = new AGSRoom();
         room.LoadFromFile(filepath);
@@ -25,8 +29,10 @@ namespace AGSUnpackerSharp
           room.script.DumpInstructions(writer);
         }*/
 
-        /*AGSGameData dta = new AGSGameData();
-        dta.LoadFromFile(filepath);*/
+        //AGSGameData dta = new AGSGameData();
+        //dta.LoadFromFile(filepath);
+        //AGSRoom room = new AGSRoom();
+        //room.LoadFromFile(filepath);
 
         /*string[][] exports = new string[dta.scriptModules.Length][];
         for (int i = 0; i < dta.scriptModules.Length; ++i)
@@ -126,9 +132,10 @@ namespace AGSUnpackerSharp
             room.LoadFromFile(files[i]);
           }
         }*/
-        //AGSSpritesCache.ExtractSprites(filepath);
-        /*string[] files = Directory.GetFiles(filepath, "spr*");
-        AGSSpritesCache.PackSprites(files);*/
+
+        //AGSSpriteSet.UnpackSprites(args[0], args[1]);
+        //AGSSpriteSet.PackSprites(args[0], args[1]);
+        
         //AGSRoom room = new AGSRoom();
         //room.LoadFromFile(filepath);
 

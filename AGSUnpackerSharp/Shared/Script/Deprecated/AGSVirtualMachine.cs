@@ -3,7 +3,7 @@ using System.Diagnostics;
 using AGSUnpackerSharp.Extensions;
 using AGSUnpackerSharp.Utils;
 
-namespace AGSUnpackerSharp.Shared.Script
+namespace AGSUnpackerSharp.Shared.Script.Deprecated
 {
   public struct AGSInstruction
   {
@@ -28,17 +28,6 @@ namespace AGSUnpackerSharp.Shared.Script
     StringsOffset,
     FunctionOffset,
     StackOffset,
-  }
-
-  public enum AGSFixupType
-  {
-    Literal = 0,
-    GlobalData = 1,
-    Function = 2,
-    String = 3,
-    Import = 4,
-    DataData = 5,
-    Stack = 6,
   }
 
   public struct AGSArgument
@@ -434,6 +423,7 @@ namespace AGSUnpackerSharp.Shared.Script
                   {
                     case AGSArgumentType.IntConstant:
                     case AGSArgumentType.StackOffset:
+                      //FIX(adm244): get actual stack value from StackOffset
                       instruction.Arguments[arg].IntValue = value;
                       break;
 

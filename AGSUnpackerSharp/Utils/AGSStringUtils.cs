@@ -60,9 +60,11 @@ namespace AGSUnpackerSharp
 
     public static byte[] EncryptString(string str)
     {
-      byte[] buffer = new byte[str.Length];
+      //NOTE(adm244): string must be null-terminated before encryption
+      byte[] buffer = new byte[str.Length + 1];
       for (int i = 0; i < str.Length; ++i)
         buffer[i] = (byte)str[i];
+      buffer[str.Length] = 0;
 
       return EncryptString(buffer);
     }
@@ -82,6 +84,7 @@ namespace AGSUnpackerSharp
       return encoding.GetString(buffer);
     }
 
+    //TODO(adm244): consider moving Read\Write into BinaryReader\BinaryWriter extensions
     public static string ReadEncryptedString(BinaryReader r)
     {
       Int32 length = r.ReadInt32();

@@ -35,10 +35,10 @@ namespace AGSUnpackerSharp.Extensions
 
     public static void WriteFixedString(this BinaryWriter w, string str, int length)
     {
-      byte[] bytes = new byte[length];
+      char[] bytes = new char[length];
       for (int i = 0; i < str.Length; ++i)
       {
-        bytes[i] = (byte)str[i];
+        bytes[i] = str[i];
       }
 
       w.Write(bytes);

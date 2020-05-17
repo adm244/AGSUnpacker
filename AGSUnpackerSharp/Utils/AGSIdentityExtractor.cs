@@ -50,7 +50,7 @@ namespace AGSUnpackerSharp.Utils
           byte[] buffer = r.ReadBytes((int)assets[i].Size);
           using (MemoryStream stream = new MemoryStream(buffer))
           {
-            using (BinaryReader streamReader = new BinaryReader(stream))
+            using (BinaryReader streamReader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
             {
               AGSGameData dta = new AGSGameData();
               dta.LoadFromStream(streamReader);

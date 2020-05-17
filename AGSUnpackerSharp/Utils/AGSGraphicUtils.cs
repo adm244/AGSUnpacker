@@ -3,7 +3,8 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Runtime.InteropServices;
+using System.Text;
+using AGSUnpackerSharp.Extensions;
 
 namespace AGSUnpackerSharp.Utils
 {
@@ -34,6 +35,34 @@ namespace AGSUnpackerSharp.Utils
     }
   }
 
+  public enum ColorFormat
+  {
+    RGB6bits,
+    RGB8bits,
+    RGBA6bits,
+    RGBA8bits,
+  }
+
+  public static class ColorFormatExtension
+  {
+    public static int GetBytesPerPixel(this ColorFormat format)
+    {
+      switch (format)
+      {
+        case ColorFormat.RGB6bits:
+        case ColorFormat.RGB8bits:
+          return 3;
+
+        case ColorFormat.RGBA6bits:
+        case ColorFormat.RGBA8bits:
+          return 4;
+
+        default:
+          throw new NotImplementedException("Unimplemented palette format!");
+      }
+    }
+  }
+
   public static class AGSGraphicUtils
   {
     public static int ToABGR(Color color)
@@ -43,390 +72,670 @@ namespace AGSUnpackerSharp.Utils
 
     public static Color FromABGR(int abgr)
     {
-      int red = (abgr & 0xFF);
-      int green = ((abgr >> 8) & 0xFF);
-      int blue = ((abgr >> 16) & 0xFF);
+      int red   = ((abgr >>  0) & 0xFF);
+      int green = ((abgr >>  8) & 0xFF);
+      int blue  = ((abgr >> 16) & 0xFF);
       int alpha = ((abgr >> 24) & 0xFF);
 
       return Color.FromArgb(alpha, red, green, blue);
     }
 
-    public static byte[] WriteRLEData8(byte[] data)
+    public static PixelFormat ReadBitmapPixelFormat(string filepath)
     {
-      const int maxRuns = 128;
-      byte[] buffer = new byte[maxRuns];
-      int bufferPosition = 0;
+      PixelFormat format = PixelFormat.Undefined;
 
-      MemoryStream stream = new MemoryStream();
-      for (long i = 0; i < data.Length; )
+      using (FileStream file = new FileStream(filepath, FileMode.Open))
       {
-        byte value = data[i];
-
-        int blockLength = maxRuns - 1;
-        if (blockLength > (data.Length - i))
-          blockLength = (int)(data.Length - i);
-
-        int run = 1;
-        while ((run < blockLength) && (data[i + run] == value))
-          ++run;
-
-        if ((run > 1) || (bufferPosition == maxRuns) || (i == (data.Length - 1)))
+        //NOTE(adm244): is there any reason for us to use ASCII encoding here specifically?
+        using (BinaryReader reader = new BinaryReader(file, Encoding.ASCII))
         {
-          //NOTE(adm244): encode a run
-          if (bufferPosition > 0)
-          {
-            stream.WriteByte((byte)(bufferPosition - 1));
-            stream.Write(buffer, 0, bufferPosition);
-            bufferPosition = 0;
-          }
-          
-          stream.WriteByte((byte)(1 - run));
-          stream.WriteByte((byte)value);
-          i += run;
-        }
-        else
-        {
-          //NOTE(adm244): encode a sequence
-          buffer[bufferPosition] = value;
-          ++bufferPosition;
-          ++i;
+          reader.BaseStream.Seek(28, SeekOrigin.Begin);
+          UInt16 bitCount = reader.ReadUInt16();
+
+          format = BitmapExtension.GetPixelFormat(bitCount / 8);
         }
       }
 
-      return stream.ToArray();
+      return format;
     }
 
-    public static byte[] WriteRLEData16(UInt16[] data)
+    public static Bitmap ConvertToBitmap(byte[] buffer, int width, int height, int bytesPerPixel, Color[] palette)
+    {
+      PixelFormat format = BitmapExtension.GetPixelFormat(bytesPerPixel);
+      Bitmap bitmap = new Bitmap(width, height, format);
+      bitmap.SetPixels(buffer);
+
+      if (bytesPerPixel == 1)
+        bitmap.SetPalette(palette);
+
+      return bitmap;
+    }
+
+    public static byte[] ColorsToBytes(Color[] colors, ColorFormat format)
+    {
+      switch (format)
+      {
+        case ColorFormat.RGB6bits:
+        case ColorFormat.RGB8bits:
+          return ColorsToRGB(colors, format);
+
+        case ColorFormat.RGBA6bits:
+        case ColorFormat.RGBA8bits:
+          return ColorsToRGBA(colors, format);
+
+        default:
+          throw new NotImplementedException("Unimplemented palette format!");
+      }
+    }
+
+    private static byte[] ColorsToRGB(Color[] colors, ColorFormat format)
+    {
+      int bytesPerPixel = format.GetBytesPerPixel();
+      if (bytesPerPixel != 3)
+        throw new InvalidDataException("Invalid color format for RGB!");
+
+      byte[] buffer = new byte[colors.Length * bytesPerPixel];
+
+      for (int i = 0; i < colors.Length; ++i)
+      {
+        int red   = colors[i].R;
+        int green = colors[i].G;
+        int blue  = colors[i].B;
+
+        if (format == ColorFormat.RGB6bits)
+        {
+          //TODO(adm244): consider moving this into MathUtils or something
+          red   = (int)((red   / 256f) * 64f);
+          green = (int)((green / 256f) * 64f);
+          blue  = (int)((blue  / 256f) * 64f);
+        }
+
+        buffer[bytesPerPixel * i + 0] = (byte)red;
+        buffer[bytesPerPixel * i + 1] = (byte)green;
+        buffer[bytesPerPixel * i + 2] = (byte)blue;
+      }
+
+      return buffer;
+    }
+
+    private static byte[] ColorsToRGBA(Color[] colors, ColorFormat format)
+    {
+      int bytesPerPixel = format.GetBytesPerPixel();
+      if (bytesPerPixel != 4)
+        throw new InvalidDataException("Invalid color format for RGBA!");
+
+      byte[] buffer = new byte[colors.Length * bytesPerPixel];
+
+      for (int i = 0; i < colors.Length; ++i)
+      {
+        int red   = colors[i].R;
+        int green = colors[i].G;
+        int blue  = colors[i].B;
+        int alpha = colors[i].A;
+
+        if (format == ColorFormat.RGBA6bits)
+        {
+          red   = (int)((red   / 256f) * 64f);
+          green = (int)((green / 256f) * 64f);
+          blue  = (int)((blue  / 256f) * 64f);
+          alpha = (int)((alpha / 256f) * 64f);
+        }
+
+        buffer[bytesPerPixel * i + 0] = (byte)red;
+        buffer[bytesPerPixel * i + 1] = (byte)green;
+        buffer[bytesPerPixel * i + 2] = (byte)blue;
+        buffer[bytesPerPixel * i + 3] = (byte)alpha;
+      }
+
+      return buffer;
+    }
+
+    public static Color[] BytesToColors(byte[] buffer, ColorFormat format)
+    {
+      switch (format)
+      {
+        case ColorFormat.RGB6bits:
+        case ColorFormat.RGB8bits:
+          return RGBToColors(buffer, format);
+
+        case ColorFormat.RGBA6bits:
+        case ColorFormat.RGBA8bits:
+          return RGBAToColors(buffer, format);
+
+        default:
+          throw new NotImplementedException("Unimplemented palette format!");
+      }
+    }
+
+    private static Color[] RGBToColors(byte[] buffer, ColorFormat format)
+    {
+      int bytesPerPixel = format.GetBytesPerPixel();
+      if (bytesPerPixel != 3)
+        throw new InvalidDataException("Invalid color format for RGB!");
+
+      int count = (buffer.Length / bytesPerPixel);
+      Color[] colors = new Color[count];
+
+      for (int i = 0; i < colors.Length; ++i)
+      {
+        int red   = buffer[bytesPerPixel * i + 0];
+        int green = buffer[bytesPerPixel * i + 1];
+        int blue  = buffer[bytesPerPixel * i + 2];
+
+        if (format == ColorFormat.RGB6bits)
+        {
+          blue  = (byte)((blue  / 64f) * 256f);
+          green = (byte)((green / 64f) * 256f);
+          red   = (byte)((red   / 64f) * 256f);
+        }
+
+        colors[i] = Color.FromArgb(red, green, blue);
+      }
+
+      return colors;
+    }
+
+    private static Color[] RGBAToColors(byte[] buffer, ColorFormat format)
+    {
+      int bytesPerPixel = format.GetBytesPerPixel();
+      if (bytesPerPixel != 4)
+        throw new InvalidDataException("Invalid color format for RGBA!");
+
+      int count = (buffer.Length / bytesPerPixel);
+      Color[] colors = new Color[count];
+
+      for (int i = 0; i < colors.Length; ++i)
+      {
+        int red   = buffer[bytesPerPixel * i + 0];
+        int green = buffer[bytesPerPixel * i + 1];
+        int blue  = buffer[bytesPerPixel * i + 2];
+        int alpha = buffer[bytesPerPixel * i + 3];
+
+        if (format == ColorFormat.RGBA6bits)
+        {
+          red   = (int)((red   / 64f) * 256f);
+          green = (int)((green / 64f) * 256f);
+          blue  = (int)((blue  / 64f) * 256f);
+          alpha = (int)((alpha / 64f) * 256f);
+        }
+
+        colors[i] = Color.FromArgb(alpha, red, green, blue);
+      }
+
+      return colors;
+    }
+
+    public static Color[] ReadPalette(BinaryReader reader, ColorFormat format)
+    {
+      //TODO(adm244): investigate if a palette can have a different colors count in it
+      int size = (256 * format.GetBytesPerPixel());
+      byte[] buffer = reader.ReadBytes(size);
+
+      return AGSGraphicUtils.BytesToColors(buffer, format);
+    }
+
+    public static void WritePalette(BinaryWriter writer, Color[] palette, ColorFormat format)
+    {
+      byte[] buffer = ColorsToBytes(palette, format);
+      writer.Write((byte[])buffer);
+    }
+
+    public static Bitmap ReadAllegroImage(BinaryReader reader)
+    {
+      Int16 bytesPerPixel = 1;
+      Int16 width = reader.ReadInt16();
+      Int16 height = reader.ReadInt16();
+
+      byte[] buffer = ReadAllegro(reader, width, height);
+      Debug.Assert(buffer.Length == (width * height * bytesPerPixel));
+
+      Color[] palette = ReadPalette(reader, ColorFormat.RGB6bits);
+      return ConvertToBitmap(buffer, width, height, bytesPerPixel, palette);
+    }
+
+    public static void WriteAllegroImage(BinaryWriter writer, Bitmap bitmap)
+    {
+      writer.Write((Int16)bitmap.Width);
+      writer.Write((Int16)bitmap.Height);
+
+      byte[] pixels = bitmap.GetPixels();
+      WriteAllegro(writer, pixels, bitmap.Width, bitmap.Height);
+
+      byte[] palette = ColorsToBytes(bitmap.Palette.Entries, ColorFormat.RGB6bits);
+      writer.Write((byte[])palette);
+    }
+
+    public static Bitmap ReadLZ77Image(BinaryReader reader, int bytesPerPixel)
+    {
+      byte[] bufferPalette = reader.ReadBytes(256 * sizeof(UInt32));
+      Int32 sizeUncompressed = reader.ReadInt32();
+      Int32 sizeCompressed = reader.ReadInt32();
+
+      int width;
+      int height;
+      byte[] bufferPixels = ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out width, out height);
+
+      ColorFormat paletteFormat = ColorFormat.RGBA8bits;
+      //NOTE(adm244): AGS is using only 6-bits per channel for an indexed image,
+      // so we have to convert it to full 8-bit range
+      if (bytesPerPixel == 1)
+        paletteFormat = ColorFormat.RGBA6bits;
+
+      Color[] palette = BytesToColors(bufferPalette, paletteFormat);
+      Bitmap bitmap = ConvertToBitmap(bufferPixels, width, height, bytesPerPixel, palette);
+
+      //NOTE(adm244): since AGS doesn't use alpha-channel for room backgrounds it is nullyfied
+      // and we have to get rid of it by converting image into 24-bit pixel format (no alpha channel)
+      bitmap = bitmap.Convert(PixelFormat.Format24bppRgb);
+
+      return bitmap;
+    }
+
+    public static void WriteLZ77Image(BinaryWriter writer, Bitmap bitmap, int bytesPerPixel)
+    {
+      //FIX(adm244): 24-bit bitmaps are all messed up !!!
+      //TODO(adm244): check if that's still true or I just forgot to remove this scary FIX
+
+      byte[] palette = ColorsToBytes(bitmap.Palette.Entries, ColorFormat.RGBA6bits);
+      writer.Write((byte[])palette);
+
+      //NOTE(adm244): convert bitmap to match requested bytesPerPixel
+      if (bitmap.GetBytesPerPixel() != bytesPerPixel)
+        bitmap.Convert(BitmapExtension.GetPixelFormat(bytesPerPixel));
+
+      byte[] pixels = bitmap.GetPixels();
+      Debug.Assert(pixels.Length == (bitmap.Width * bitmap.Height * bytesPerPixel));
+
+      byte[] buffer = AppendImageSize(bitmap.Width, bitmap.Height, bytesPerPixel, pixels);
+      byte[] bufferCompressed = LZ77Compress(buffer);
+
+      writer.Write((UInt32)buffer.Length);
+      writer.Write((UInt32)bufferCompressed.Length);
+      writer.Write((byte[])bufferCompressed);
+    }
+
+    public static byte[] WriteRLE8Rows(byte[] buffer, int width, int height)
+    {
+      using (MemoryStream memoryStream = new MemoryStream(buffer.Length))
+      {
+        for (int y = 0; y < height; ++y)
+        {
+          byte[] row = new byte[width];
+          Buffer.BlockCopy(buffer, y * width, row, 0, width);
+
+          byte[] bufferCompressed = AGSGraphicUtils.WriteRLEData8(row);
+          memoryStream.Write(bufferCompressed, 0, bufferCompressed.Length);
+        }
+
+        return memoryStream.ToArray();
+      }
+    }
+
+    public static byte[] WriteRLE16Rows(byte[] buffer, int width, int height)
+    {
+      using (MemoryStream memoryStream = new MemoryStream(buffer.Length))
+      {
+        for (int y = 0; y < height; ++y)
+        {
+          UInt16[] row = new UInt16[width];
+          Buffer.BlockCopy(buffer, y * width * 2, row, 0, width * 2);
+
+          byte[] bufferCompressed = AGSGraphicUtils.WriteRLEData16(row);
+          memoryStream.Write(bufferCompressed, 0, bufferCompressed.Length);
+        }
+
+        return memoryStream.ToArray();
+      }
+    }
+
+    public static byte[] WriteRLE32Rows(byte[] buffer, int width, int height)
+    {
+      using (MemoryStream memoryStream = new MemoryStream(buffer.Length))
+      {
+        for (int y = 0; y < height; ++y)
+        {
+          UInt32[] row = new UInt32[width];
+          Buffer.BlockCopy(buffer, y * width * 4, row, 0, width * 4);
+
+          byte[] bufferCompressed = AGSGraphicUtils.WriteRLEData32(row);
+          memoryStream.Write(bufferCompressed, 0, bufferCompressed.Length);
+        }
+
+        return memoryStream.ToArray();
+      }
+    }
+
+    // compression related stuff below
+    //TODO(adm244): move compression related methods into AGSCompressionUtils
+
+    public static byte[] ReadRLE8(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    {
+      byte[] buffer = new byte[sizeUncompressed];
+      int positionImage = 0;
+
+      long positionBase = reader.BaseStream.Position;
+      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      {
+        sbyte control = (sbyte)reader.ReadByte();
+        if (control == -128)
+          control = 0;
+
+        if (control < 0)
+        {
+          //NOTE(adm244): literal run
+          int runCount = (1 - control);
+          byte value = reader.ReadByte();
+          for (int j = 0; j < runCount; ++j)
+          {
+            buffer[positionImage] = value;
+            ++positionImage;
+          }
+        }
+        else
+        {
+          //NOTE(adm244): literal sequence
+          int literalsCount = (control + 1);
+          for (int j = 0; j < literalsCount; ++j)
+          {
+            buffer[positionImage] = reader.ReadByte();
+            ++positionImage;
+          }
+        }
+      }
+
+      return buffer;
+    }
+
+    public static byte[] ReadRLE16(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    {
+      byte[] buffer = new byte[sizeUncompressed];
+      int positionImage = 0;
+
+      long positionBase = reader.BaseStream.Position;
+      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      {
+        sbyte control = (sbyte)reader.ReadByte();
+        if (control == -128)
+          control = 0;
+
+        if (control < 0)
+        {
+          //NOTE(adm244): literal run
+          int runCount = (1 - control);
+          UInt16 value = reader.ReadUInt16();
+          for (int j = 0; j < runCount; ++j)
+          {
+            buffer[positionImage + 0] = (byte)(value >> 0);
+            buffer[positionImage + 1] = (byte)(value >> 8);
+            positionImage += 2;
+          }
+        }
+        else
+        {
+          //NOTE(adm244): literal sequence
+          int literalsCount = (control + 1);
+          for (int j = 0; j < literalsCount; ++j)
+          {
+            UInt16 value = reader.ReadUInt16();
+            buffer[positionImage + 0] = (byte)(value >> 0);
+            buffer[positionImage + 1] = (byte)(value >> 8);
+            positionImage += 2;
+          }
+        }
+      }
+
+      return buffer;
+    }
+
+    public static byte[] ReadRLE32(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    {
+      byte[] buffer = new byte[sizeUncompressed];
+      int positionImage = 0;
+
+      long positionBase = reader.BaseStream.Position;
+      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      {
+        sbyte control = (sbyte)reader.ReadByte();
+        if (control == -128)
+          control = 0;
+
+        if (control < 0)
+        {
+          //NOTE(adm244): literal run
+          int runCount = (1 - control);
+          UInt32 value = reader.ReadUInt32();
+          for (int j = 0; j < runCount; ++j)
+          {
+            buffer[positionImage + 0] = (byte)(value >> 0);
+            buffer[positionImage + 1] = (byte)(value >> 8);
+            buffer[positionImage + 2] = (byte)(value >> 16);
+            buffer[positionImage + 3] = (byte)(value >> 24);
+            positionImage += 4;
+          }
+        }
+        else
+        {
+          //NOTE(adm244): literal sequence
+          int literalsCount = (control + 1);
+          for (int j = 0; j < literalsCount; ++j)
+          {
+            UInt32 value = reader.ReadUInt32();
+            buffer[positionImage + 0] = (byte)(value >> 0);
+            buffer[positionImage + 1] = (byte)(value >> 8);
+            buffer[positionImage + 2] = (byte)(value >> 16);
+            buffer[positionImage + 3] = (byte)(value >> 24);
+            positionImage += 4;
+          }
+        }
+      }
+
+      return buffer;
+    }
+
+    public static byte[] WriteRLEData8(byte[] buffer)
     {
       const int maxRuns = 128;
-      UInt16[] buffer = new UInt16[maxRuns];
+      byte[] bufferCompressed = new byte[maxRuns];
       int bufferPosition = 0;
 
-      MemoryStream stream = new MemoryStream();
-      for (long i = 0; i < data.Length; )
+      using (MemoryStream stream = new MemoryStream())
       {
-        UInt16 value = data[i];
-
-        int blockLength = maxRuns - 1;
-        if (blockLength > (data.Length - i))
-          blockLength = (int)(data.Length - i);
-
-        int run = 1;
-        while ((run < blockLength) && (data[i + run] == value))
-          ++run;
-
-        if ((run > 1) || (bufferPosition == maxRuns) || (i == (data.Length - 1)))
+        for (long i = 0; i < buffer.Length; )
         {
-          //NOTE(adm244): encode a run
-          if (bufferPosition > 0)
+          byte value = buffer[i];
+
+          int blockLength = (maxRuns - 1);
+          if (blockLength > (buffer.Length - i))
+            blockLength = (int)(buffer.Length - i);
+
+          int run = 1;
+          while ((run < blockLength) && (buffer[i + run] == value))
+            ++run;
+
+          if ((run > 1) || (bufferPosition == maxRuns) || (i == (buffer.Length - 1)))
           {
-            stream.WriteByte((byte)(bufferPosition - 1));
-            for (int j = 0; j < bufferPosition; ++j)
+            //NOTE(adm244): encode a run
+            if (bufferPosition > 0)
             {
-              stream.WriteByte((byte)buffer[j]);
-              stream.WriteByte((byte)(buffer[j] >> 8));
+              stream.WriteByte((byte)(bufferPosition - 1));
+              stream.Write(bufferCompressed, 0, bufferPosition);
+              bufferPosition = 0;
             }
 
-            bufferPosition = 0;
-          }
-          
-          stream.WriteByte((byte)(1 - run));
-          stream.WriteByte((byte)value);
-          stream.WriteByte((byte)(value >> 8));
-          i += run;
-        }
-        else
-        {
-          //NOTE(adm244): encode a sequence
-          buffer[bufferPosition] = value;
-          ++bufferPosition;
-          ++i;
-        }
-      }
-
-      return stream.ToArray();
-    }
-
-    public static byte[] WriteRLEData32(UInt32[] data)
-    {
-      const int maxRuns = 128;
-      UInt32[] buffer = new UInt32[maxRuns];
-      int bufferPosition = 0;
-
-      MemoryStream stream = new MemoryStream();
-      for (long i = 0; i < data.Length; )
-      {
-        UInt32 value = data[i];
-
-        int blockLength = maxRuns - 1;
-        if (blockLength > (data.Length - i))
-          blockLength = (int)(data.Length - i);
-
-        int run = 1;
-        while ((run < blockLength) && (data[i + run] == value))
-          ++run;
-
-        if ((run > 1) || (bufferPosition == maxRuns) || (i == (data.Length - 1)))
-        {
-          //NOTE(adm244): encode a run
-          if (bufferPosition > 0)
-          {
-            stream.WriteByte((byte)(bufferPosition - 1));
-            for (int j = 0; j < bufferPosition; ++j)
-            {
-              stream.WriteByte((byte)buffer[j]);
-              stream.WriteByte((byte)(buffer[j] >> 8));
-              stream.WriteByte((byte)(buffer[j] >> 16));
-              stream.WriteByte((byte)(buffer[j] >> 24));
-            }
-
-            bufferPosition = 0;
-          }
-          
-          stream.WriteByte((byte)(1 - run));
-          stream.WriteByte((byte)value);
-          stream.WriteByte((byte)(value >> 8));
-          stream.WriteByte((byte)(value >> 16));
-          stream.WriteByte((byte)(value >> 24));
-          i += run;
-        }
-        else
-        {
-          //NOTE(adm244): encode a sequence
-          buffer[bufferPosition] = value;
-          ++bufferPosition;
-          ++i;
-        }
-      }
-
-      return stream.ToArray();
-    }
-
-    public static byte[] ReadRLEData8(BinaryReader r, long compressedSize, int uncompressedSize)
-    {
-      byte[] image = new byte[uncompressedSize];
-      int imagePosition = 0;
-
-      long dataBase = r.BaseStream.Position;
-      for (long n = 0; n < compressedSize; n = (r.BaseStream.Position - dataBase))
-      {
-        SByte control = (SByte)r.ReadByte();
-        if (control == -128)
-          control = 0;
-
-        if (control < 0)
-        {
-          //NOTE(adm244): literal run
-          int runCount = 1 - control;
-          byte value = r.ReadByte();
-          for (int j = 0; j < runCount; ++j)
-          {
-            image[imagePosition] = value;
-            ++imagePosition;
-          }
-        }
-        else
-        {
-          //NOTE(adm244): literal sequence
-          int literalsCount = control + 1;
-          for (int j = 0; j < literalsCount; ++j)
-          {
-            image[imagePosition] = r.ReadByte();
-            ++imagePosition;
-          }
-        }
-      }
-
-      return image;
-    }
-
-    public static byte[] ReadRLEData16(BinaryReader r, long compressedSize, int uncompressedSize)
-    {
-      byte[] image = new byte[uncompressedSize];
-      int imagePosition = 0;
-
-      long dataBase = r.BaseStream.Position;
-      for (long n = 0; n < compressedSize; n = (r.BaseStream.Position - dataBase))
-      {
-        SByte control = (SByte)r.ReadByte();
-        if (control == -128)
-          control = 0;
-
-        if (control < 0)
-        {
-          //NOTE(adm244): literal run
-          int runCount = 1 - control;
-          UInt16 value = r.ReadUInt16();
-          for (int j = 0; j < runCount; ++j)
-          {
-            image[imagePosition] = (byte)(value >> 0);
-            image[imagePosition + 1] = (byte)(value >> 8);
-            imagePosition += 2;
-          }
-        }
-        else
-        {
-          //NOTE(adm244): literal sequence
-          int literalsCount = control + 1;
-          for (int j = 0; j < literalsCount; ++j)
-          {
-            UInt16 value = r.ReadUInt16();
-            image[imagePosition] = (byte)(value >> 0);
-            image[imagePosition + 1] = (byte)(value >> 8);
-            imagePosition += 2;
-          }
-        }
-      }
-
-      return image;
-    }
-
-    public static byte[] ReadRLEData32(BinaryReader r, long compressedSize, int uncompressedSize)
-    {
-      byte[] image = new byte[uncompressedSize];
-      int imagePosition = 0;
-
-      long dataBase = r.BaseStream.Position;
-      for (long n = 0; n < compressedSize; n = (r.BaseStream.Position - dataBase))
-      {
-        SByte control = (SByte)r.ReadByte();
-        if (control == -128)
-          control = 0;
-
-        if (control < 0)
-        {
-          //NOTE(adm244): literal run
-          int runCount = 1 - control;
-          UInt32 value = r.ReadUInt32();
-          for (int j = 0; j < runCount; ++j)
-          {
-            image[imagePosition] = (byte)(value >> 0);
-            image[imagePosition + 1] = (byte)(value >> 8);
-            image[imagePosition + 2] = (byte)(value >> 16);
-            image[imagePosition + 3] = (byte)(value >> 24);
-            imagePosition += 4;
-          }
-        }
-        else
-        {
-          //NOTE(adm244): literal sequence
-          int literalsCount = control + 1;
-          for (int j = 0; j < literalsCount; ++j)
-          {
-            UInt32 value = r.ReadUInt32();
-            image[imagePosition] = (byte)(value >> 0);
-            image[imagePosition + 1] = (byte)(value >> 8);
-            image[imagePosition + 2] = (byte)(value >> 16);
-            image[imagePosition + 3] = (byte)(value >> 24);
-            imagePosition += 4;
-          }
-        }
-      }
-
-      return image;
-    }
-
-    public static Bitmap ParseAllegroCompressedImage(BinaryReader r)
-    {
-      Int16 bpp = 1;
-      Int16 width = r.ReadInt16();
-      Int16 height = r.ReadInt16();
-
-      MemoryStream stream = new MemoryStream();
-      for (int y = 0; y < height; ++y)
-      {
-        int pixelsRead = 0;
-        while (pixelsRead < width)
-        {
-          sbyte index = (sbyte)r.ReadByte();
-          if (index == -128) index = 0;
-
-          if (index < 0)
-          {
-            int count = (1 - index);
-            byte value = r.ReadByte();
-
-            while ((count--) > 0)
-              stream.WriteByte(value);
-
-            pixelsRead += (1 - index);
+            stream.WriteByte((byte)(1 - run));
+            stream.WriteByte((byte)(value));
+            i += run;
           }
           else
           {
-            byte[] buffer = r.ReadBytes(index + 1);
-            stream.Write(buffer, 0, buffer.Length);
-            pixelsRead += (index + 1);
+            //NOTE(adm244): encode a sequence
+            bufferCompressed[bufferPosition] = value;
+            ++bufferPosition;
+            ++i;
           }
         }
+
+        return stream.ToArray();
       }
-
-      byte[] data = stream.ToArray();
-      Debug.Assert(data.Length == (width * height * bpp));
-
-      byte[] palette = r.ReadBytes(256 * 3);
-
-      Int32[] palette32 = new Int32[256];
-      for (int i = 0; i < palette32.Length; ++i)
-      {
-        //TODO(adm244): check if that's correct
-        palette32[i] = (palette[i * 3 + 2] << 16) | (palette[i * 3 + 1] << 8) | (palette[i * 3 + 0]);
-      }
-
-      return ConvertToBitmap(data, width, height, bpp, palette32, true);
     }
 
-    public static void WriteAllegroCompressedImage(BinaryWriter w, Bitmap image)
+    public static byte[] WriteRLEData16(UInt16[] buffer)
     {
-      w.Write((Int16)image.Width);
-      w.Write((Int16)image.Height);
+      const int maxRuns = 128;
+      UInt16[] bufferCompressed = new UInt16[maxRuns];
+      int bufferPosition = 0;
 
-      byte[] pixels = ConvertToRaw(image);
-      for (int y = 0; y < image.Height; ++y)
+      using (MemoryStream stream = new MemoryStream())
       {
-        byte[] pixelsRow = new byte[image.Width];
-        Buffer.BlockCopy(pixels, y * image.Width, pixelsRow, 0, image.Width);
-
-        byte[] data = WriteRLEData8(pixelsRow);
-        w.Write(data, 0, data.Length);
-      }
-
-      byte[] palette = new byte[256 * 3];
-      if (image.PixelFormat == PixelFormat.Format8bppIndexed)
-      {
-        Debug.Assert(image.Palette.Entries.Length == 256);
-        for (int i = 0; i < image.Palette.Entries.Length; ++i)
+        for (long i = 0; i < buffer.Length; )
         {
-          palette[3 * i + 0] = image.Palette.Entries[i].R;
-          palette[3 * i + 1] = image.Palette.Entries[i].G;
-          palette[3 * i + 2] = image.Palette.Entries[i].B;
-        }
-      }
+          UInt16 value = buffer[i];
 
-      w.Write(palette);
+          int blockLength = (maxRuns - 1);
+          if (blockLength > (buffer.Length - i))
+            blockLength = (int)(buffer.Length - i);
+
+          int run = 1;
+          while ((run < blockLength) && (buffer[i + run] == value))
+            ++run;
+
+          if ((run > 1) || (bufferPosition == maxRuns) || (i == (buffer.Length - 1)))
+          {
+            //NOTE(adm244): encode a run
+            if (bufferPosition > 0)
+            {
+              stream.WriteByte((byte)(bufferPosition - 1));
+              for (int j = 0; j < bufferPosition; ++j)
+              {
+                stream.WriteByte((byte)(bufferCompressed[j]));
+                stream.WriteByte((byte)(bufferCompressed[j] >> 8));
+              }
+              bufferPosition = 0;
+            }
+
+            stream.WriteByte((byte)(1 - run));
+            stream.WriteByte((byte)(value));
+            stream.WriteByte((byte)(value >> 8));
+            i += run;
+          }
+          else
+          {
+            //NOTE(adm244): encode a sequence
+            bufferCompressed[bufferPosition] = value;
+            ++bufferPosition;
+            ++i;
+          }
+        }
+
+        return stream.ToArray();
+      }
     }
 
-    public static Bitmap ParseLZ77Image(BinaryReader r, int bpp)
+    public static byte[] WriteRLEData32(UInt32[] buffer)
     {
-      // skip palette
-      //r.BaseStream.Seek(256 * sizeof(Int32), SeekOrigin.Current);
-      Int32[] palette = r.ReadArrayInt32(256);
+      const int maxRuns = 128;
+      UInt32[] bufferCompressed = new UInt32[maxRuns];
+      int bufferPosition = 0;
 
-      Int32 uncompressed_size = r.ReadInt32();
-      Int32 compressed_size = r.ReadInt32();
+      using (MemoryStream stream = new MemoryStream())
+      {
+        for (long i = 0; i < buffer.Length; )
+        {
+          UInt32 value = buffer[i];
 
-      //TODO(adm244): parse background data
+          int blockLength = (maxRuns - 1);
+          if (blockLength > (buffer.Length - i))
+            blockLength = (int)(buffer.Length - i);
 
-      // skip lzw compressed image
-      //r.BaseStream.Seek(picture_data_size, SeekOrigin.Current);
-      //byte[] rawBackground = r.ReadBytes(picture_data_size);
+          int run = 1;
+          while ((run < blockLength) && (buffer[i + run] == value))
+            ++run;
 
-      /*FileStream fs = new FileStream("room_background", FileMode.Create);
-      BinaryWriter w = new BinaryWriter(fs, System.Text.Encoding.GetEncoding(1252));
-      w.Write((UInt32)picture_maxsize);
-      w.Write((UInt32)picture_data_size);
-      w.Write(rawBackground);
-      w.Close();*/
+          if ((run > 1) || (bufferPosition == maxRuns) || (i == (buffer.Length - 1)))
+          {
+            //NOTE(adm244): encode a run
+            if (bufferPosition > 0)
+            {
+              stream.WriteByte((byte)(bufferPosition - 1));
+              for (int j = 0; j < bufferPosition; ++j)
+              {
+                stream.WriteByte((byte)(bufferCompressed[j]));
+                stream.WriteByte((byte)(bufferCompressed[j] >> 8));
+                stream.WriteByte((byte)(bufferCompressed[j] >> 16));
+                stream.WriteByte((byte)(bufferCompressed[j] >> 24));
+              }
+              bufferPosition = 0;
+            }
 
+            stream.WriteByte((byte)(1 - run));
+            stream.WriteByte((byte)(value));
+            stream.WriteByte((byte)(value >> 8));
+            stream.WriteByte((byte)(value >> 16));
+            stream.WriteByte((byte)(value >> 24));
+            i += run;
+          }
+          else
+          {
+            //NOTE(adm244): encode a sequence
+            bufferCompressed[bufferPosition] = value;
+            ++bufferPosition;
+            ++i;
+          }
+        }
+
+        return stream.ToArray();
+      }
+    }
+
+    private static byte[] ReadAllegro(BinaryReader reader, int width, int height)
+    {
+      using (MemoryStream stream = new MemoryStream())
+      {
+        for (int y = 0; y < height; ++y)
+        {
+          int pixelsRead = 0;
+          while (pixelsRead < width)
+          {
+            sbyte index = (sbyte)reader.ReadByte();
+            if (index == -128) index = 0;
+
+            if (index < 0)
+            {
+              int count = (1 - index);
+              byte value = reader.ReadByte();
+
+              while ((count--) > 0)
+                stream.WriteByte(value);
+
+              pixelsRead += (1 - index);
+            }
+            else
+            {
+              byte[] buffer = reader.ReadBytes(index + 1);
+              stream.Write(buffer, 0, buffer.Length);
+              pixelsRead += (index + 1);
+            }
+          }
+        }
+
+        return stream.ToArray();
+      }
+    }
+
+    private static void WriteAllegro(BinaryWriter writer, byte[] buffer, int width, int height)
+    {
+      for (int y = 0; y < height; ++y)
+      {
+        byte[] row = new byte[width];
+        Buffer.BlockCopy(buffer, y * width, row, 0, width);
+
+        byte[] bufferCompressed = WriteRLEData8(row);
+        writer.Write(bufferCompressed, 0, bufferCompressed.Length);
+      }
+    }
+
+    private static byte[] ReadLZ77(BinaryReader reader, long sizeUncompressed, int bytesPerPixel, out int width, out int height)
+    {
       /*
        * AGS background image decompression algorithm:
        * 
@@ -470,26 +779,26 @@ namespace AGSUnpackerSharp.Utils
        * 
        */
 
-      byte[] output = new byte[uncompressed_size];
-      int output_pos = 0;
+      byte[] output = new byte[sizeUncompressed];
+      long output_pos = 0;
 
-      while (output_pos < uncompressed_size)
+      while (output_pos < sizeUncompressed)
       {
-        byte control = r.ReadByte();
+        byte control = reader.ReadByte();
         for (int mask = 1; (mask & 0xFF) != 0; mask <<= 1)
         {
           if ((control & mask) == 0)
           {
-            output[output_pos] = r.ReadByte();
+            output[output_pos] = reader.ReadByte();
             output_pos++;
           }
           else
           {
-            UInt16 runlength = r.ReadUInt16();
+            UInt16 runlength = reader.ReadUInt16();
             UInt16 sequence_start_offset = (UInt16)(runlength & 0x0FFF);
             byte sequence_length = (byte)((runlength >> 12) + 3);
 
-            int sequence_pos = output_pos - sequence_start_offset - 1;
+            long sequence_pos = output_pos - sequence_start_offset - 1;
             for (int i = 0; i < sequence_length; ++i)
             {
               output[output_pos] = output[sequence_pos];
@@ -498,119 +807,29 @@ namespace AGSUnpackerSharp.Utils
             }
           }
 
-          if (output_pos >= uncompressed_size)
+          if (output_pos >= sizeUncompressed)
             break;
         }
       }
 
-      /*FileStream fs = new FileStream("room_background_decompressed", FileMode.Create);
-      BinaryWriter w = new BinaryWriter(fs, System.Text.Encoding.GetEncoding(1252));
-      w.Write(output);
-      w.Close();*/
-
-      //return new LZWImage(picture_maxsize, picture_data_size, rawBackground);
-
       //TODO(adm244): get from DTA info
-      int width = ((output[3] << 24) | (output[2] << 16) | (output[1] << 8) | output[0]) / bpp;
-      int height = ((output[7] << 24) | (output[6] << 16) | (output[5] << 8) | output[4]);
-
-      //bitmap.Save("room_background.bmp", ImageFormat.Bmp);
+      //TODO(adm244): try to remember what this TODO means...
+      //TODO(adm244): consider using a utils function to convert from a byte buffer to int32
+      width = ((output[3] << 24) | (output[2] << 16) | (output[1] << 8) | output[0]) / bytesPerPixel;
+      height = ((output[7] << 24) | (output[6] << 16) | (output[5] << 8) | output[4]);
 
       byte[] pixels = new byte[output.Length - 8];
       Array.Copy(output, 8, pixels, 0, pixels.Length);
 
-      Bitmap bitmap = ConvertToBitmap(pixels, width, height, bpp, palette, (bpp == 1));
-
-      if (bpp == 4)
-      {
-        //NOTE(adm244): since AGS doesn't use alpha-channel for room background it is nullyfied
-        // and we have to get rid of it by converting image into 24-bit pixel format
-        return bitmap.Clone(new Rectangle(0, 0, bitmap.Width, bitmap.Height), PixelFormat.Format24bppRgb);
-      }
-
-      return bitmap;
-    }
-
-    public static Bitmap ConvertToBitmap(byte[] data, int width, int height, int bpp, Int32[] palette, bool convertTo8bit)
-    {
-      //TODO(adm244): pick according to bpp
-      //PixelFormat format = PixelFormat.Format32bppArgb;
-      PixelFormat format = GetPixelFormat(bpp);
-
-      Bitmap bitmap = new Bitmap(width, height, format);
-      BitmapData lockData = bitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.WriteOnly, format);
-
-      /*byte[] rawData = new byte[data.Length - 8];
-      Array.Copy(data, 8, rawData, 0, rawData.Length);*/
-
-      IntPtr p = lockData.Scan0;
-      for (int row = 0; row < height; ++row)
-      {
-        Marshal.Copy(data, row * width * bpp, p, width * bpp);
-        p = new IntPtr(p.ToInt64() + lockData.Stride);
-      }
-
-      bitmap.UnlockBits(lockData);
-
-      if ((bpp == 1) && (palette != null))
-      {
-        Color[] paletteColors = new Color[256];
-        for (int i = 0; i < paletteColors.Length; ++i)
-        {
-          int abgr = palette[i];
-
-          int red = (abgr & 0xFF);
-          int green = ((abgr >> 8) & 0xFF);
-          int blue = ((abgr >> 16) & 0xFF);
-          int alpha = ((abgr >> 24) & 0xFF);
-
-          if (convertTo8bit)
-          {
-            //NOTE(adm244): AGS is using only 6-bits per channel, so we have to convert it to full 8-bit range
-            blue = (byte)((blue / 64f) * 256f);
-            green = (byte)((green / 64f) * 256f);
-            red = (byte)((red / 64f) * 256f);
-          }
-
-          paletteColors[i] = Color.FromArgb(red, green, blue);
-        }
-
-        ColorPalette bitmapPalette = bitmap.Palette;
-        for (int j = 0; j < bitmapPalette.Entries.Length; ++j)
-        {
-          bitmapPalette.Entries[j] = paletteColors[j];
-        }
-        bitmap.Palette = bitmapPalette;
-      }
-
-      return bitmap;
-    }
-
-    public static byte[] ConvertToRaw(Bitmap image)
-    {
-      int width = image.Width;
-      int height = image.Height;
-      int bpp = GetBytesPerPixel(image);
-
-      byte[] pixels = new byte[width * height * bpp];
-
-      BitmapData lockData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadOnly, image.PixelFormat);
-      IntPtr p = lockData.Scan0;
-      for (int row = 0; row < height; ++row)
-      {
-        Marshal.Copy(p, pixels, row * width * bpp, width * bpp);
-        p = new IntPtr(p.ToInt64() + lockData.Stride);
-      }
-      image.UnlockBits(lockData);
-
       return pixels;
     }
 
-    private static byte[] AppendImageSize(int width, int height, int bpp, byte[] pixels)
+    //TODO(adm244): this method looks suspicious, investigate
+    private static byte[] AppendImageSize(int width, int height, int bytesPerPixel, byte[] pixels)
     {
       byte[] rawData = new byte[pixels.Length + 8];
 
-      int newWidth = width * bpp;
+      int newWidth = width * bytesPerPixel;
       rawData[0] = (byte)(newWidth);
       rawData[1] = (byte)(newWidth >> 8);
       rawData[2] = (byte)(newWidth >> 16);
@@ -628,243 +847,127 @@ namespace AGSUnpackerSharp.Utils
       return rawData;
     }
 
-    private static PixelFormat GetPixelFormat(int bpp)
+    //NOTE(adm244): it performs worse than the original (i.e. low speed) but
+    // the file size is actually smaller since we don't interrupt the sequence
+    private static byte[] LZ77Compress(byte[] buffer)
     {
-      PixelFormat format = PixelFormat.Undefined;
-      switch (bpp)
+      using (MemoryStream stream = new MemoryStream(buffer.Length))
       {
-        case 1:
-          format = PixelFormat.Format8bppIndexed;
-          break;
-        case 2:
-          format = PixelFormat.Format16bppRgb565;
-          break;
-        case 3:
-          format = PixelFormat.Format24bppRgb;
-          break;
-        case 4:
-          format = PixelFormat.Format32bppArgb;
-          break;
+        const long LookbackSize = 4095;
+        const byte LookbackSequenceLength = 18;
+        const byte ElementsSize = 8;
 
-        default:
-          Debug.Assert(false);
-          break;
-      }
+        Element[] elements = new Element[ElementsSize];
+        byte elementsCount = 0;
 
-      return format;
-    }
-
-    public static int GetBytesPerPixel(Bitmap image)
-    {
-      int bpp = -1;
-      switch (image.PixelFormat)
-      {
-        case PixelFormat.Format8bppIndexed:
-          bpp = 1;
-          break;
-        case PixelFormat.Format16bppRgb565:
-          bpp = 2;
-          break;
-        case PixelFormat.Format24bppRgb:
-          bpp = 3;
-          break;
-        case PixelFormat.Format32bppRgb:
-        case PixelFormat.Format32bppArgb:
-          bpp = 4;
-          break;
-
-        default:
-          Debug.Assert(false);
-          break;
-      }
-
-      return bpp;
-    }
-
-    public static void WriteLZ77Image(BinaryWriter w, Bitmap image, int bpp, bool convertTo6bit)
-    {
-      /*w.Write((Int32)image.picture_maxsize);
-      w.Write((Int32)image.picture_data_size);
-      w.Write(image.rawBackground);*/
-
-      //FIX(adm244): 24-bit bitmaps are all messed up !!!
-
-      int image_bpp = GetBytesPerPixel(image);
-      if (image_bpp != bpp)
-      {
-        //NOTE(adm244): convert background image to room background format
-        PixelFormat newFormat = GetPixelFormat(bpp);
-        image = image.Clone(new Rectangle(0, 0, image.Width, image.Height), newFormat);
-        /*Bitmap newImage = new Bitmap(image.Width, image.Height, newFormat);
-
-        BitmapData lockData1 = newImage.LockBits(new Rectangle(0, 0, newImage.Width, newImage.Height), ImageLockMode.WriteOnly, newFormat);
-        BitmapData lockData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadOnly, newFormat);
-
-        IntPtr p1 = lockData1.Scan0;
-        IntPtr p = lockData.Scan0;
-        for (int row = 0; row < image.Height; ++row)
+        long bufferPosition = 0;
+        while (bufferPosition < buffer.Length)
         {
-          Marshal.Copy(p, row * image.Width * bpp, p1, image.Width * bpp);
-          p = new IntPtr(p.ToInt64() + lockData.Stride);
-          p1 = new IntPtr(p1.ToInt64() + lockData1.Stride);
-        }
-        image.UnlockBits(lockData);
-        newImage.UnlockBits(lockData1);*/
-      }
+          //NOTE(adm244): PART 1: Find largest matching sequence in a lookback buffer
 
-      byte[] pixels = ConvertToRaw(image);
-      byte[] rawData = AppendImageSize(image.Width, image.Height, bpp, pixels);
-      byte[] rawDataCompressed = LZ77Compress(rawData);
+          //NOTE(adm244): BRUTE-FORCE approach
 
-      Debug.Assert(pixels.Length == (image.Width * image.Height * bpp));
+          //NOTE(adm244): lookback buffer includes current buffer position
+          long lookbackLength = Math.Min(bufferPosition, LookbackSize);
+          long lookbackStart = bufferPosition - lookbackLength;
 
-      byte[] palette = new byte[256 * sizeof(Int32)];
-      if (image.Palette.Entries.Length > 0)
-      {
-        Debug.Assert(image.Palette.Entries.Length == 256);
-        for (int i = 0; i < image.Palette.Entries.Length; ++i)
-        {
-          if (convertTo6bit)
+          long bestRun = 0;
+          long bestRunOffset = 0;
+          long lookbackEnd = lookbackStart + lookbackLength;
+          for (long lookbackPosition = lookbackStart; lookbackPosition < lookbackEnd; )
           {
-            palette[4 * i + 0] = (byte)((image.Palette.Entries[i].R / 255f) * 64f);
-            palette[4 * i + 1] = (byte)((image.Palette.Entries[i].G / 255f) * 64f);
-            palette[4 * i + 2] = (byte)((image.Palette.Entries[i].B / 255f) * 64f);
-            palette[4 * i + 3] = (byte)((image.Palette.Entries[i].A / 255f) * 64f);
+            //NOTE(adm244): allow lookback buffer to go beyond current buffer position
+            long sequenceLength = 0;
+            long lookbackSubEnd = (lookbackPosition + LookbackSequenceLength);
+            for (long lookbackSubPosition = lookbackPosition; lookbackSubPosition < lookbackSubEnd; ++lookbackSubPosition)
+            {
+              long bufferSubPosition = bufferPosition + (lookbackSubPosition - lookbackPosition);
+              if (bufferSubPosition == buffer.Length)
+                break;
+
+              if (buffer[lookbackSubPosition] == buffer[bufferSubPosition])
+                ++sequenceLength;
+              else
+                break;
+            }
+
+            if (bestRun < sequenceLength)
+            {
+              bestRun = sequenceLength;
+              bestRunOffset = bufferPosition - lookbackPosition - 1;
+            }
+
+            if (sequenceLength > 0)
+              lookbackPosition += sequenceLength;
+            else
+              lookbackPosition += 1;
+          }
+
+          //NOTE(adm244): PART 2: Encode either LOOKBACK (RUN) or LITERAL
+
+          if (bestRun >= 3)
+          {
+            //NOTE(adm244): encode looback (run)
+            elements[elementsCount].SetLookback(bestRunOffset, bestRun);
+            elementsCount += 1;
+
+            bufferPosition += bestRun;
           }
           else
           {
-            palette[4 * i + 0] = image.Palette.Entries[i].R;
-            palette[4 * i + 1] = image.Palette.Entries[i].G;
-            palette[4 * i + 2] = image.Palette.Entries[i].B;
-            palette[4 * i + 3] = image.Palette.Entries[i].A;
-          }
-        }
-      }
+            //NOTE(adm244): encode literal
+            elements[elementsCount].SetSymbol(buffer[bufferPosition]);
+            elementsCount += 1;
 
-      w.Write(palette);
-      w.Write((UInt32)rawData.Length);
-      w.Write((UInt32)rawDataCompressed.Length);
-      w.Write(rawDataCompressed);
-    }
-
-    private static byte[] LZ77Compress(byte[] data)
-    {
-      //NOTE(adm244): it performs worse than the original, i.e. low speed, bigger file size
-      MemoryStream stream = new MemoryStream(data.Length);
-
-      const long LookbackSize = 4095;
-      const byte LookbackSequenceLength = 18;
-      const byte ElementsSize = 8;
-
-      Element[] elements = new Element[ElementsSize];
-      byte elementsCount = 0;
-
-      long bufferPosition = 0;
-      while (bufferPosition < data.Length)
-      {
-        //NOTE(adm244): PART 1: Find largest matching sequence in a lookback buffer
-
-        //NOTE(adm244): BRUTE-FORCE approach
-
-        //NOTE(adm244): lookback buffer includes current buffer position
-        long lookbackLength = Math.Min(bufferPosition, LookbackSize);
-        long lookbackStart = bufferPosition - lookbackLength;
-
-        long bestRun = 0;
-        long bestRunOffset = 0;
-        long lookbackEnd = lookbackStart + lookbackLength;
-        for (long lookbackPosition = lookbackStart; lookbackPosition < lookbackEnd; )
-        {
-          //NOTE(adm244): allow lookback buffer to go beyond current buffer position
-          long sequenceLength = 0;
-          long lookbackSubEnd = (lookbackPosition + LookbackSequenceLength);
-          for (long lookbackSubPosition = lookbackPosition; lookbackSubPosition < lookbackSubEnd; ++lookbackSubPosition)
-          {
-            long bufferSubPosition = bufferPosition + (lookbackSubPosition - lookbackPosition);
-            if (bufferSubPosition == data.Length)
-              break;
-
-            if (data[lookbackSubPosition] == data[bufferSubPosition])
-              ++sequenceLength;
-            else
-              break;
+            bufferPosition += 1;
           }
 
-          if (bestRun < sequenceLength)
+          //NOTE(adm244): PART 3: Flush elements buffer if it's full or we're at the end of a stream
+
+          if ((elementsCount == ElementsSize) || (bufferPosition == buffer.Length))
           {
-            bestRun = sequenceLength;
-            bestRunOffset = bufferPosition - lookbackPosition - 1;
-          }
+            int controlMask = 0;
+            int elementsLength = (elementsCount < ElementsSize) ? elementsCount : ElementsSize;
 
-          if (sequenceLength > 0)
-            lookbackPosition += sequenceLength;
-          else
-            lookbackPosition += 1;
-        }
-
-        //NOTE(adm244): PART 2: Encode either LOOKBACK (RUN) or LITERAL
-
-        if (bestRun >= 3)
-        {
-          //NOTE(adm244): encode looback (run)
-          elements[elementsCount].SetLookback(bestRunOffset, bestRun);
-          elementsCount += 1;
-
-          bufferPosition += bestRun;
-        }
-        else
-        {
-          //NOTE(adm244): encode literal
-          elements[elementsCount].SetSymbol(data[bufferPosition]);
-          elementsCount += 1;
-
-          bufferPosition += 1;
-        }
-
-        //NOTE(adm244): PART 3: Flush elements buffer if it's full or we're at the end of a stream
-
-        if ((elementsCount == ElementsSize) || (bufferPosition == data.Length))
-        {
-          int controlMask = 0;
-          int elementsLength = (elementsCount < ElementsSize) ? elementsCount : ElementsSize;
-
-          //NOTE(adm244): make mask for control byte
-          for (int i = 0; i < elementsLength; ++i)
-          {
-            if (elements[i].Type == LiteralType.Lookback)
-              controlMask |= (1 << i);
-          }
-
-          Debug.Assert(controlMask == (int)((byte)(controlMask)));
-          stream.WriteByte((byte)controlMask);
-
-          //NOTE(adm244): write elements
-          for (int i = 0; i < elementsLength; ++i)
-          {
-            if (elements[i].Type == LiteralType.Lookback)
+            //NOTE(adm244): make mask for control byte
+            for (int i = 0; i < elementsLength; ++i)
             {
-              UInt16 offset = (UInt16)(elements[i].Offset & 0x0FFF);
-              Debug.Assert(elements[i].Offset == (long)offset);
-
-              byte length = (byte)(elements[i].Length - 3);
-              Debug.Assert(elements[i].Length == (long)((length + 3)));
-              Debug.Assert((length >= 0) && (length <= 15));
-
-              UInt16 runlength = (UInt16)(offset | (length << 12));
-              stream.WriteByte((byte)(runlength & 0xFF));
-              stream.WriteByte((byte)((runlength >> 8) & 0xFF));
+              if (elements[i].Type == LiteralType.Lookback)
+                controlMask |= (1 << i);
             }
-            else
+
+            Debug.Assert(controlMask == (int)((byte)(controlMask)));
+            stream.WriteByte((byte)controlMask);
+
+            //NOTE(adm244): write elements
+            for (int i = 0; i < elementsLength; ++i)
             {
-              stream.WriteByte((byte)elements[i].Symbol);
+              if (elements[i].Type == LiteralType.Lookback)
+              {
+                UInt16 offset = (UInt16)(elements[i].Offset & 0x0FFF);
+                byte length = (byte)(elements[i].Length - 3);
+
+                Debug.Assert(elements[i].Offset == (long)(offset));
+                Debug.Assert(elements[i].Length == (long)((length + 3)));
+
+                Debug.Assert((length >= 0) && (length <= 15));
+
+                UInt16 runlength = (UInt16)(offset | (length << 12));
+                stream.WriteByte((byte)((runlength >> 0) & 0xFF));
+                stream.WriteByte((byte)((runlength >> 8) & 0xFF));
+              }
+              else
+              {
+                stream.WriteByte((byte)elements[i].Symbol);
+              }
             }
+
+            elementsCount = 0;
           }
-
-          elementsCount = 0;
         }
-      }
 
-      return stream.ToArray();
+        return stream.ToArray();
+      }
     }
   }
 }

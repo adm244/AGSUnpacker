@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Diagnostics;
 
 namespace AGSUnpackerSharp.Game
 {
@@ -34,18 +35,26 @@ namespace AGSUnpackerSharp.Game
     {
       options = new string[30];
       for (int i = 0; i < options.Length; ++i)
-      {
         options[i] = r.ReadFixedString(150);
-      }
 
       flags = r.ReadArrayInt32(30);
-
       Int32 ptr = r.ReadInt32();
       Int16[] entry_points = r.ReadArrayInt16(30);
       startup_entry_point = r.ReadInt16();
       code_size = r.ReadInt16();
       options_number = r.ReadInt32();
       topic_flags = r.ReadInt32();
+
+      //NOTE(adm244): since options can contain garbage,
+      // we zeroing everything that's not used to make it less confusing
+
+      string[] validOptions = new string[options_number];
+      for (int i = 0; i < validOptions.Length; ++i)
+        validOptions[i] = options[i];
+
+      options = new string[30];
+      for (int i = 0; i < validOptions.Length; ++i)
+        options[i] = validOptions[i];
     }
   }
 }

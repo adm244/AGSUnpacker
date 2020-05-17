@@ -4,13 +4,23 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using AGSUnpackerSharp.Extensions;
+using System.Collections;
+//using AGSUnpackerSharp.Shared.Script.Deprecated;
 
 namespace AGSUnpackerSharp.Shared.Script
 {
   public struct AGSScriptExport
   {
     public string Name;
+    public ExportType Type;
     public Int32 Pointer;
+
+    public enum ExportType
+    {
+      Unknown = 0,
+      Function = 1,
+      Variable = 2,
+    }
   }
 
   public struct AGSScriptSection
@@ -19,10 +29,21 @@ namespace AGSUnpackerSharp.Shared.Script
     public Int32 Offset;
   }
 
+  public enum AGSFixupType
+  {
+    Literal = 0,
+    GlobalData = 1,
+    Function = 2,
+    String = 3,
+    Import = 4,
+    DataData = 5,
+    Stack = 6,
+  }
+
   public struct AGSScriptFixup
   {
     public AGSFixupType Type;
-    public UInt32 Value;
+    public int Offset;
   }
 
   public class AGSScript
@@ -30,11 +51,13 @@ namespace AGSUnpackerSharp.Shared.Script
     private static readonly string HEAD_SIGNATURE = "SCOM";
     private static readonly UInt32 TAIL_SIGNATURE = 0xBEEFCAFE;
 
+    private string[] _strings;
+
     public Int32 Version;
     public byte[] GlobalData;
     public Int32[] Code;
-    public byte[] StringsBlob;
-    public string[] Strings;
+    //public byte[] StringsBlob;
+    public Hashtable StringsTable;
     public string[] Imports;
     public AGSScriptExport[] Exports;
     public AGSScriptSection[] Sections;
@@ -42,50 +65,16 @@ namespace AGSUnpackerSharp.Shared.Script
 
     public AGSScript()
     {
+      _strings = null;
+
       GlobalData = new byte[0];
       Code = new Int32[0];
-      StringsBlob = new byte[0];
-      Strings = new string[0];
+      //StringsBlob = new byte[0];
+      StringsTable = new Hashtable();
       Imports = new string[0];
       Exports = new AGSScriptExport[0];
       Sections = new AGSScriptSection[0];
       Fixups = new AGSScriptFixup[0];
-    }
-
-    public void DumpInstructions(TextWriter writer)
-    {
-      //NOTE(adm244): pre-process fixups data
-      AGSFixupType[] fixups = new AGSFixupType[Code.Length];
-      for (int i = 0; i < Fixups.Length; ++i)
-      {
-        //NOTE(adm244): it looks like it's treated as a usual literal, so skip it
-        if (Fixups[i].Type == AGSFixupType.DataData)
-          continue;
-
-        if (Fixups[i].Type == AGSFixupType.GlobalData)
-        {
-          //Debug.Assert(false, "GlobalData fixup type is not supported yet!");
-          continue;
-        }
-
-        fixups[Fixups[i].Value] = Fixups[i].Type;
-      }
-
-      for (int ip = 0; ip < Code.Length; )
-      {
-        AGSInstruction instruction = AGSVirtualMachine.DisassembleInstruction(this, fixups, Code, ip);
-        ip += instruction.ArgumentsCount + 1;
-
-        writer.Write(instruction.Mnemonic);
-        for (int arg = 0; arg < instruction.Arguments.Length; ++arg)
-        {
-          if (arg > 0)
-            writer.Write(",");
-
-          writer.Write(" {0}", instruction.Arguments[arg].ToString());
-        }
-        writer.WriteLine();
-      }
     }
 
     private byte[] ConvertStringsToBlob(string[] strings)
@@ -112,6 +101,7 @@ namespace AGSUnpackerSharp.Shared.Script
       w.Write((UInt32)Code.Length);
 
       //NOTE(adm244): AGSScript.stringsBlob and AGSScript.strings are NOT in sync!
+      //byte[] stringsBlob = ConvertStringsToBlob(Strings);
       byte[] stringsBlob = ConvertStringsToBlob(Strings);
       w.Write((UInt32)stringsBlob.Length);
 
@@ -126,7 +116,7 @@ namespace AGSUnpackerSharp.Shared.Script
         w.Write((byte)Fixups[i].Type);
 
       for (int i = 0; i < Fixups.Length; ++i)
-        w.Write((UInt32)Fixups[i].Value);
+        w.Write((UInt32)Fixups[i].Offset);
 
       // write imports section
       w.Write((Int32)Imports.Length);
@@ -138,7 +128,11 @@ namespace AGSUnpackerSharp.Shared.Script
       for (int i = 0; i < Exports.Length; ++i)
       {
         w.WriteNullTerminatedString(Exports[i].Name, 300);
-        w.Write((Int32)Exports[i].Pointer);
+
+        UInt32 value = (UInt32)Exports[i].Pointer;
+        value |= ((uint)Exports[i].Type << 24);
+
+        w.Write((UInt32)value);
       }
 
       // write script sections
@@ -186,8 +180,12 @@ namespace AGSUnpackerSharp.Shared.Script
       if (strings_size > 0)
       {
         //NOTE(adm244): sequence of null terminated strings
-        StringsBlob = r.ReadBytes(strings_size);
-        Strings = AGSStringUtils.ConvertNullTerminatedSequence(StringsBlob);
+        //StringsBlob = r.ReadBytes(strings_size);
+        //Strings = AGSStringUtils.ConvertNullTerminatedSequence(StringsBlob);
+
+        byte[] stringsBlob = r.ReadBytes(strings_size);
+        //Strings = AGSStringUtils.ConvertNullTerminatedSequence(stringsBlob);
+        PopulateStringsTable(stringsBlob);
       }
 
       // parse fixups section
@@ -199,7 +197,7 @@ namespace AGSUnpackerSharp.Shared.Script
       }
       for (int i = 0; i < fixups_count; ++i)
       {
-        Fixups[i].Value = r.ReadUInt32();
+        Fixups[i].Offset = r.ReadInt32();
       }
 
       // parse imports section
@@ -216,7 +214,11 @@ namespace AGSUnpackerSharp.Shared.Script
       for (int i = 0; i < exports_count; ++i)
       {
         Exports[i].Name = r.ReadNullTerminatedString(300);
-        Exports[i].Pointer = r.ReadInt32();
+        //Exports[i].Pointer = r.ReadInt32();
+        
+        UInt32 data = r.ReadUInt32();
+        Exports[i].Type = (AGSScriptExport.ExportType)(data >> 24);
+        Exports[i].Pointer = (Int32)(data & 0x00FFFFFF);
       }
 
       // parse script sections
@@ -236,9 +238,50 @@ namespace AGSUnpackerSharp.Shared.Script
       Debug.Assert(tail_sig == TAIL_SIGNATURE);
     }
 
-    // disassembles script and dumps instructions in a file
-    public void Disassemble(string targetpath)
+    private unsafe void PopulateStringsTable(byte[] buffer)
     {
+      int startpos = 0;
+      for (int i = 0; i < buffer.Length; ++i)
+      {
+        if (buffer[i] == 0)
+        {
+          fixed (byte* p = &buffer[startpos])
+          {
+            string str = new string((sbyte*)p);
+            StringsTable.Add(startpos, str);
+          }
+          startpos = (i + 1);
+        }
+      }
+    }
+
+    public string[] Strings
+    {
+      get
+      {
+        if (_strings == null)
+        {
+          //NOTE(adm244): .NET is a setup for a failure
+
+          List<int> keys = new List<int>();
+          foreach (int key in StringsTable.Keys)
+            keys.Add(key);
+
+          keys.Sort();
+
+          _strings = new string[keys.Count];
+
+          for (int i = 0; i < _strings.Length; ++i)
+            _strings[i] = (string)StringsTable[keys[i]];
+        }
+
+        return _strings;
+      }
+    }
+
+    // disassembles script and dumps instructions in a file
+    //public void Disassemble(string targetpath)
+    //{
       /*
        * Instructions are stored as Int32 where highest byte stores instance id:
        *       (memory)           (register)
@@ -257,14 +300,75 @@ namespace AGSUnpackerSharp.Shared.Script
        * 
        * Fixups types:
        *  0x0 : numerical literal
-       *  GLOBAL_DATA = 0x1 : pointer?
-       *  FUNCTION = 0x2 : offset from a start of code section (pc value)
+       *  GLOBAL_DATA = 0x1 : offset into globaldata (in bytes)
+       *  FUNCTION = 0x2 : offset from a start of code section (pc value ???)
        *  STRING = 0x3 : offset to strings null-terminated sequence (in bytes)
        *  IMPORT = 0x4 : index for imports array
-       *  STACK = 0x5 : offset on the stack (in bytes)
+       *  DATADATA = 0x5 : relative offset into globaldata stored in globaldata (in bytes)
+       *  STACK = 0x6 : offset on the stack (in bytes)
+       * 
        * 
        * 
        */
-    }
+
+      /*for (int i = 0; i < Fixups.Length; ++i)
+      {
+        AGSScriptFixup fixup = Fixups[i];
+
+        switch (fixup.Type)
+        {
+          case AGSFixupType.Literal:
+            {
+              int value = Code[fixup.Value];
+            }
+            break;
+
+          case AGSFixupType.GlobalData:
+            {
+              int offset = Code[fixup.Value];
+              int value = GlobalData[offset];
+            }
+            break;
+
+          case AGSFixupType.Function:
+            {
+              int offset = Code[fixup.Value];
+              int value = Code[offset];
+            }
+            break;
+
+          case AGSFixupType.String:
+            {
+              int offset = Code[fixup.Value];
+              string value = ReadCString(StringsBlob[offset]);
+            }
+            break;
+
+          case AGSFixupType.Import:
+            {
+              int index = Code[fixup.Value];
+              string value = Imports[index];
+            }
+            break;
+
+          case AGSFixupType.DataData:
+            {
+              int offset = GlobalData[fixup.Value];
+              int value = GlobalData[offset];
+            }
+            break;
+
+          case AGSFixupType.Stack:
+            {
+              int offset = Code[fixup.Value];
+              int value = Stack[offset];
+            }
+            break;
+
+          default:
+            throw new InvalidDataException();
+        }
+      }*/
+    //}
   }
 }
