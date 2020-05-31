@@ -1,30 +1,25 @@
-﻿using System;
+﻿using System.Drawing;
 using AGSUnpackerSharp.Shared;
-using AGSUnpackerSharp.Shared.Interaction;
 
 namespace AGSUnpackerSharp.Room
 {
   public class AGSHotspot
   {
-    public Int16 walkto_x;
-    public Int16 walkto_y;
-    public string name;
-    public string scriptname;
-    public AGSInteractionScript interactions;
-    public AGSPropertyStorage properties;
+    public string Name;
+    public string ScriptName;
+    public Point WalkTo;
 
-    public AGSInteraction interactions_old;
+    public AGSPropertyStorage Properties;
+    public AGSInteractions Interactions;
 
     public AGSHotspot()
     {
-      walkto_x = 0;
-      walkto_y = 0;
-      name = string.Empty;
-      scriptname = string.Empty;
-      interactions = new AGSInteractionScript();
-      properties = new AGSPropertyStorage();
+      Name = string.Empty;
+      ScriptName = string.Empty;
+      WalkTo = new Point();
 
-      interactions_old = new AGSInteraction();
+      Properties = new AGSPropertyStorage();
+      Interactions = new AGSInteractions();
     }
   }
 }

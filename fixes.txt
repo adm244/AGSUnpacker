@@ -1,5 +1,16 @@
 
 v05:
+Added: Support for CLib version 6 (vox files)
+Added: Support for multiple CLib files
+Added: Reimplemented CLib reader
+Refactor: Cleaned up AGSScript code
+Fixed: AGSScript::SaveToStream incorrectly writing empty sections
+Fixed: AGSScript::LoadFromStream didn't check the fixup type
+Refactor: Moved encryption methods into AGSEncryption
+Refactor: Cleaned up AGSRoom, AGSStringUtils code
+Added: Support for 64-bit room block length
+Fixed: Removed garbage from script strings
+
 Re-added: AGSSpriteSet outputs sprindex.dat
 Fixed: AGSSpriteSet::Pack now properly packs sprites based on their index
 Fixed: AGSSpriteSet::Pack writting compression type for file version below 6

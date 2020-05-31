@@ -238,11 +238,11 @@ namespace AGSUnpackerSharp.Game
         dictionary.LoadFromStream(r);
 
       // parse global script
-      globalScript.LoadFromStream(r);
+      globalScript.ReadFromStream(r);
 
       // parse dialog script
       if (dta_version > 37) // 3.1.0
-        dialogScript.LoadFromStream(r);
+        dialogScript.ReadFromStream(r);
 
       // parse other scripts
       if (dta_version >= 31) // 2.7.0
@@ -252,7 +252,7 @@ namespace AGSUnpackerSharp.Game
         for (int i = 0; i < scriptModules.Length; ++i)
         {
           scriptModules[i] = new AGSScript();
-          scriptModules[i].LoadFromStream(r);
+          scriptModules[i].ReadFromStream(r);
         }
       }
 
@@ -358,7 +358,7 @@ namespace AGSUnpackerSharp.Game
       for (int i = 0; i < roomsDebugInfo.Length; ++i)
       {
         roomsDebugInfo[i].id = r.ReadInt32();
-        roomsDebugInfo[i].name = r.ReadNullTerminatedString(3000);
+        roomsDebugInfo[i].name = r.ReadCString(3000);
       }
     }
 
@@ -368,21 +368,21 @@ namespace AGSUnpackerSharp.Game
       for (int i = 0; i < setup.views_count; ++i)
       {
         if (dta_version > 32) // 3.x
-          views[i].scriptName = r.ReadNullTerminatedString();
+          views[i].scriptName = r.ReadCString();
         else
-          views272[i].scriptName = r.ReadNullTerminatedString();
+          views272[i].scriptName = r.ReadCString();
       }
 
       // parse inventory items script names
       for (int i = 0; i < setup.inventory_items_count; ++i)
       {
-        inventoryItems[i].scriptName = r.ReadNullTerminatedString();
+        inventoryItems[i].scriptName = r.ReadCString();
       }
 
       // parse dialogs script names
       for (int i = 0; i < setup.dialogs_count; ++i)
       {
-        dialogs[i].scriptName = r.ReadNullTerminatedString();
+        dialogs[i].scriptName = r.ReadCString();
       }
     }
 
@@ -396,14 +396,14 @@ namespace AGSUnpackerSharp.Game
       for (int i = 0; i < setup.characters_count; ++i)
       {
         characters[i].properties = new AGSPropertyStorage();
-        characters[i].properties.LoadFromStream(r);
+        characters[i].properties.ReadFromStream(r);
       }
 
       // parse inventory items properties
       for (int i = 0; i < setup.inventory_items_count; ++i)
       {
         inventoryItems[i].properties = new AGSPropertyStorage();
-        inventoryItems[i].properties.LoadFromStream(r);
+        inventoryItems[i].properties.ReadFromStream(r);
       }
     }
 
@@ -415,7 +415,7 @@ namespace AGSUnpackerSharp.Game
       Int32 count = r.ReadInt32();
       for (int i = 0; i < count; ++i)
       {
-        string name = r.ReadNullTerminatedString();
+        string name = r.ReadCString();
         Int32 datasize = r.ReadInt32();
         if (datasize > 0)
         {

@@ -1,24 +1,21 @@
-﻿using System;
-using AGSUnpackerSharp.Shared;
-using AGSUnpackerSharp.Shared.Interaction;
+﻿using AGSUnpackerSharp.Shared;
 
 namespace AGSUnpackerSharp.Room
 {
   public class AGSRegion
   {
-    public AGSInteractionScript interactions;
-    public Int16 light;
-    public Int32 tint;
+    public int Light;
+    
+    //TODO(adm244): AGSRegion: probably convert Tint from Int32 into Color
+    public int Tint;
 
-    public AGSInteraction interactions_old;
+    public AGSInteractions Interactions;
 
     public AGSRegion()
     {
-      interactions = new AGSInteractionScript();
-      light = 0;
-      tint = 0;
-
-      interactions_old = new AGSInteraction();
+      Light = 0;
+      Tint = 0;
+      Interactions = new AGSInteractions();
     }
   }
 }

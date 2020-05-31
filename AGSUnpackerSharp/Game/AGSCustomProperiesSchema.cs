@@ -31,9 +31,9 @@ namespace AGSUnpackerSharp.Game
       {
         if (version == 1)
         {
-          Name = r.ReadNullTerminatedString(20);
-          Description = r.ReadNullTerminatedString(100);
-          DefaultValue = r.ReadNullTerminatedString(500);
+          Name = r.ReadCString(20);
+          Description = r.ReadCString(100);
+          DefaultValue = r.ReadCString(500);
           Type = r.ReadInt32();
         }
         else

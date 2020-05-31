@@ -89,7 +89,7 @@ namespace AGSUnpackerGUI
       retry:
         try
         {
-          _loadedRoom.LoadFromFile(fileFullPath);
+          _loadedRoom.ReadFromFile(fileFullPath);
 
           ctrlBackgroundFrame.Items.Clear();
 
@@ -235,7 +235,7 @@ namespace AGSUnpackerGUI
       retry:
         try
         {
-          _loadedRoom.SaveToFile(fileFullPath, _loadedRoom.version);
+          _loadedRoom.WriteToFile(fileFullPath, _loadedRoom.Version);
 
           MessageBox.Show(this, "Room was successefully saved.",
             "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);

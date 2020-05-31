@@ -21,7 +21,7 @@ namespace AGSUnpackerSharp.Shared
       events = new AGSInteractionScriptEvent[events_count];
       for (int i = 0; i < events_count; ++i)
       {
-        events[i].name = r.ReadNullTerminatedString(200);
+        events[i].name = r.ReadCString(200);
       }
     }
 
@@ -30,7 +30,7 @@ namespace AGSUnpackerSharp.Shared
       w.Write((Int32)events.Length);
       for (int i = 0; i < events.Length; ++i)
       {
-        w.WriteNullTerminatedString(events[i].name, 200);
+        w.WriteCString(events[i].name, 200);
       }
     }
   }

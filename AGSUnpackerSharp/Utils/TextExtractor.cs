@@ -39,7 +39,7 @@ namespace AGSUnpackerSharp.Utils
             Console.Write("\tParsing {0} room file...", Path.GetFileName(filenames[i]));
 
             AGSRoom room = new AGSRoom(Path.GetFileNameWithoutExtension(filenames[i]));
-            room.LoadFromFile(filenames[i]);
+            room.ReadFromFile(filenames[i]);
             rooms.Add(room);
 
             Console.WriteLine(" Done!");
@@ -75,11 +75,11 @@ namespace AGSUnpackerSharp.Utils
         string metadata = string.Empty;
         if (gameData.roomsDebugInfo.Length == 0)
         {
-          metadata = string.Format("// [{0}.crm]", rooms[i].name);
+          metadata = string.Format("// [{0}.crm]", rooms[i].Name);
         }
         else
         {
-          metadata = string.Format("// [{0}.crm - {1}]", rooms[i].name, gameData.roomsDebugInfo[i].name);
+          metadata = string.Format("// [{0}.crm - {1}]", rooms[i].Name, gameData.roomsDebugInfo[i].name);
         }
 
         lines.Add(metadata);
@@ -98,9 +98,9 @@ namespace AGSUnpackerSharp.Utils
 
       // messages
       lines.Add("//   [messages]");
-      for (int i = 0; i < room.messages.Length; ++i)
+      for (int i = 0; i < room.Messages.Length; ++i)
       {
-        PushIntoLines(room.messages[i].text);
+        PushIntoLines(room.Messages[i].Text);
       }
 
       // objects
@@ -112,9 +112,9 @@ namespace AGSUnpackerSharp.Utils
 
       // script strings
       lines.Add("//   [script strings]");
-      for (int i = 0; i < room.script.Strings.Length; ++i)
+      for (int i = 0; i < room.Script.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(room.script.Strings[i]);
+        PushIntoLines(room.Script.StringsReferenced[i]);
       }
     }
 
@@ -132,16 +132,16 @@ namespace AGSUnpackerSharp.Utils
 
       // global script strings
       lines.Add("//   [global script strings]");
-      for (int i = 0; i < data.globalScript.Strings.Length; ++i)
+      for (int i = 0; i < data.globalScript.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(data.globalScript.Strings[i]);
+        PushIntoLines(data.globalScript.StringsReferenced[i]);
       }
 
       // dialog script strings
       lines.Add("//   [dialog script strings]");
-      for (int i = 0; i < data.dialogScript.Strings.Length; ++i)
+      for (int i = 0; i < data.dialogScript.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(data.dialogScript.Strings[i]);
+        PushIntoLines(data.dialogScript.StringsReferenced[i]);
       }
 
       // old dialog strings
@@ -155,9 +155,9 @@ namespace AGSUnpackerSharp.Utils
       for (int script_index = 0; script_index < data.scriptModules.Length; ++script_index)
       {
         lines.Add(string.Format("//   [{0} strings]", data.scriptModules[script_index].Sections[0].Name));
-        for (int i = 0; i < data.scriptModules[script_index].Strings.Length; ++i)
+        for (int i = 0; i < data.scriptModules[script_index].StringsReferenced.Length; ++i)
         {
-          PushIntoLines(data.scriptModules[script_index].Strings[i]);
+          PushIntoLines(data.scriptModules[script_index].StringsReferenced[i]);
         }
       }
 

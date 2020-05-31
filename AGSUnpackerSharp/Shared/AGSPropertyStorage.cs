@@ -1,66 +1,68 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Diagnostics;
+using System.IO;
 using AGSUnpackerSharp.Extensions;
 
 namespace AGSUnpackerSharp.Shared
 {
   public class AGSPropertyStorage
   {
-    public Int32 version;
-    public string[] names;
-    public string[] values;
+    public static readonly int MaxNameLength = 200;
+    public static readonly int MaxValueLength = 500;
+
+    public int Version;
+    public string[] Names;
+    public string[] Values;
 
     public AGSPropertyStorage()
     {
-      names = new string[0];
-      values = new string[0];
+      Version = 2;
+      Names = new string[0];
+      Values = new string[0];
     }
 
-    public void WriteToStream(BinaryWriter w, int version)
+    public void ReadFromStream(BinaryReader reader)
     {
-      w.Write((Int32)version);
+      Version = reader.ReadInt32();
+      Debug.Assert((Version == 1) || (Version == 2));
 
-      Debug.Assert(names.Length == values.Length);
+      int count = reader.ReadInt32();
 
-      w.Write((Int32)names.Length);
-      for (int i = 0; i < names.Length; ++i)
+      Names = new string[count];
+      Values = new string[count];
+      for (int i = 0; i < count; ++i)
       {
-        if (version == 1)
+        if (Version == 1)
         {
-          w.WriteNullTerminatedString(names[i], 200);
-          w.WriteNullTerminatedString(values[i], 500);
+          Names[i] = reader.ReadCString(MaxNameLength);
+          Values[i] = reader.ReadCString(MaxValueLength);
         }
         else
         {
-          w.WritePrefixedString32(names[i]);
-          w.WritePrefixedString32(values[i]);
+          Names[i] = reader.ReadPrefixedString32();
+          Values[i] = reader.ReadPrefixedString32();
         }
       }
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void WriteToStream(BinaryWriter writer)
     {
-      version = r.ReadInt32();
-      Debug.Assert((version == 1) || (version == 2));
+      writer.Write((Int32)Version);
 
-      Int32 count = r.ReadInt32();
-      names = new string[count];
-      values = new string[count];
+      Debug.Assert(Names.Length == Values.Length);
+      writer.Write((Int32)Names.Length);
 
-      for (int i = 0; i < count; ++i)
+      for (int i = 0; i < Names.Length; ++i)
       {
-        if (version == 1)
+        if (Version == 1)
         {
-          names[i] = r.ReadNullTerminatedString(200);
-          values[i] = r.ReadNullTerminatedString(500);
+          writer.WriteCString(Names[i], MaxNameLength);
+          writer.WriteCString(Values[i], MaxValueLength);
         }
         else
         {
-          names[i] = r.ReadPrefixedString32();
-          values[i] = r.ReadPrefixedString32();
+          writer.WritePrefixedString32(Names[i]);
+          writer.WritePrefixedString32(Values[i]);
         }
       }
     }

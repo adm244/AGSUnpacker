@@ -43,14 +43,14 @@ namespace AGSUnpackerSharp.Game
         is_activated = r.ReadInt32();
 
       if (gui_version >= 106)
-        name = r.ReadNullTerminatedString();
+        name = r.ReadCString();
 
       if (gui_version >= 108) // ???
       {
         Int32 events_count = r.ReadInt32();
         events = new string[events_count];
         for (int i = 0; i < events.Length; ++i)
-          events[i] = r.ReadNullTerminatedString();
+          events[i] = r.ReadCString();
       }
     }
   }

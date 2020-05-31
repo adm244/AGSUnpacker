@@ -47,7 +47,7 @@ namespace AGSUnpackerSharp.Extractors.SourceExtractors
         using (BinaryReader inputReader = new BinaryReader(inputStream, Encoding.GetEncoding(1251)))
         {
           // read signature
-          string signature = inputReader.ReadNullTerminatedString();
+          string signature = inputReader.ReadCString();
           if (signature != EDITORINFO_SIGNATURE)
             throw new InvalidDataException();
 
@@ -60,14 +60,14 @@ namespace AGSUnpackerSharp.Extractors.SourceExtractors
           if (version >= 3)
           {
             int globalScriptHeaderSize = inputReader.ReadInt32();
-            string globalScriptHeader = inputReader.ReadNullTerminatedString();
+            string globalScriptHeader = inputReader.ReadCString();
           }
 
           // read global script
           if (version >= 2)
           {
             int globalScriptSize = inputReader.ReadInt32();
-            string globalScript = inputReader.ReadNullTerminatedString();
+            string globalScript = inputReader.ReadCString();
           }
 
           // read sprites and folders
@@ -103,7 +103,7 @@ namespace AGSUnpackerSharp.Extractors.SourceExtractors
           string[] roomDescriptions = new string[roomDescriptionsCount];
           for (int i = 0; i < roomDescriptionsCount; ++i)
           {
-            roomDescriptions[i] = inputReader.ReadNullTerminatedString();
+            roomDescriptions[i] = inputReader.ReadCString();
           }
 
           // read unknown blob
@@ -128,7 +128,7 @@ namespace AGSUnpackerSharp.Extractors.SourceExtractors
             for (int i = 0; i < pluginsCount; ++i)
             {
               //NOTE(adm244): 2.62 reads 50.000.000(!) but pluginName's buffer size is 200 (ouch!)
-              string pluginName = inputReader.ReadNullTerminatedString();
+              string pluginName = inputReader.ReadCString();
 
               //NOTE(adm244): might be just a size of a blob
               int pluginDataOffset = inputReader.ReadInt32();

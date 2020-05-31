@@ -7,59 +7,60 @@ namespace AGSUnpackerSharp.Utils
 {
   public static class AGSClibUtils
   {
-    private static readonly string CLIB_HEAD_SIGNATURE = "CLIB\x1a";
-    private static readonly string CLIB_TAIL_SIGNATURE = "CLIB\x1\x2\x3\x4SIGE";
+    private static readonly string SignatureHead = "CLIB\x1a";
+    private static readonly string SignatureTail = "CLIB\x1\x2\x3\x4SIGE";
 
     private static readonly Int32 EncryptionRandSeed = 9338638;
 
-    public static string[] UnpackAGSAssetFiles(string agsfile, string targetFolder)
+    public static string[] UnpackAGSAssetFiles(string filePath, string targetFolder)
     {
-      FileStream fs = new FileStream(agsfile, FileMode.Open, FileAccess.Read, FileShare.Read);
-      BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252));
-
-      Console.Write("Parsing {0}...", agsfile);
-      AGSAssetInfo[] assetInfos = ParseAGSAssetInfos(r);
-      Console.WriteLine(" Done!");
-
-      Console.WriteLine("Extracting data files...");
-      string[] filenames = ExtractAGSAssetFiles(r, assetInfos, targetFolder);
-      Console.WriteLine("Done!");
-
-      r.Close();
-
-      return filenames;
+      using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
+      {
+        using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        {
+          Console.Write("Parsing {0}...", filePath);
+          AGSAssetInfo[] assetInfos = ParseAGSAssetInfos(reader);
+          Console.WriteLine(" Done!");
+      
+          Console.WriteLine("Extracting data files...");
+          string[] filenames = ExtractAGSAssetFiles(reader, assetInfos, targetFolder);
+          Console.WriteLine("Done!");
+      
+          return filenames;
+        }
+      }
     }
 
     public static AGSAssetInfo[] ParseAGSAssetInfos(BinaryReader r)
     {
       // verify tail signature
-      r.BaseStream.Seek(-CLIB_TAIL_SIGNATURE.Length, SeekOrigin.End);
-      char[] tail_sig = r.ReadChars(CLIB_TAIL_SIGNATURE.Length);
+      r.BaseStream.Seek(-SignatureTail.Length, SeekOrigin.End);
+      char[] tail_sig = r.ReadChars(SignatureTail.Length);
       string tail_sig_string = new string(tail_sig);
-      Debug.Assert(CLIB_TAIL_SIGNATURE == tail_sig_string);
+      Debug.Assert(SignatureTail == tail_sig_string);
 
       // get clib offset
-      r.BaseStream.Seek(-(CLIB_TAIL_SIGNATURE.Length + sizeof(UInt32)), SeekOrigin.End);
+      r.BaseStream.Seek(-(SignatureTail.Length + sizeof(UInt32)), SeekOrigin.End);
       UInt32 clib_offset = r.ReadUInt32();
 
-      r.BaseStream.Seek(-(CLIB_TAIL_SIGNATURE.Length + sizeof(UInt64)), SeekOrigin.End);
+      r.BaseStream.Seek(-(SignatureTail.Length + sizeof(UInt64)), SeekOrigin.End);
       UInt64 clib_offset_64 = r.ReadUInt64();
 
       r.BaseStream.Seek((long)clib_offset_64, SeekOrigin.Begin);
       //Debug.Assert(r.BaseStream.Position == clib_offset);
 
       // verify clib signature
-      char[] head_sig = r.ReadChars(CLIB_HEAD_SIGNATURE.Length);
+      char[] head_sig = r.ReadChars(SignatureHead.Length);
       string head_sig_string = new string(head_sig);
       //Debug.Assert(CLIB_HEAD_SIGNATURE == head_sig_string);
 
       // using old 32-bit offset
-      if (CLIB_HEAD_SIGNATURE != head_sig_string)
+      if (SignatureHead != head_sig_string)
       {
         r.BaseStream.Seek(clib_offset, SeekOrigin.Begin);
-        head_sig = r.ReadChars(CLIB_HEAD_SIGNATURE.Length);
+        head_sig = r.ReadChars(SignatureHead.Length);
         head_sig_string = new string(head_sig);
-        Debug.Assert(CLIB_HEAD_SIGNATURE == head_sig_string);
+        Debug.Assert(SignatureHead == head_sig_string);
       }
 
       // parse clib
@@ -80,7 +81,7 @@ namespace AGSUnpackerSharp.Utils
             Int32 files_count = r.ReadInt32();
             string[] lib_filenames = new string[files_count];
             for (int i = 0; i < lib_filenames.Length; ++i)
-              lib_filenames[i] = r.ReadNullTerminatedString(50);
+              lib_filenames[i] = r.ReadCString(50);
 
             Int32 asset_count = r.ReadInt32();
             assetInfos = new AGSAssetInfo[asset_count];
@@ -163,14 +164,14 @@ namespace AGSUnpackerSharp.Utils
         string[] lib_filenames = new string[files_count];
         for (int i = 0; i < files_count; ++i)
         {
-          lib_filenames[i] = r.ReadNullTerminatedString();
+          lib_filenames[i] = r.ReadCString();
         }
 
         Int32 asset_count = r.ReadInt32();
         assetInfos = new AGSAssetInfo[asset_count];
         for (int i = 0; i < asset_count; ++i)
         {
-          assetInfos[i].Filename = r.ReadNullTerminatedString();
+          assetInfos[i].Filename = r.ReadCString();
           assetInfos[i].UId = r.ReadByte();
           assetInfos[i].Offset = r.ReadInt64() + (Int64)clib_offset_64;
           assetInfos[i].Size = r.ReadInt64();

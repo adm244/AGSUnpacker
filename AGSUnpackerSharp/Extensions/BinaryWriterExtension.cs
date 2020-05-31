@@ -1,63 +1,69 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.IO;
+using AGSUnpackerSharp.Utils.Encryption;
 
 namespace AGSUnpackerSharp.Extensions
 {
   public static class BinaryWriterExtension
   {
-    public static void WriteNullTerminatedString(this BinaryWriter w, string str)
+    public static void WriteCString(this BinaryWriter writer, string text)
     {
-      WriteNullTerminatedString(w, str, 5000000);
+      WriteCString(writer, text, AGSStringUtils.MaxCStringLength);
     }
 
-    public static void WriteNullTerminatedString(this BinaryWriter w, string str, int maxLength)
+    public static void WriteCString(this BinaryWriter writer, string text, int lengthMax)
     {
-      byte[] buffer = new byte[maxLength];
+      byte[] buffer = new byte[lengthMax];
       int length = 0;
 
-      for (int i = 0; i < str.Length; ++i)
+      for (int i = 0; i < text.Length; ++i)
       {
-        if (i == maxLength)
+        if (i == lengthMax)
           break;
 
-        buffer[i] = (byte)str[i];
+        buffer[i] = (byte)text[i];
         ++length;
       }
 
-      w.Write(buffer, 0, length);
+      writer.Write((byte[])buffer, 0, length);
+
       //NOTE(adm244): if string length exeeds maxLength it shouldn't be null-terminated
-      if (length < maxLength)
-        w.Write((byte)0);
+      if (length < lengthMax)
+        writer.Write((byte)0);
     }
 
-    public static void WriteFixedString(this BinaryWriter w, string str, int length)
+    public static void WriteEncryptedCString(this BinaryWriter writer, string text)
     {
-      char[] bytes = new char[length];
-      for (int i = 0; i < str.Length; ++i)
-      {
-        bytes[i] = str[i];
-      }
-
-      w.Write(bytes);
+      byte[] buffer = AGSEncryption.EncryptAvis(text);
+      writer.Write((Int32)buffer.Length);
+      writer.Write((byte[])buffer);
     }
 
-    public static void WriteArrayInt32(this BinaryWriter w, int[] values)
+    public static void WriteFixedString(this BinaryWriter writer, string text, int length)
+    {
+      char[] buffer = new char[length + 1];
+
+      for (int i = 0; i < text.Length; ++i)
+        buffer[i] = text[i];
+
+      //NOTE(adm244): don't trust microsoft to have it initialized to 0
+      buffer[length] = (char)0;
+
+      writer.Write((char[])buffer);
+    }
+
+    public static void WritePrefixedString32(this BinaryWriter writer, string text)
+    {
+      writer.Write((Int32)text.Length);
+
+      char[] buffer = text.ToCharArray();
+      writer.Write((char[])buffer);
+    }
+
+    public static void WriteArrayInt32(this BinaryWriter writer, int[] values)
     {
       for (int i = 0; i < values.Length; ++i)
-      {
-        w.Write(values[i]);
-      }
-    }
-
-    public static void WritePrefixedString32(this BinaryWriter w, string str)
-    {
-      w.Write((Int32)str.Length);
-      //FIX(adm244): use Encoding with 1252 or something like this
-      // otherwise can't guarantee it will be "1 char = 1 byte"
-      w.Write(str.ToCharArray());
+        writer.Write(values[i]);
     }
   }
 }

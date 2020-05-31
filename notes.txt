@@ -2,6 +2,95 @@
 ####### AGS disassembler notes #######
 ######################################
 
+// disassembles script and dumps instructions in a file
+//public void Disassemble(string targetpath)
+//{
+  /*
+    * Instructions are stored as Int32 where highest byte stores instance id:
+    *       (memory)           (register)
+    *  [ AA  BB  CC  01 ]  [ 01  CC  BB  AA ]
+    *   [  opcode  ][id]    [id][  opcode  ]
+    * 
+    * If script compiled in debug mode, it contains "linenumber" instructions
+    * with a line number as an argument.
+    * 
+    * For 3.4 opcode is 0..74 inclusive.
+    * 
+    * Each instruction can have multiple arguments represented as Int32.
+    * For 3.4 maximum arguments count is 3.
+    * Argument may be either a numeric value or an offset\pointer.
+    * Fixups table is used to determine the type of an argument.
+    * 
+    * Fixups types:
+    *  0x0 : numerical literal
+    *  GLOBAL_DATA = 0x1 : offset into globaldata (in bytes)
+    *  FUNCTION = 0x2 : offset from a start of code section (pc value ???)
+    *  STRING = 0x3 : offset to strings null-terminated sequence (in bytes)
+    *  IMPORT = 0x4 : index for imports array
+    *  DATADATA = 0x5 : relative offset into globaldata stored in globaldata (in bytes)
+    *  STACK = 0x6 : offset on the stack (in bytes)
+    */
+
+  /*for (int i = 0; i < Fixups.Length; ++i)
+  {
+    AGSScriptFixup fixup = Fixups[i];
+
+    switch (fixup.Type)
+    {
+      case AGSFixupType.Literal:
+        {
+          int value = Code[fixup.Value];
+        }
+        break;
+
+      case AGSFixupType.GlobalData:
+        {
+          int offset = Code[fixup.Value];
+          int value = GlobalData[offset];
+        }
+        break;
+
+      case AGSFixupType.Function:
+        {
+          int offset = Code[fixup.Value];
+          int value = Code[offset];
+        }
+        break;
+
+      case AGSFixupType.String:
+        {
+          int offset = Code[fixup.Value];
+          string value = ReadCString(StringsBlob[offset]);
+        }
+        break;
+
+      case AGSFixupType.Import:
+        {
+          int index = Code[fixup.Value];
+          string value = Imports[index];
+        }
+        break;
+
+      case AGSFixupType.DataData:
+        {
+          int offset = GlobalData[fixup.Value];
+          int value = GlobalData[offset];
+        }
+        break;
+
+      case AGSFixupType.Stack:
+        {
+          int offset = Code[fixup.Value];
+          int value = Stack[offset];
+        }
+        break;
+
+      default:
+        throw new InvalidDataException();
+    }
+  }*/
+//}
+
 ########### Literal types ############
 "number":
   "int": 12

@@ -76,7 +76,7 @@ namespace AGSUnpackerSharp.Game
 
       for (int i = 0; i < items.Length; ++i)
       {
-        items[i] = r.ReadNullTerminatedString();
+        items[i] = r.ReadCString();
       }
 
       if (gui_version >= 114)

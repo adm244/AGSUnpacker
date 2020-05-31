@@ -1,89 +1,96 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using AGSUnpackerSharp.Utils.Encryption;
 
 namespace AGSUnpackerSharp
 {
   public static class BinaryReaderExtension
   {
-    //TODO(adm244): redo this nonsense to propely handle encoding (use win1251)
-
     public static bool EOF(this BinaryReader reader)
     {
       return (reader.BaseStream.Position >= reader.BaseStream.Length);
     }
 
-    public static string ReadNullTerminatedString(this BinaryReader r)
+    public static string ReadCString(this BinaryReader reader)
     {
-      if (r.EOF())
+      if (reader.EOF())
         return string.Empty;
 
-      return ReadNullTerminatedString(r, 5000000);
+      return ReadCString(reader, AGSStringUtils.MaxCStringLength);
     }
 
-    public static string ReadNullTerminatedString(this BinaryReader r, int maxLength)
+    public static string ReadCString(this BinaryReader reader, int maxLength)
     {
-      if (r.EOF())
+      if (reader.EOF())
         return string.Empty;
 
-      StringBuilder sb = new StringBuilder(maxLength / 4);
+      StringBuilder stringBuilder = new StringBuilder(maxLength / 4);
+
       for (int i = 0; i < maxLength; ++i)
       {
-        char symbol = r.ReadChar();
-        if (symbol == 0) break;
-        sb.Append(symbol);
+        char character = reader.ReadChar();
+        if (character == 0)
+          break;
+
+        stringBuilder.Append(character);
       }
 
-      return sb.ToString();
+      return stringBuilder.ToString();
     }
 
-    public static string ReadFixedString(this BinaryReader r, int length)
+    public static string ReadEncryptedCString(this BinaryReader reader)
     {
-      if (r.EOF())
+      Int32 length = reader.ReadInt32();
+      if ((length <= 0) || (length > AGSStringUtils.MaxCStringLength))
+        throw new IndexOutOfRangeException();
+
+      //NOTE(adm244): ASCII ReadChars is not reliable in this case since it replaces bytes > 0x7F
+      // https://referencesource.microsoft.com/#mscorlib/system/text/asciiencoding.cs,879
+
+      byte[] buffer = reader.ReadBytes(length);
+      return AGSEncryption.DecryptAvis(buffer);
+    }
+
+    public static string ReadFixedString(this BinaryReader reader, int length)
+    {
+      if (reader.EOF())
         return string.Empty;
 
-      char[] buffer = r.ReadChars(length);
-      StringBuilder sb = new StringBuilder(length);
-      for (int i = 0; i < length; ++i)
-      {
-        if (buffer[i] == 0) break;
-        sb.Append(buffer[i]);
-      }
-
-      return sb.ToString();
+      char[] buffer = reader.ReadChars(length);
+      
+      //NOTE(adm244): the reason why we use ConvertCString here is that we expect that
+      // the string can be null-terminated (when it's actual length is less the the length specified)
+      // Should we consider using a different method for this case??
+      return AGSStringUtils.ConvertCString(buffer);
     }
 
-    public static string ReadPrefixedString32(this BinaryReader r)
+    public static string ReadPrefixedString32(this BinaryReader reader)
     {
-      if (r.EOF())
+      if (reader.EOF())
         return string.Empty;
 
-      Int32 length = r.ReadInt32();
-      byte[] buffer = r.ReadBytes(length);
-      //char[] buffer = r.ReadChars(length);
-
-      Encoding encoding = Encoding.GetEncoding(1252);
-      return encoding.GetString(buffer);
+      Int32 length = reader.ReadInt32();
+      char[] buffer = reader.ReadChars(length);
+      return new string(buffer);
     }
 
-    public static Int16[] ReadArrayInt16(this BinaryReader r, int count)
+    public static Int16[] ReadArrayInt16(this BinaryReader reader, int count)
     {
       Int16[] values = new Int16[count];
+
       for (int i = 0; i < count; ++i)
-      {
-        values[i] = r.ReadInt16();
-      }
+        values[i] = reader.ReadInt16();
 
       return values;
     }
 
-    public static Int32[] ReadArrayInt32(this BinaryReader r, int count)
+    public static Int32[] ReadArrayInt32(this BinaryReader reader, int count)
     {
       Int32[] values = new Int32[count];
+
       for (int i = 0; i < count; ++i)
-      {
-        values[i] = r.ReadInt32();
-      }
+        values[i] = reader.ReadInt32();
 
       return values;
     }

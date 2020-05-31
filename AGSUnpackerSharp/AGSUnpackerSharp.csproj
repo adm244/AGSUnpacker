@@ -70,19 +70,25 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\AssetsManager.cs" />
     <Compile Include="Extensions\BinaryWriterExtension.cs" />
     <Compile Include="Extensions\BitmapExtension.cs" />
     <Compile Include="Extractors\SourceExtractors\SourceExtractor262.cs" />
     <Compile Include="Game\View\AGSView272.cs" />
     <Compile Include="Graphics\AGSSpriteSet.cs" />
     <Compile Include="Graphics\SpriteSetHeader.cs" />
+    <Compile Include="Room\AGSRoomBackground.cs" />
+    <Compile Include="Room\AGSRoomEdges.cs" />
+    <Compile Include="Shared\AGSInteractions.cs" />
+    <Compile Include="Room\AGSRoomMarkup.cs" />
+    <Compile Include="Room\AGSRoomProperties.cs" />
+    <Compile Include="Room\AGSRoomScript.cs" />
+    <Compile Include="Room\AGSRoomState.cs" />
     <Compile Include="Shared\Interaction\AGSInteraction.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionCommand.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionCommandsList.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionValue.cs" />
     <Compile Include="Shared\Interaction\AGSInteractionVariable.cs" />
-    <Compile Include="Shared\Script\AGSScriptDecoder.cs" />
-    <Compile Include="Shared\Script\Deprecated\AGSVirtualMachine.cs" />
     <Compile Include="Utils\AGSAlignedStream.cs" />
     <Compile Include="Translation\AGSTranslation.cs" />
     <Compile Include="Utils\AGSIdentityExtractor.cs" />
@@ -122,11 +128,12 @@
     <Compile Include="Room\AGSRegion.cs" />
     <Compile Include="Room\AGSRoom.cs" />
     <Compile Include="Room\AGSWalkableArea.cs" />
-    <Compile Include="Room\AGSWalkBehindArea.cs" />
+    <Compile Include="Room\AGSWalkbehindArea.cs" />
     <Compile Include="Shared\InteractionScript\AGSInteractionScript.cs" />
     <Compile Include="Shared\InteractionScript\AGSInteractionScriptEvent.cs" />
     <Compile Include="Shared\AGSPropertyStorage.cs" />
-    <Compile Include="Shared\Script\AGSScript.cs" />
+    <Compile Include="Shared\AGSScript.cs" />
+    <Compile Include="Utils\Encryption\AGSEncryption.cs" />
     <Compile Include="Utils\IEEE754Utils.cs" />
     <Compile Include="Extractors\SourceExtractor.cs" />
     <Compile Include="Utils\TextExtractor.cs" />
