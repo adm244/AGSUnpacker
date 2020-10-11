@@ -35,6 +35,7 @@ namespace AGSUnpackerSharp.Room
     {
     }
 
+    // TODO(adm244): pass a room version into contructor
     public AGSRoom(string name)
     {
       Version = 29;
@@ -66,7 +67,7 @@ namespace AGSUnpackerSharp.Room
           while (true)
           {
             byte blockTypeRead = reader.ReadByte();
-            if (!Enum.IsDefined(typeof(BlockType), blockTypeRead))
+            if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
               throw new InvalidDataException("Unknown room block type!");
 
             BlockType blockType = (BlockType)blockTypeRead;

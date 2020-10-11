@@ -83,7 +83,7 @@ namespace AGSUnpackerSharp.Translation
         case BlockType.Header:
           {
             writer.Write((UInt32)GameID);
-            AGSStringUtils.WriteEncryptedString(writer, GameName);
+            writer.WriteEncryptedCString(GameName);
           } break;
 
         case BlockType.Content:
@@ -94,14 +94,14 @@ namespace AGSUnpackerSharp.Translation
               if (string.IsNullOrEmpty(TranslatedLines[i]))
                 continue;
 
-              AGSStringUtils.WriteEncryptedString(writer, OriginalLines[i]);
-              AGSStringUtils.WriteEncryptedString(writer, TranslatedLines[i]);
+              writer.WriteEncryptedCString(OriginalLines[i]);
+              writer.WriteEncryptedCString(TranslatedLines[i]);
             }
 
             //NOTE(adm244): write empty strings so parser knows this block has ended
             // no idea why they just didn't use a block size value...
-            AGSStringUtils.WriteEncryptedString(writer, "");
-            AGSStringUtils.WriteEncryptedString(writer, "");
+            writer.WriteEncryptedCString("");
+            writer.WriteEncryptedCString("");
           } break;
 
         case BlockType.Settings:
@@ -147,8 +147,8 @@ namespace AGSUnpackerSharp.Translation
             {
               for (; ; )
               {
-                string original = AGSStringUtils.ReadEncryptedString(reader);
-                string translation = AGSStringUtils.ReadEncryptedString(reader);
+                string original = reader.ReadEncryptedCString();
+                string translation = reader.ReadEncryptedCString();
 
                 if ((original.Length < 1) && (translation.Length < 1))
                   break;
@@ -160,7 +160,7 @@ namespace AGSUnpackerSharp.Translation
             else if (blockType == (int)BlockType.Header)
             {
               GameID = reader.ReadUInt32();
-              GameName = AGSStringUtils.ReadEncryptedString(reader);
+              GameName = reader.ReadEncryptedCString();
             }
             else if (blockType == (int)BlockType.Settings)
             {

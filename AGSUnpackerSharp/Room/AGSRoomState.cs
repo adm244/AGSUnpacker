@@ -1,7 +1,7 @@
 ﻿
 namespace AGSUnpackerSharp.Room
 {
-  public struct AGSRoomState
+  public class AGSRoomState
   {
     public byte StartupMusicID;
     public byte MusicVolume;

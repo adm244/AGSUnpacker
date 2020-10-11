@@ -91,9 +91,9 @@ namespace AGSUnpackerSharp.Utils
     {
       // hotspots
       lines.Add("//   [hotspots]");
-      for (int i = 0; i < room.hotspots.Length; ++i)
+      for (int i = 0; i < room.Markup.Hotspots.Length; ++i)
       {
-        PushIntoLines(room.hotspots[i].name);
+        PushIntoLines(room.Markup.Hotspots[i].Name);
       }
 
       // messages
@@ -105,16 +105,16 @@ namespace AGSUnpackerSharp.Utils
 
       // objects
       lines.Add("//   [objects]");
-      for (int i = 0; i < room.objects.Length; ++i)
+      for (int i = 0; i < room.Markup.Objects.Length; ++i)
       {
-        PushIntoLines(room.objects[i].name);
+        PushIntoLines(room.Markup.Objects[i].Name);
       }
 
       // script strings
       lines.Add("//   [script strings]");
-      for (int i = 0; i < room.Script.StringsReferenced.Length; ++i)
+      for (int i = 0; i < room.Script.SCOM3.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(room.Script.StringsReferenced[i]);
+        PushIntoLines(room.Script.SCOM3.StringsReferenced[i]);
       }
     }
 

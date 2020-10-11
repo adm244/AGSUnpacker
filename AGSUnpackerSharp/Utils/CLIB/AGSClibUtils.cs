@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
+using AGSUnpackerSharp.Utils.Encryption;
 
 namespace AGSUnpackerSharp.Utils
 {
@@ -90,7 +91,7 @@ namespace AGSUnpackerSharp.Utils
               Int16 length = r.ReadInt16();
               length /= 5;
               byte[] jibzler = r.ReadBytes(length);
-              assetInfos[i].Filename = AGSStringUtils.DejibzleString(jibzler);
+              assetInfos[i].Filename = AGSEncryption.DecryptJibzle(jibzler);
             }
           }
           else // 2.72 and older
@@ -109,7 +110,7 @@ namespace AGSUnpackerSharp.Utils
               else
               {
                 byte[] jibzler = r.ReadBytes(25);
-                assetInfos[i].Filename = AGSStringUtils.DejibzleString(jibzler);
+                assetInfos[i].Filename = AGSEncryption.DecryptJibzle(jibzler);
               }
             }
           }

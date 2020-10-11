@@ -20,14 +20,14 @@ namespace AGSUnpackerSharp.Game
       words = new AGSDictionaryWord[0];
     }
 
-    public void LoadFromStream(BinaryReader r)
+    public void LoadFromStream(BinaryReader reader)
     {
-      Int32 words_count = r.ReadInt32();
+      Int32 words_count = reader.ReadInt32();
       words = new AGSDictionaryWord[words_count];
       for (int i = 0; i < words_count; ++i)
       {
-        words[i].text = AGSStringUtils.ReadEncryptedString(r);
-        words[i].group = r.ReadInt16();
+        words[i].text = reader.ReadEncryptedCString();
+        words[i].group = reader.ReadInt16();
       }
     }
   }

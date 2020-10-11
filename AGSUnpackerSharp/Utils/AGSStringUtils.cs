@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace AGSUnpackerSharp
 {
@@ -8,16 +9,33 @@ namespace AGSUnpackerSharp
     //RANT(adm244): 50.000.000 sounds like a non-sense, but so is AGS being a good engine
     public static readonly int MaxCStringLength = 5000000;
 
+    public static readonly Encoding Encoding = Encoding.GetEncoding(1252);
+
+    public static int GetCStringLength(byte[] buffer, int index)
+    {
+      int i = 0;
+
+      while (buffer[index + i] != 0)
+      {
+        if (i >= MaxCStringLength)
+          break;
+
+        ++i;
+      }
+
+      return i;
+    }
+
     public static unsafe string ConvertCString(byte[] buffer, int index)
     {
+      int length = GetCStringLength(buffer, index);
       fixed (byte* p = &buffer[index])
-        return new string((sbyte *)p);
+        return new string((sbyte*)p, 0, length, Encoding);
     }
 
     public static unsafe string ConvertCString(byte[] buffer)
     {
-      fixed (byte* p = &buffer[0])
-        return new string((sbyte *)p);
+      return ConvertCString(buffer, 0);
     }
 
     public static unsafe string ConvertCString(char[] buffer)
@@ -51,7 +69,7 @@ namespace AGSUnpackerSharp
           startpos = (i + 1);
         }
       }
-    
+
       return strings.ToArray();
     }
 
@@ -61,6 +79,7 @@ namespace AGSUnpackerSharp
       {
         for (int i = 0; i < strings.Length; ++i)
         {
+          // TODO(adm244): implement a method to convert "string" into "byte[]"
           byte[] buffer = GetASCIIBytes(strings[i]);
           stream.Write(buffer, 0, buffer.Length);
           stream.WriteByte(0);

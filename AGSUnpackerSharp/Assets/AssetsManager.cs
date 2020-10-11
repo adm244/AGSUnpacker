@@ -316,7 +316,7 @@ namespace AGSUnpackerSharp.Assets
       return false;
     }
 
-    private struct AGSCLibAsset
+    private class AGSCLibAsset
     {
       public string Filename;
       public Int64 Offset;
@@ -332,7 +332,7 @@ namespace AGSUnpackerSharp.Assets
       }
     }
 
-    private struct CLibAsset
+    private class CLibAsset
     {
       public string Filename;
       public ulong Offset;

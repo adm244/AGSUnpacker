@@ -2,7 +2,7 @@
 
 namespace AGSUnpackerSharp.Shared
 {
-  public struct AGSInteractions
+  public class AGSInteractions
   {
     public AGSInteractionScript Script;
     public AGSInteraction Interaction;

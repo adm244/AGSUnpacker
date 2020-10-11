@@ -1,5 +1,7 @@
 
 v05:
+Fixed: Incorrect encoding for script referenced strings
+
 Added: Support for CLib version 6 (vox files)
 Added: Support for multiple CLib files
 Added: Reimplemented CLib reader

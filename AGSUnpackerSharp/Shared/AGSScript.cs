@@ -21,6 +21,8 @@ namespace AGSUnpackerSharp.Shared
     public Section[] Sections;
     public Fixup[] Fixups;
 
+    private byte[] _stringsBlob;
+
     public AGSScript()
     {
       GlobalData = new byte[0];
@@ -31,6 +33,8 @@ namespace AGSUnpackerSharp.Shared
       Exports = new Export[0];
       Sections = new Section[0];
       Fixups = new Fixup[0];
+
+      _stringsBlob = new byte[0];
     }
 
     public void ReadFromStream(BinaryReader reader)
@@ -47,6 +51,8 @@ namespace AGSUnpackerSharp.Shared
 
       if (Version >= 83) // ???
         ReadScriptSections(reader);
+
+      StringsReferenced = GetReferencedStrings(_stringsBlob);
 
       UInt32 signatureTail = reader.ReadUInt32();
       Debug.Assert(signatureTail == SignatureTail);
@@ -91,9 +97,8 @@ namespace AGSUnpackerSharp.Shared
 
     private void ReadStringsSection(BinaryReader reader, int size)
     {
-      byte[] stringsBlob = reader.ReadBytes(size);
-      StringsStored = AGSStringUtils.ConvertNullTerminatedSequence(stringsBlob);
-      StringsReferenced = GetReferencedStrings(stringsBlob);
+      _stringsBlob = reader.ReadBytes(size);
+      StringsStored = AGSStringUtils.ConvertNullTerminatedSequence(_stringsBlob);
     }
 
     private void ReadMainSection(BinaryReader reader)
@@ -139,7 +144,7 @@ namespace AGSUnpackerSharp.Shared
       for (int i = 0; i < count; ++i)
       {
         byte fixupTypeRaw = reader.ReadByte();
-        if (!Enum.IsDefined(typeof(Fixup.FixupType), fixupTypeRaw))
+        if (!Enum.IsDefined(typeof(Fixup.FixupType), (int)fixupTypeRaw))
         {
           Debug.Assert(false, "AGSScript: Unknown fixup type encountered, assuming literal.");
           fixupTypeRaw = (byte)Fixup.FixupType.Literal;

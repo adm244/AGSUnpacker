@@ -93,10 +93,10 @@ namespace AGSUnpackerGUI
 
           ctrlBackgroundFrame.Items.Clear();
 
-          int framesCount = (_loadedRoom.backgroundFrames == 0) ? 1 : _loadedRoom.backgroundFrames;
+          int framesCount = (_loadedRoom.Background.Frames.Length == 0) ? 1 : _loadedRoom.Background.Frames.Length;
           for (int i = 0; i < framesCount; ++i)
           {
-            Bitmap image = _loadedRoom.backgrounds[i];
+            Bitmap image = _loadedRoom.Background.Frames[i];
             string name = (i == 0) ? "Main background" : ("Frame " + i);
             RoomFrame frame = new RoomFrame(image, name);
 
@@ -127,7 +127,7 @@ namespace AGSUnpackerGUI
         return;
 
       RoomFrame roomFrame = (RoomFrame)ctrlBackgroundFrame.SelectedItem;
-      roomFrame.Image = _loadedRoom.backgrounds[ctrlBackgroundFrame.SelectedIndex];
+      roomFrame.Image = _loadedRoom.Background.Frames[ctrlBackgroundFrame.SelectedIndex];
       ctrlBackgroundImage.Image = roomFrame.Image;
     }
 
@@ -152,8 +152,8 @@ namespace AGSUnpackerGUI
 
         int index = ctrlBackgroundFrame.SelectedIndex;
 
-        if ((bitmap.Width != _loadedRoom.backgrounds[index].Width)
-          || (bitmap.Height != _loadedRoom.backgrounds[index].Height))
+        if ((bitmap.Width != _loadedRoom.Background.Frames[index].Width)
+          || (bitmap.Height != _loadedRoom.Background.Frames[index].Height))
         {
           DialogResult result = MessageBox.Show(this,
             "Selected image has different size than background image.\n\nSelect another image?",
@@ -164,11 +164,11 @@ namespace AGSUnpackerGUI
           return;
         }
 
-        if (bitmap.PixelFormat != _loadedRoom.backgrounds[index].PixelFormat)
+        if (bitmap.PixelFormat != _loadedRoom.Background.Frames[index].PixelFormat)
         {
           //TODO(adm244): convert images
           string message = string.Format("Selected image has different pixel format than background image.\nExpected: {0}, Got: {1}\n\nSelect another image?",
-            _loadedRoom.backgrounds[index].PixelFormat, bitmap.PixelFormat);
+            _loadedRoom.Background.Frames[index].PixelFormat, bitmap.PixelFormat);
           DialogResult result = MessageBox.Show(this,
             message,
             "Invalid image", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
@@ -178,7 +178,7 @@ namespace AGSUnpackerGUI
           return;
         }
 
-        _loadedRoom.backgrounds[index] = bitmap;
+        _loadedRoom.Background.Frames[index] = bitmap;
         //ctrlBackgroundFrame.SelectedIndex = index;
         ctrlBackgroundFrame_SelectedIndexChanged(this, new EventArgs());
 
@@ -199,7 +199,7 @@ namespace AGSUnpackerGUI
         string fileFullPath = _sfd.FileName;
 
         int index = ctrlBackgroundFrame.SelectedIndex;
-        _loadedRoom.backgrounds[index].Save(fileFullPath, ImageFormat.Bmp);
+        _loadedRoom.Background.Frames[index].Save(fileFullPath, ImageFormat.Bmp);
 
         MessageBox.Show(this, "Background image was successefully exported.",
           "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);

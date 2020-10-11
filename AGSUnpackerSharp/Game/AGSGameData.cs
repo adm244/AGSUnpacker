@@ -6,7 +6,7 @@ using System.Text;
 using AGSUnpackerSharp.Game.View;
 using AGSUnpackerSharp.Shared;
 using AGSUnpackerSharp.Shared.Interaction;
-using AGSUnpackerSharp.Shared.Script;
+using AGSUnpackerSharp.Utils.Encryption;
 
 namespace AGSUnpackerSharp.Game
 {
@@ -302,7 +302,7 @@ namespace AGSUnpackerSharp.Game
 
           Int32 scriptSize = r.ReadInt32();
           byte[] encodedStr = r.ReadBytes(scriptSize);
-          dialogs[i].old_dialog_script = AGSStringUtils.DecryptString(encodedStr);
+          dialogs[i].old_dialog_script = AGSEncryption.DecryptAvis(encodedStr);
         }
 
         if (dta_version <= 25) // 2.60 and older
@@ -321,7 +321,7 @@ namespace AGSUnpackerSharp.Game
             }
 
             byte[] encodedStr = r.ReadBytes(length);
-            oldDialogStrings.Add(AGSStringUtils.DecryptString(encodedStr));
+            oldDialogStrings.Add(AGSEncryption.DecryptAvis(encodedStr));
           }
         }
       }
@@ -529,7 +529,7 @@ namespace AGSUnpackerSharp.Game
         if (setup.global_messages[i] == 0)
           continue;
 
-        globalMessages[i] = AGSStringUtils.ReadEncryptedString(r);
+        globalMessages[i] = r.ReadEncryptedCString();
       }
     }
   }
