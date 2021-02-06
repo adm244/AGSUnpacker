@@ -448,6 +448,9 @@ namespace AGSUnpackerSharp.Graphics
 
     private static void WriteSpriteIndexFile(SpriteSetHeader header, SpriteIndexInfo[] spriteIndexInfo)
     {
+      // FIXME(adm244): check all filepaths so that they ALL are either RELATIVE or ABSOLUTE
+      // because for now some files are saved in a working directory (relative paths)
+      // and some in other places (absolute paths)
       using (FileStream stream = new FileStream(SpriteSetIndexFileName, FileMode.Create))
       {
         using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))

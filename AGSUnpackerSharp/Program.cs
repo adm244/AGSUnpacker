@@ -1,11 +1,26 @@
 ﻿using System;
 using System.Drawing;
 using System.Drawing.Imaging;
-using AGSUnpackerSharp.Graphics;
 using AGSUnpackerSharp.Translation;
 
 namespace AGSUnpackerSharp
 {
+  //struct Pixel
+  //{
+  //  public byte A;
+  //  public byte R;
+  //  public byte G;
+  //  public byte B;
+
+  //  public Pixel(byte a, byte r, byte g, byte b)
+  //  {
+  //    A = a;
+  //    R = r;
+  //    G = g;
+  //    B = b;
+  //  }
+  //}
+
   class Program
   {
     static void Main(string[] args)
@@ -14,8 +29,80 @@ namespace AGSUnpackerSharp
       {
         string filepath = args[0];
 
+        //byte[] buffer = File.ReadAllBytes(filepath);
+        //byte[] buffer = null;
+        //using (FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
+        //{
+        //  using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        //  {
+        //    List<Pixel> pixels = new List<Pixel>();
+
+        //    int column = 0;
+        //    while (!reader.EOF())
+        //    {
+        //      byte a = reader.ReadByte();
+        //      byte r = reader.ReadByte();
+        //      byte g = reader.ReadByte();
+        //      byte b = reader.ReadByte();
+
+        //      ++column;
+
+        //      if (column >= 640)
+        //      {
+        //        column = 0;
+        //        byte pad = reader.ReadByte();
+        //      }
+
+        //      pixels.Add(new Pixel(a, r, g, b));
+        //    }
+
+        //    buffer = new byte[pixels.Count * 4];
+        //    for (int i = 0; i < pixels.Count; ++i)
+        //    {
+        //      int index = i * 4;
+        //      buffer[index + 3] = pixels[i].A;
+        //      buffer[index + 0] = pixels[i].R;
+        //      buffer[index + 1] = pixels[i].G;
+        //      buffer[index + 2] = pixels[i].B;
+        //    }
+        //  }
+        //}
+        //Bitmap image = new Bitmap(640, 40, PixelFormat.Format32bppArgb);
+        //image.SetPixels(buffer);
+        //image.Save(args[1], ImageFormat.Png);
+
         AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
-        translation.Compile(filepath + ".tra", 5934168, "Kathy Rain");
+        translation.Compile(args[1], 450455843, "Whispers of a Machine");
+
+        //AGSSpriteSet.PackSprites(filepath, args[1]);
+
+        //AGSGameData dta = new AGSGameData();
+        //dta.LoadFromFile(filepath);
+
+        //using (BinaryWriter stream = new BinaryWriter(new FileStream("globalscript.o", FileMode.Create, FileAccess.Write)))
+        //{
+        //  dta.globalScript.WriteToStream(stream);
+        //}
+
+        //using (BinaryWriter stream = new BinaryWriter(new FileStream("dialogscript.o", FileMode.Create, FileAccess.Write)))
+        //{
+        //  dta.dialogScript.WriteToStream(stream);
+        //}
+
+        //for (int i = 0; i < dta.scriptModules.Length; ++i)
+        //{
+        //  string filename = string.Format("{0}.o", dta.scriptModules[i].Sections[0].Name);
+        //  using (FileStream fileStream = new FileStream(filename, FileMode.Create, FileAccess.Write))
+        //  {
+        //    using (BinaryWriter writer = new BinaryWriter(fileStream))
+        //    {
+        //      dta.scriptModules[i].WriteToStream(writer);
+        //    }
+        //  }
+        //}
+
+        //AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
+        //translation.Compile(filepath + ".tra", 5934168, "Kathy Rain");
 
         //SourceExtractor extractor = SourceExtractor.Create(AGSVersion.AGS262);
         //bool result = extractor.Extract(filepath);
@@ -62,7 +149,7 @@ namespace AGSUnpackerSharp
             room.script.DumpInstructions(writer);
           }
         }*/
-        
+
         /*using (BinaryWriter writer = new BinaryWriter(new FileStream("Dialog.o", FileMode.Create)))
         {
           //dta.globalScript.DumpInstructions(writer);
@@ -135,7 +222,7 @@ namespace AGSUnpackerSharp
 
         //AGSSpriteSet.UnpackSprites(args[0], args[1]);
         //AGSSpriteSet.PackSprites(args[0], args[1]);
-        
+
         //AGSRoom room = new AGSRoom();
         //room.LoadFromFile(filepath);
 

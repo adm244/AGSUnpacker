@@ -104,6 +104,7 @@ namespace AGSUnpackerSharp.Extensions
     public static Bitmap Convert(this Bitmap bitmap, PixelFormat format)
     {
       Rectangle copyRegion = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+      // FIXME(adm244): investigate "out of memory" exception here...
       return bitmap.Clone(copyRegion, format);
     }
   }

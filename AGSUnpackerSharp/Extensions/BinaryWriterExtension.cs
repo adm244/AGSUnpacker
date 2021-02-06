@@ -41,6 +41,16 @@ namespace AGSUnpackerSharp.Extensions
 
     public static void WriteFixedString(this BinaryWriter writer, string text, int length)
     {
+      char[] buffer = new char[length];
+
+      for (int i = 0; i < text.Length; ++i)
+        buffer[i] = text[i];
+
+      writer.Write((char[])buffer);
+    }
+
+    public static void WriteFixedCString(this BinaryWriter writer, string text, int length)
+    {
       char[] buffer = new char[length + 1];
 
       for (int i = 0; i < text.Length; ++i)
