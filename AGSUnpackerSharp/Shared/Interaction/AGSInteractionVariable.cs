@@ -19,7 +19,7 @@ namespace AGSUnpackerSharp.Shared.Interaction
 
     public void LoadFromStream(BinaryReader r)
     {
-      name = r.ReadFixedString(23);
+      name = r.ReadFixedCString(23);
       type = r.ReadByte();
       value = r.ReadInt32();
     }

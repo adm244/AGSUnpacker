@@ -19,11 +19,16 @@ namespace AGSUnpackerSharp.Assets
     private string RootFolder;
     private CLibFile[] Files;
 
+    private string RootFile
+    {
+      get { return Path.Combine(RootFolder, RootFilename); }
+    }
+
     private AssetsManager()
     {
       RootFilename = string.Empty;
       RootFolder = string.Empty;
-      Files = null;
+      Files = new CLibFile[0];
     }
 
     public static AssetsManager Create(string filePath)
@@ -32,23 +37,71 @@ namespace AGSUnpackerSharp.Assets
 
       manager.RootFolder = Path.GetDirectoryName(filePath);
 
-      if (manager.ReadMainCLibFile(filePath))
+      if (manager.TryReadMainCLibFile(filePath))
         return manager;
 
-      if (manager.ReadMainCLibFile(Path.Combine(manager.RootFolder, "ac2game.dat")))
+      if (manager.TryReadMainCLibFile(Path.Combine(manager.RootFolder, "ac2game.dat")))
         return manager;
 
-      if (manager.ReadMainCLibFile(Path.Combine(manager.RootFolder, "ac2game.ags")))
+      if (manager.TryReadMainCLibFile(Path.Combine(manager.RootFolder, "ac2game.ags")))
         return manager;
 
       return null;
     }
 
-    //TODO(adm244): implement unpacking
     //TODO(adm244): implement packing
 
-    //FIX(adm244): rename to BuildAssetsList and make it return a List<Asset>
-    private bool ReadMainCLibFile(string filePath)
+    public void Extract(string folderPath)
+    {
+      for (int i = 0; i < Files.Length; ++i)
+      {
+        string fileFolderPath = Path.Combine(folderPath, Files[i].Filename);
+        Directory.CreateDirectory(fileFolderPath);
+
+        string libFilePath = Path.Combine(RootFolder, Files[i].Filename);
+
+        //NOTE(adm244): if doesn't exist try the root file
+        if (!File.Exists(libFilePath))
+          libFilePath = RootFile;
+
+        //NOTE(adm244): if STILL doesn't exist -- throw up
+        if (!File.Exists(libFilePath))
+          throw new InvalidDataException("CLib file does NOT exist!");
+
+        using (FileStream stream = new FileStream(libFilePath, FileMode.Open, FileAccess.Read))
+        {
+          using (BinaryReader reader = new BinaryReader(stream, FileEncoding))
+          {
+            //TODO(adm244): verify signature?
+
+            for (int j = 0; j < Files[i].Assets.Count; ++j)
+            {
+              reader.BaseStream.Seek(Files[i].Assets[j].Offset + Files[i].Offset, SeekOrigin.Begin);
+
+              string filePath = Path.Combine(fileFolderPath, Files[i].Assets[j].Filename);
+              using (FileStream outputStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+              {
+                using (BinaryWriter outputWriter = new BinaryWriter(outputStream, FileEncoding))
+                {
+                  long bytesToRead = Files[i].Assets[j].Size;
+                  while (bytesToRead > 0)
+                  {
+                    //NOTE(adm244): maybe try a bigger I/O buffer size
+                    long bytesRead = Math.Min(bytesToRead, 65536);
+                    byte[] buffer = reader.ReadBytes((int)bytesRead);
+                    bytesToRead -= bytesRead;
+
+                    outputWriter.Write(buffer);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    private bool TryReadMainCLibFile(string filePath)
     {
       RootFilename = Path.GetFileName(filePath);
       Files = null;
@@ -57,41 +110,56 @@ namespace AGSUnpackerSharp.Assets
       {
         using (BinaryReader reader = new BinaryReader(stream, FileEncoding))
         {
-          string signatureHead = reader.ReadFixedString(SignatureHead.Length);
+          long offset = 0;
+
+          string signatureHead = reader.ReadFixedCString(SignatureHead.Length);
           if (signatureHead != SignatureHead)
           {
-            if (!FindAppendedCLIBFile(reader))
+            if (!FindAppendedCLIBFile(reader, out offset))
               return false;
           }
 
-          byte version = reader.ReadByte();
+          Files = ReadCLib(reader);
 
-          //TODO(adm244): legacy\community engine supports only these, add support for other versions
-          if ((version != 6) || (version != 10)
-           || (version != 11) || (version != 15)
-           || (version != 20) || (version != 21)
-           || (version != 30))
-            return false;
-
-          if (version >= 10) // multi-file
-          {
-            byte index = reader.ReadByte();
-            if (index != 0)
-              return false;
-
-            if (version >= 30)
-              Files = ReadCLib30(reader);
-            else if (version >= 21)
-              Files = ReadCLib21(reader);
-            else
-              Files = ReadCLibPre21(reader, version);
-          }
-          else
-            Files = ReadCLibPre10(reader, version);
+          //HACK(adm244): quick 'n dirty appended clib support
+          // assumes that the first entry is the appended clib
+          Files[0].Offset = offset;
         }
       }
 
       return (Files != null);
+    }
+
+    private CLibFile[] ReadCLib(BinaryReader reader)
+    {
+      CLibFile[] files = new CLibFile[0];
+
+      byte version = reader.ReadByte();
+
+      //TODO(adm244): legacy\community engine supports only these, add support for other versions
+      if ((version != 6) && (version != 10)
+       && (version != 11) && (version != 15)
+       && (version != 20) && (version != 21)
+       && (version != 30))
+        throw new NotImplementedException("CLib version is not supported!");
+
+      if (version >= 10) // multi-file
+      {
+        byte index = reader.ReadByte();
+        if (index != 0)
+          throw new InvalidDataException("CLib file index is not 0!\nAre you trying to read a wrong CLib file?");
+
+        if (version >= 30)
+          files = ReadCLib30(reader);
+        else if (version >= 21)
+          files = ReadCLib21(reader);
+        else
+          files = ReadCLibPre21(reader, version);
+      }
+      else
+        files = ReadCLibPre10(reader, version);
+
+      return files;
     }
 
     private CLibFile[] ReadCLib30(BinaryReader reader)
@@ -111,13 +179,11 @@ namespace AGSUnpackerSharp.Assets
 
         asset.Filename = reader.ReadCString();
         byte index = reader.ReadByte();
-        asset.Offset = (ulong)reader.ReadInt64();
-        asset.Size = (ulong)reader.ReadInt64();
+        asset.Offset = reader.ReadInt64();
+        asset.Size = reader.ReadInt64();
 
-        if (index < 0)
-          return null;
         if (index >= files.Length)
-          return null;
+          throw new InvalidDataException("CLib file index is incorrect!");
 
         files[index].Assets.Add(asset);
       }
@@ -132,12 +198,18 @@ namespace AGSUnpackerSharp.Assets
 
       //NOTE(adm244): assuming asset files are stored sequentially
       Int32 filesCount = encoder.ReadInt32(reader);
+      
       CLibFile[] files = new CLibFile[filesCount];
+      for (int i = 0; i < files.Length; ++i)
+        files[i] = new CLibFile();
+
       for (int i = 0; i < files.Length; ++i)
         files[i].Filename = encoder.ReadString(reader);
 
       Int32 assetsCount = encoder.ReadInt32(reader);
       AGSCLibAsset[] assets = new AGSCLibAsset[assetsCount];
+      for (int i = 0; i < assets.Length; ++i)
+        assets[i] = new AGSCLibAsset();
 
       for (int i = 0; i < assetsCount; ++i)
         assets[i].Filename = encoder.ReadString(reader);
@@ -195,7 +267,7 @@ namespace AGSUnpackerSharp.Assets
         if (version == 20)
           files[i].Filename = reader.ReadCString(50);
         else
-          files[i].Filename = reader.ReadFixedString(20);
+          files[i].Filename = reader.ReadFixedCString(20);
       }
 
       Int32 asset_count = reader.ReadInt32();
@@ -217,7 +289,7 @@ namespace AGSUnpackerSharp.Assets
           assets[i].Filename = AGSEncryption.DecryptJibzle(jibzler);
         }
         else
-          assets[i].Filename = reader.ReadFixedString(25);
+          assets[i].Filename = reader.ReadFixedCString(25);
       }
 
       for (int i = 0; i < assets.Length; ++i)
@@ -248,7 +320,7 @@ namespace AGSUnpackerSharp.Assets
 
       for (int i = 0; i < assets.Length; ++i)
       {
-        string filename = reader.ReadFixedString(13);
+        string filename = reader.ReadFixedCString(13);
         assets[i].Filename = AGSEncryption.DecryptSalt(filename, salt);
       }
 
@@ -276,8 +348,8 @@ namespace AGSUnpackerSharp.Assets
 
         CLibAsset asset = new CLibAsset();
         asset.Filename = assets[i].Filename;
-        asset.Offset = (ulong)assets[i].Offset;
-        asset.Size = (ulong)assets[i].Size;
+        asset.Offset = assets[i].Offset;
+        asset.Size = assets[i].Size;
 
         int index = assets[i].AssetFileIndex;
         files[index].Assets.Add(asset);
@@ -286,11 +358,12 @@ namespace AGSUnpackerSharp.Assets
       return files;
     }
 
-    private bool FindAppendedCLIBFile(BinaryReader reader)
+    private bool FindAppendedCLIBFile(BinaryReader reader, out long offset)
     {
       reader.BaseStream.Seek(-(SignatureTail.Length), SeekOrigin.End);
+      offset = 0;
 
-      string signatureTail = reader.ReadFixedString(SignatureTail.Length);
+      string signatureTail = reader.ReadFixedCString(SignatureTail.Length);
       if (signatureTail != SignatureTail)
         return false;
 
@@ -302,17 +375,20 @@ namespace AGSUnpackerSharp.Assets
 
       //NOTE(adm244): .NET is a setup for a failure
       reader.BaseStream.Seek((Int64)offset64, SeekOrigin.Begin);
+      offset = (long)offset64;
 
-      string signatureHead = reader.ReadFixedString(SignatureHead.Length);
+      string signatureHead = reader.ReadFixedCString(SignatureHead.Length);
       if (signatureHead == SignatureHead)
         return true;
 
       reader.BaseStream.Seek(offset32, SeekOrigin.Begin);
+      offset = offset32;
 
-      signatureHead = reader.ReadFixedString(SignatureHead.Length);
+      signatureHead = reader.ReadFixedCString(SignatureHead.Length);
       if (signatureHead == SignatureHead)
         return true;
 
+      offset = 0;
       return false;
     }
 
@@ -335,8 +411,8 @@ namespace AGSUnpackerSharp.Assets
     private class CLibAsset
     {
       public string Filename;
-      public ulong Offset;
-      public ulong Size;
+      public long Offset;
+      public long Size;
 
       public CLibAsset()
       {
@@ -349,12 +425,14 @@ namespace AGSUnpackerSharp.Assets
     private class CLibFile
     {
       public string Filename;
+      public long Offset;
       public List<CLibAsset> Assets;
 
       public CLibFile()
       {
         Filename = string.Empty;
-        Assets = null;
+        Offset = 0;
+        Assets = new List<CLibAsset>();
       }
     }
   }

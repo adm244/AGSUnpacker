@@ -113,7 +113,7 @@ namespace AGSUnpackerSharp.Game
       // parse dta header
       Int32 dta_version = r.ReadInt32();
       Int32 strlen = r.ReadInt32();
-      string engine_version = r.ReadFixedString(strlen);
+      string engine_version = r.ReadFixedCString(strlen);
 
       // parse capability strings
       if (dta_version >= 48) // 3.4.1

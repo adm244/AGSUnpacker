@@ -91,7 +91,7 @@ namespace AGSUnpackerSharp.Extractors.SourceExtractors
               // also other negative numbers...
 
               folders[i].ParentIndex = inputReader.ReadInt16();
-              folders[i].Name = inputReader.ReadFixedString(AGSSpritesFolder.MAX_NAME_LENGTH);
+              folders[i].Name = inputReader.ReadFixedCString(AGSSpritesFolder.MAX_NAME_LENGTH);
             }
           }
 

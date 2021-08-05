@@ -39,7 +39,7 @@ namespace AGSUnpackerSharp.Shared
 
     public void ReadFromStream(BinaryReader reader)
     {
-      string signatureHead = reader.ReadFixedString(SignatureHead.Length);
+      string signatureHead = reader.ReadFixedCString(SignatureHead.Length);
       Debug.Assert(signatureHead == SignatureHead);
 
       Version = reader.ReadInt32();

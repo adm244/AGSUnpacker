@@ -59,7 +59,7 @@ namespace AGSUnpackerSharp
     public string ReadFixedString(int length)
     {
       SkipPadding(sizeof(byte));
-      string rawData = r.ReadFixedString(length);
+      string rawData = r.ReadFixedCString(length);
       _curPos += length;
 
       return rawData;

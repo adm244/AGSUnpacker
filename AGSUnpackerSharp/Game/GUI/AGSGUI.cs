@@ -76,17 +76,17 @@ namespace AGSUnpackerSharp.Game
 
       if (gui_version < 118) // 3.4.0
       {
-        name = r.ReadFixedString(16);
-        onclick_handler = r.ReadFixedString(20);
+        name = r.ReadFixedCString(16);
+        onclick_handler = r.ReadFixedCString(20);
       }
       else
       {
         //FIX(adm244): why ReadString is not working?
         Int32 strlen = r.ReadInt32();
-        name = r.ReadFixedString(strlen);
+        name = r.ReadFixedCString(strlen);
 
         strlen = r.ReadInt32();
-        onclick_handler = r.ReadFixedString(strlen);
+        onclick_handler = r.ReadFixedCString(strlen);
       }
 
       x = r.ReadInt32();

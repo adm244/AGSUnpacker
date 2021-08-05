@@ -2,6 +2,11 @@
 using System.Drawing;
 using System.Drawing.Imaging;
 using AGSUnpackerSharp.Translation;
+using AGSUnpackerSharp.Utils;
+using System.IO;
+using System.Text;
+using AGSUnpackerSharp.Graphics;
+using AGSUnpackerSharp.Assets;
 
 namespace AGSUnpackerSharp
 {
@@ -28,6 +33,34 @@ namespace AGSUnpackerSharp
       if (args.Length > 0)
       {
         string filepath = args[0];
+
+        //AGSTranslation original = AGSTranslation.ReadSourceFile(args[0]);
+        //AGSTranslation translated = AGSTranslation.ReadSourceFile(args[1]);
+        //
+        //int translatedCount = 0;
+        //for (int i = 0; i < original.OriginalLines.Count; ++i)
+        //{
+        //  int index = translated.OriginalLines.IndexOf(original.OriginalLines[i]);
+        //  if (index >= 0)
+        //  {
+        //    original.TranslatedLines[i] = translated.TranslatedLines[index];
+        //    ++translatedCount;
+        //  }
+        //}
+        //
+        //string outputFilename = args[0] + ".new";
+        //original.WriteSourceFile(outputFilename);
+        //
+        //string statsText = string.Format("// {0} / {1} translated ({2:P1})", translatedCount, original.OriginalLines.Count,
+        //  (double)translatedCount / original.OriginalLines.Count);
+        //File.AppendAllText(outputFilename, statsText, Encoding.GetEncoding(1251));
+
+        AssetsManager assets = AssetsManager.Create(args[0]);
+        assets.Extract(args[1]);
+
+        //FIXME(adm244): can't extract resources from multilib's
+        //AGSClibUtils.UnpackAGSAssetFiles(filepath, args[1]);
+        //TextExtractor.Extract(filepath, args[1]);
 
         //byte[] buffer = File.ReadAllBytes(filepath);
         //byte[] buffer = null;
@@ -71,9 +104,14 @@ namespace AGSUnpackerSharp
         //image.SetPixels(buffer);
         //image.Save(args[1], ImageFormat.Png);
 
-        AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
-        translation.Compile(args[1], 450455843, "Whispers of a Machine");
+        //AGSTranslation translation = new AGSTranslation();
+        //translation.Decompile(filepath);
+        //translation.WriteSourceFile(args[1]);
 
+        //AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
+        //translation.Compile(args[1], 450455843, "Whispers of a Machine");
+
+        //AGSSpriteSet.UnpackSprites(filepath, args[1]);
         //AGSSpriteSet.PackSprites(filepath, args[1]);
 
         //AGSGameData dta = new AGSGameData();

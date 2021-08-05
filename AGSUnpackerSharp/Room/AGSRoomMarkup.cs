@@ -31,7 +31,7 @@ namespace AGSUnpackerSharp.Room
         if (room_version >= 31) // 3.4.1.5
           Objects[i].ScriptName = r.ReadPrefixedString32();
         else
-          Objects[i].ScriptName = r.ReadFixedString(AGSObject.MaxScriptNameLength);
+          Objects[i].ScriptName = r.ReadFixedCString(AGSObject.MaxScriptNameLength);
       }
     }
 
@@ -58,7 +58,7 @@ namespace AGSUnpackerSharp.Room
         if (roomVersion >= 31) // 3.4.1.5
           Objects[i].Name = reader.ReadPrefixedString32();
         else
-          Objects[i].Name = reader.ReadFixedString(AGSObject.MaxNameLength);
+          Objects[i].Name = reader.ReadFixedCString(AGSObject.MaxNameLength);
       }
     }
 

@@ -64,7 +64,7 @@ namespace AGSUnpackerSharp.Game
       right_click_data = r.ReadInt32();
 
       if (gui_version < 119) // 3.5.0
-        text = r.ReadFixedString(50);
+        text = r.ReadFixedCString(50);
       else
         text = r.ReadPrefixedString32();
 

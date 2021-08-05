@@ -11,14 +11,17 @@ namespace AGSUnpackerSharp.Translation
   {
     private static readonly string TRA_SIGNATURE = "AGSTranslation\x0";
 
-    private List<string> OriginalLines = new List<string>();
-    private List<string> TranslatedLines = new List<string>();
+    // FIXME(adm244): temporary? public
+    public List<string> OriginalLines { get; set; }
+    public List<string> TranslatedLines { get; set; }
 
     public uint GameID { get; private set; }
     public string GameName { get; private set; }
 
     public AGSTranslation()
     {
+      OriginalLines = new List<string>();
+      TranslatedLines = new List<string>();
     }
 
     public AGSTranslation(IEnumerable<string> originalLines, IEnumerable<string> translatedLines)
@@ -219,6 +222,26 @@ namespace AGSUnpackerSharp.Translation
       }
 
       return translation;
+    }
+
+    public void WriteSourceFile(string filepath)
+    {
+      using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+      {
+        using (StreamWriter writer = new StreamWriter(stream, Encoding.GetEncoding(1252)))
+        {
+          Debug.Assert(OriginalLines.Count == TranslatedLines.Count);
+
+          for (int i = 0; i < OriginalLines.Count; ++i)
+          {
+            writer.WriteLine(OriginalLines[i]);
+            writer.WriteLine(TranslatedLines[i]);
+          }
+
+          // NOTE(adm244): write an empty line
+          writer.WriteLine();
+        }
+      }
     }
 
     private enum BlockType

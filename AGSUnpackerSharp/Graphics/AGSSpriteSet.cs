@@ -395,7 +395,7 @@ namespace AGSUnpackerSharp.Graphics
     private static SpriteSetHeader ReadSpriteSetHeader(BinaryReader reader)
     {
       Int16 version = reader.ReadInt16();
-      string signature = reader.ReadFixedString(SpriteSetSignature.Length);
+      string signature = reader.ReadFixedCString(SpriteSetSignature.Length);
       Debug.Assert(signature == SpriteSetSignature);
 
       CompressionType compression = SpriteSetHeader.DefaultCompression;

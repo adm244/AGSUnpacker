@@ -99,14 +99,14 @@ namespace AGSUnpackerSharp.Utils
             Int32 files_count = r.ReadInt32();
             string[] lib_filenames = new string[files_count];
             for (int i = 0; i < lib_filenames.Length; ++i)
-              lib_filenames[i] = r.ReadFixedString(20);
+              lib_filenames[i] = r.ReadFixedCString(20);
 
             Int32 asset_count = r.ReadInt32();
             assetInfos = new AGSAssetInfo[asset_count];
             for (int i = 0; i < assetInfos.Length; ++i)
             {
               if (clib_version < 11) // unk version
-                assetInfos[i].Filename = r.ReadFixedString(25);
+                assetInfos[i].Filename = r.ReadFixedCString(25);
               else
               {
                 byte[] jibzler = r.ReadBytes(25);

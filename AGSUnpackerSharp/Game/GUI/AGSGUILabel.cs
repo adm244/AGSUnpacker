@@ -26,10 +26,10 @@ namespace AGSUnpackerSharp.Game
       if (gui_version >= 113)
       {
         Int32 strlen = r.ReadInt32();
-        text = r.ReadFixedString(strlen);
+        text = r.ReadFixedCString(strlen);
       }
       else
-        text = r.ReadFixedString(200);
+        text = r.ReadFixedCString(200);
 
       font = r.ReadInt32();
       text_color = r.ReadInt32();

@@ -54,6 +54,22 @@ namespace AGSUnpackerSharp
 
     public static string ReadFixedString(this BinaryReader reader, int length)
     {
+      if (length < 1)
+        return string.Empty;
+
+      if (reader.EOF())
+        return string.Empty;
+
+      char[] buffer = reader.ReadChars(length);
+
+      return new string(buffer);
+    }
+
+    public static string ReadFixedCString(this BinaryReader reader, int length)
+    {
+      if (length < 1)
+        return string.Empty;
+
       if (reader.EOF())
         return string.Empty;
 

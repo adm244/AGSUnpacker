@@ -24,7 +24,7 @@ namespace AGSUnpackerSharp.Game
 
       // parse textbox info
       if (gui_version < 119) // 3.5.0
-        text = r.ReadFixedString(200);
+        text = r.ReadFixedCString(200);
       else
         text = r.ReadPrefixedString32();
 

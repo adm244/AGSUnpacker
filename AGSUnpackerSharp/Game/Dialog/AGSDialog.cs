@@ -35,7 +35,7 @@ namespace AGSUnpackerSharp.Game
     {
       options = new string[30];
       for (int i = 0; i < options.Length; ++i)
-        options[i] = r.ReadFixedString(150);
+        options[i] = r.ReadFixedCString(150);
 
       flags = r.ReadArrayInt32(30);
       Int32 ptr = r.ReadInt32();

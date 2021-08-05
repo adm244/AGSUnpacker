@@ -307,7 +307,7 @@ namespace AGSUnpackerSharp.Room
         else if (roomVersion >= 28) // ???
           Markup.Hotspots[i].Name = reader.ReadCString();
         else
-          Markup.Hotspots[i].Name = reader.ReadFixedString(30);
+          Markup.Hotspots[i].Name = reader.ReadFixedCString(30);
       }
 
       // read hotspots scriptnames
@@ -318,7 +318,7 @@ namespace AGSUnpackerSharp.Room
           if (roomVersion >= 31) // 3.4.1.5
             Markup.Hotspots[i].ScriptName = reader.ReadPrefixedString32();
           else
-            Markup.Hotspots[i].ScriptName = reader.ReadFixedString(20);
+            Markup.Hotspots[i].ScriptName = reader.ReadFixedCString(20);
         }
       }
     }
