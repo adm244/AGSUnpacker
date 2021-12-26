@@ -214,7 +214,10 @@ namespace AGSUnpackerSharp.Graphics
           int spritesCount = GetLargestIndex(sprites);
           WriteSpriteSetHeader(writer, header, spritesCount);
           SpriteIndexInfo[] spritesWritten = WriteSprites(writer, header, sprites);
-          WriteSpriteIndexFile(header, spritesWritten);
+
+          // HACK(adm244): temp solution
+          string indexFilepath = Path.GetDirectoryName(outputFilepath);
+          WriteSpriteIndexFile(indexFilepath, header, spritesWritten);
         }
       }
     }
@@ -368,6 +371,15 @@ namespace AGSUnpackerSharp.Graphics
       spriteIndexData.Height = sprite.Height;
       spriteIndexData.Offset = writer.BaseStream.Position;
 
+      if (header.Compression == CompressionType.RLE)
+      {
+        //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp
+        if (sprite.PixelFormat == PixelFormat.Format24bppRgb)
+        {
+          sprite = sprite.Convert(PixelFormat.Format32bppArgb);
+        }
+      }
+
       int bytesPerPixel = sprite.GetBytesPerPixel();
 
       writer.Write((UInt16)bytesPerPixel);
@@ -446,12 +458,14 @@ namespace AGSUnpackerSharp.Graphics
 
     //TODO(adm244): ReadSpriteIndexFile
 
-    private static void WriteSpriteIndexFile(SpriteSetHeader header, SpriteIndexInfo[] spriteIndexInfo)
+    private static void WriteSpriteIndexFile(string outputFolder, SpriteSetHeader header, SpriteIndexInfo[] spriteIndexInfo)
     {
       // FIXME(adm244): check all filepaths so that they ALL are either RELATIVE or ABSOLUTE
       // because for now some files are saved in a working directory (relative paths)
       // and some in other places (absolute paths)
-      using (FileStream stream = new FileStream(SpriteSetIndexFileName, FileMode.Create))
+      string targetFilepath = Path.Combine(outputFolder, SpriteSetIndexFileName);
+
+      using (FileStream stream = new FileStream(targetFilepath, FileMode.Create))
       {
         using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
         {

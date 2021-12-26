@@ -6,7 +6,7 @@ using AGSUnpackerSharp.Utils.Encryption;
 
 namespace AGSUnpackerSharp.Utils
 {
-  public static class AGSClibUtils
+  public static class AGSClibUtilsDeprecated
   {
     private static readonly string SignatureHead = "CLIB\x1a";
     private static readonly string SignatureTail = "CLIB\x1\x2\x3\x4SIGE";

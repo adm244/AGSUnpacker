@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
+
 using AGSUnpackerSharp.Extensions;
 
 namespace AGSUnpackerSharp.Shared
@@ -15,7 +17,8 @@ namespace AGSUnpackerSharp.Shared
     public byte[] GlobalData;
     public int[] Code;
     public string[] StringsStored;
-    public string[] StringsReferenced;
+    //public string[] StringsReferenced;
+    public ReferencedString[] StringsReferenced;
     public string[] Imports;
     public Export[] Exports;
     public Section[] Sections;
@@ -28,7 +31,8 @@ namespace AGSUnpackerSharp.Shared
       GlobalData = new byte[0];
       Code = new int[0];
       StringsStored = new string[0];
-      StringsReferenced = new string[0];
+      //StringsReferenced = new string[0];
+      StringsReferenced = new ReferencedString[0];
       Imports = new string[0];
       Exports = new Export[0];
       Sections = new Section[0];
@@ -75,9 +79,15 @@ namespace AGSUnpackerSharp.Shared
       writer.Write((UInt32)SignatureTail);
     }
 
-    private string[] GetReferencedStrings(byte[] stringsBlob)
+    public struct ReferencedString
     {
-      List<string> strings = new List<string>();
+      public string Text;
+      public int Offset;
+    }
+
+    private ReferencedString[] GetReferencedStrings(byte[] stringsBlob)
+    {
+      var strings = new List<ReferencedString>();
 
       for (int i = 0; i < Fixups.Length; ++i)
       {
@@ -88,7 +98,12 @@ namespace AGSUnpackerSharp.Shared
 
           int index = Code[Fixups[i].Offset];
           string stringReferenced = AGSStringUtils.ConvertCString(stringsBlob, index);
-          strings.Add(stringReferenced);
+          
+          strings.Add(new ReferencedString()
+          {
+            Text = stringReferenced,
+            Offset = Fixups[i].Offset
+          });
         }
       }
 
@@ -117,10 +132,51 @@ namespace AGSUnpackerSharp.Shared
         ReadStringsSection(reader, stringsSize);
     }
 
+    public void ExtractReferencedStrings(string filepath)
+    {
+      filepath = Path.GetFullPath(filepath);
+
+      string directoryPath = Path.GetDirectoryName(filepath);
+      if (!Directory.Exists(directoryPath))
+        Directory.CreateDirectory(directoryPath);
+
+      using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+      {
+        using (StreamWriter writer = new StreamWriter(stream, Encoding.GetEncoding(1252)))
+        {
+          for (int i = 0; i < StringsReferenced.Length; ++i)
+          {
+            writer.WriteLine(StringsReferenced[i].Text);
+            writer.WriteLine();
+          }
+        }
+      }
+    }
+
+    private byte[] WriteStringsBlobAndModifyCodeReferences()
+    {
+      using (MemoryStream buffer = new MemoryStream())
+      {
+        using (BinaryWriter writer = new BinaryWriter(buffer, Encoding.GetEncoding(1252)))
+        {
+          for (int i = 0; i < StringsReferenced.Length; ++i)
+          {
+            int offset = StringsReferenced[i].Offset;
+            Code[offset] = (int)writer.BaseStream.Position;
+            writer.WriteCString(StringsReferenced[i].Text);
+          }
+        }
+
+        return buffer.ToArray();
+      }
+    }
+
     private void WriteMainSection(BinaryWriter writer)
     {
       //NOTE(adm244): consider writing only referenced strings
-      byte[] stringsBlob = AGSStringUtils.ConvertToNullTerminatedSequence(StringsStored);
+      //byte[] stringsBlob = AGSStringUtils.ConvertToNullTerminatedSequence(StringsStored);
+
+      byte[] stringsBlob = WriteStringsBlobAndModifyCodeReferences();
 
       writer.Write((UInt32)GlobalData.Length);
       writer.Write((UInt32)Code.Length);

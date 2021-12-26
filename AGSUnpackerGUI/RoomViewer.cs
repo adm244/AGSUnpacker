@@ -96,6 +96,9 @@ namespace AGSUnpackerGUI
           int framesCount = (_loadedRoom.Background.Frames.Length == 0) ? 1 : _loadedRoom.Background.Frames.Length;
           for (int i = 0; i < framesCount; ++i)
           {
+            if (_loadedRoom.Background.Frames[i] == null)
+              continue;
+
             Bitmap image = _loadedRoom.Background.Frames[i];
             string name = (i == 0) ? "Main background" : ("Frame " + i);
             RoomFrame frame = new RoomFrame(image, name);

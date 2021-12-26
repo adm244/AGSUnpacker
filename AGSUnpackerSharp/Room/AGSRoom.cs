@@ -35,7 +35,7 @@ namespace AGSUnpackerSharp.Room
     {
     }
 
-    // TODO(adm244): pass a room version into contructor
+    // TODO(adm244): pass a room version into constructor
     public AGSRoom(string name)
     {
       Version = 29;

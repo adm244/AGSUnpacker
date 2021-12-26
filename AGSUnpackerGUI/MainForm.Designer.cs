@@ -39,7 +39,9 @@
       this.tbLogOutput = new System.Windows.Forms.TextBox();
       this.statusStrip1 = new System.Windows.Forms.StatusStrip();
       this.ctrlStatus = new System.Windows.Forms.ToolStripStatusLabel();
+      this.btnPackSprites = new System.Windows.Forms.Button();
       this.gbUnpacking.SuspendLayout();
+      ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
       this.splitContainer.Panel1.SuspendLayout();
       this.splitContainer.Panel2.SuspendLayout();
       this.splitContainer.SuspendLayout();
@@ -50,13 +52,14 @@
       // gbUnpacking
       // 
       this.gbUnpacking.Controls.Add(this.btnExtractTrsExe);
+      this.gbUnpacking.Controls.Add(this.btnPackSprites);
       this.gbUnpacking.Controls.Add(this.btnUnpackSprites);
       this.gbUnpacking.Controls.Add(this.btnExtractExe);
       this.gbUnpacking.Dock = System.Windows.Forms.DockStyle.Top;
       this.gbUnpacking.Location = new System.Drawing.Point(5, 5);
       this.gbUnpacking.Name = "gbUnpacking";
       this.gbUnpacking.Padding = new System.Windows.Forms.Padding(12);
-      this.gbUnpacking.Size = new System.Drawing.Size(212, 108);
+      this.gbUnpacking.Size = new System.Drawing.Size(212, 137);
       this.gbUnpacking.TabIndex = 0;
       this.gbUnpacking.TabStop = false;
       this.gbUnpacking.Text = "Unpacking";
@@ -64,7 +67,7 @@
       // btnExtractTrsExe
       // 
       this.btnExtractTrsExe.Dock = System.Windows.Forms.DockStyle.Top;
-      this.btnExtractTrsExe.Location = new System.Drawing.Point(12, 71);
+      this.btnExtractTrsExe.Location = new System.Drawing.Point(12, 94);
       this.btnExtractTrsExe.Name = "btnExtractTrsExe";
       this.btnExtractTrsExe.Size = new System.Drawing.Size(188, 23);
       this.btnExtractTrsExe.TabIndex = 2;
@@ -120,7 +123,7 @@
       this.gbExtra.Controls.Add(this.btnChangeRoomBackground);
       this.gbExtra.Controls.Add(this.btnGetUIDName);
       this.gbExtra.Dock = System.Windows.Forms.DockStyle.Top;
-      this.gbExtra.Location = new System.Drawing.Point(5, 113);
+      this.gbExtra.Location = new System.Drawing.Point(5, 142);
       this.gbExtra.Name = "gbExtra";
       this.gbExtra.Padding = new System.Windows.Forms.Padding(12);
       this.gbExtra.Size = new System.Drawing.Size(212, 100);
@@ -164,7 +167,7 @@
       this.tbLogOutput.ScrollBars = System.Windows.Forms.ScrollBars.Both;
       this.tbLogOutput.Size = new System.Drawing.Size(348, 250);
       this.tbLogOutput.TabIndex = 0;
-      this.tbLogOutput.Text = "AGSUnpacker v0.4 Log Output\r\n\r\n> ";
+      this.tbLogOutput.Text = "AGSUnpacker v0.5 (unstable) Log Output\r\n\r\n> ";
       this.tbLogOutput.WordWrap = false;
       // 
       // statusStrip1
@@ -182,6 +185,17 @@
       this.ctrlStatus.Size = new System.Drawing.Size(42, 17);
       this.ctrlStatus.Text = "Ready.";
       // 
+      // btnPackSprites
+      // 
+      this.btnPackSprites.Dock = System.Windows.Forms.DockStyle.Top;
+      this.btnPackSprites.Location = new System.Drawing.Point(12, 71);
+      this.btnPackSprites.Name = "btnPackSprites";
+      this.btnPackSprites.Size = new System.Drawing.Size(188, 23);
+      this.btnPackSprites.TabIndex = 3;
+      this.btnPackSprites.Text = "Repack Sprites";
+      this.btnPackSprites.UseVisualStyleBackColor = true;
+      this.btnPackSprites.Click += new System.EventHandler(this.btnPackSprites_Click);
+      // 
       // MainForm
       // 
       this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -191,12 +205,13 @@
       this.Controls.Add(this.statusStrip1);
       this.MinimumSize = new System.Drawing.Size(590, 310);
       this.Name = "MainForm";
-      this.Text = "AGSUnpacker v0.4";
+      this.Text = "AGSUnpacker v0.5 (unstable)";
       this.Load += new System.EventHandler(this.MainForm_Load);
       this.gbUnpacking.ResumeLayout(false);
       this.splitContainer.Panel1.ResumeLayout(false);
       this.splitContainer.Panel2.ResumeLayout(false);
       this.splitContainer.Panel2.PerformLayout();
+      ((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
       this.splitContainer.ResumeLayout(false);
       this.gbExtra.ResumeLayout(false);
       this.statusStrip1.ResumeLayout(false);
@@ -219,6 +234,7 @@
     private System.Windows.Forms.GroupBox gbExtra;
     private System.Windows.Forms.Button btnGetUIDName;
     private System.Windows.Forms.Button btnChangeRoomBackground;
+    private System.Windows.Forms.Button btnPackSprites;
   }
 }
 

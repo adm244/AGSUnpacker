@@ -17,7 +17,7 @@ namespace AGSUnpackerSharp.Utils
     {
       if (Directory.Exists(sourceFolder))
       {
-        string[] filenames = Directory.GetFiles(sourceFolder);
+        string[] filenames = Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories);
 
         Console.WriteLine("Searching asset files...");
 
@@ -114,7 +114,7 @@ namespace AGSUnpackerSharp.Utils
       lines.Add("//   [script strings]");
       for (int i = 0; i < room.Script.SCOM3.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(room.Script.SCOM3.StringsReferenced[i]);
+        PushIntoLines(room.Script.SCOM3.StringsReferenced[i].Text);
       }
     }
 
@@ -134,14 +134,14 @@ namespace AGSUnpackerSharp.Utils
       lines.Add("//   [global script strings]");
       for (int i = 0; i < data.globalScript.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(data.globalScript.StringsReferenced[i]);
+        PushIntoLines(data.globalScript.StringsReferenced[i].Text);
       }
 
       // dialog script strings
       lines.Add("//   [dialog script strings]");
       for (int i = 0; i < data.dialogScript.StringsReferenced.Length; ++i)
       {
-        PushIntoLines(data.dialogScript.StringsReferenced[i]);
+        PushIntoLines(data.dialogScript.StringsReferenced[i].Text);
       }
 
       // old dialog strings
@@ -157,7 +157,7 @@ namespace AGSUnpackerSharp.Utils
         lines.Add(string.Format("//   [{0} strings]", data.scriptModules[script_index].Sections[0].Name));
         for (int i = 0; i < data.scriptModules[script_index].StringsReferenced.Length; ++i)
         {
-          PushIntoLines(data.scriptModules[script_index].StringsReferenced[i]);
+          PushIntoLines(data.scriptModules[script_index].StringsReferenced[i].Text);
         }
       }
 

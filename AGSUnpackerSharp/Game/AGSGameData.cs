@@ -206,7 +206,7 @@ namespace AGSUnpackerSharp.Game
         // parse inventory items interaction scripts
         for (int i = 1; i < inventoryItems.Length; ++i)
         {
-          inventoryItems[i] = new AGSInventoryItem();
+          //inventoryItems[i] = new AGSInventoryItem();
           inventoryItems[i].interactions.LoadFromStream(r);
         }
       }
@@ -220,7 +220,7 @@ namespace AGSUnpackerSharp.Game
 
         for (int i = 0; i < inventoryItems.Length; ++i)
         {
-          inventoryItems[i] = new AGSInventoryItem();
+          //inventoryItems[i] = new AGSInventoryItem();
           inventoryItems[i].interactions_old.LoadFromStream(r);
         }
 

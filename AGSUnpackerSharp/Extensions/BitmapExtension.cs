@@ -52,12 +52,19 @@ namespace AGSUnpackerSharp.Extensions
 
     public static byte[] GetPixels(this Bitmap bitmap)
     {
-      int bytesPerPixel = bitmap.GetBytesPerPixel();
+      return GetPixels(bitmap, bitmap.PixelFormat);
+    }
+
+    public static byte[] GetPixels(this Bitmap bitmap, PixelFormat format)
+    {
+      //int bytesPerPixel = bitmap.GetBytesPerPixel();
+
+      int bytesPerPixel = Image.GetPixelFormatSize(format) / 8;
       int imageSize = (bitmap.Width * bitmap.Height * bytesPerPixel);
       byte[] pixels = new byte[imageSize];
 
       Rectangle lockRegion = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-      BitmapData lockData = bitmap.LockBits(lockRegion, ImageLockMode.ReadOnly, bitmap.PixelFormat);
+      BitmapData lockData = bitmap.LockBits(lockRegion, ImageLockMode.ReadOnly, format);
 
       IntPtr p = lockData.Scan0;
       for (int row = 0; row < bitmap.Height; ++row)
@@ -72,12 +79,18 @@ namespace AGSUnpackerSharp.Extensions
 
     public static void SetPixels(this Bitmap bitmap, byte[] buffer)
     {
+      SetPixels(bitmap, buffer, bitmap.PixelFormat);
+    }
+
+    public static void SetPixels(this Bitmap bitmap, byte[] buffer, PixelFormat format)
+    {
       if (buffer == null)
         throw new InvalidDataException("Buffer is null!");
 
       Rectangle lockRegion = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
-      BitmapData lockData = bitmap.LockBits(lockRegion, ImageLockMode.WriteOnly, bitmap.PixelFormat);
-      int bytesPerPixel = bitmap.GetBytesPerPixel();
+      BitmapData lockData = bitmap.LockBits(lockRegion, ImageLockMode.WriteOnly, format);
+      //int bytesPerPixel = bitmap.GetBytesPerPixel();
+      int bytesPerPixel = Image.GetPixelFormatSize(format) / 8;
 
       IntPtr p = lockData.Scan0;
       for (int row = 0; row < bitmap.Height; ++row)
@@ -103,9 +116,16 @@ namespace AGSUnpackerSharp.Extensions
 
     public static Bitmap Convert(this Bitmap bitmap, PixelFormat format)
     {
-      Rectangle copyRegion = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+      //Rectangle copyRegion = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
       // FIXME(adm244): investigate "out of memory" exception here...
-      return bitmap.Clone(copyRegion, format);
+      //return bitmap.Clone(copyRegion, format);
+
+      //NOTE(adm244): screw Clone()! it messes with bitmap passed into it somehow, let's just copy pixels
+      Bitmap newBitmap = new Bitmap(bitmap.Width, bitmap.Height, format);
+      byte[] pixels = bitmap.GetPixels(format);
+      newBitmap.SetPixels(pixels, format);
+
+      return newBitmap;
     }
   }
 }

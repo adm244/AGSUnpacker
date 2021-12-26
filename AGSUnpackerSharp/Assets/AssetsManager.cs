@@ -170,7 +170,10 @@ namespace AGSUnpackerSharp.Assets
       Int32 filesCount = reader.ReadInt32();
       CLibFile[] files = new CLibFile[filesCount];
       for (int i = 0; i < files.Length; ++i)
+      {
+        files[i] = new CLibFile();
         files[i].Filename = reader.ReadCString();
+      }
 
       Int32 assetsCount = reader.ReadInt32();
       for (int i = 0; i < assetsCount; ++i)
@@ -264,6 +267,7 @@ namespace AGSUnpackerSharp.Assets
       CLibFile[] files = new CLibFile[filesCount];
       for (int i = 0; i < files.Length; ++i)
       {
+        files[i] = new CLibFile();
         if (version == 20)
           files[i].Filename = reader.ReadCString(50);
         else
@@ -307,6 +311,7 @@ namespace AGSUnpackerSharp.Assets
     private CLibFile[] ReadCLibPre10(BinaryReader reader, int version)
     {
       CLibFile[] files = new CLibFile[1];
+      files[0] = new CLibFile();
       files[0].Filename = RootFilename;
 
       byte salt = reader.ReadByte();

@@ -10,6 +10,7 @@ using System.Threading;
 using AGSUnpackerSharp.Graphics;
 using System.Diagnostics;
 using AGSUnpackerGUI.Properties;
+using AGSUnpackerSharp.Assets;
 
 namespace AGSUnpackerGUI
 {
@@ -126,6 +127,12 @@ namespace AGSUnpackerGUI
         "Select destination folder", UnpackSpritesProc);
     }
 
+    private void btnPackSprites_Click(object sender, EventArgs e)
+    {
+      ExtractFromFolder("Select a file path where to store a sprite set", "AGS Sprite Set|*.spr",
+        "Select sprites folder", RepackSpritesProc);
+    }
+
     private void btnExtractTrsExe_Click(object sender, EventArgs e)
     {
       ExtractFromFolder("Select a file path where to store a translation", "AGS Translation Source|*.trs",
@@ -135,15 +142,44 @@ namespace AGSUnpackerGUI
     private static void UnpackExeProc(object procParams)
     {
       UnpackParams p = (procParams as UnpackParams);
-      string[] files = AGSClibUtils.UnpackAGSAssetFiles(p.FilePath, p.TargetFolder);
+      //string[] files = AGSClibUtils.UnpackAGSAssetFiles(p.FilePath, p.TargetFolder);
 
-      p.OnUnpackFinished(files.Length > 0);
+      bool result = true;
+      try
+      {
+        AssetsManager manager = AssetsManager.Create(p.FilePath);
+        manager.Extract(p.TargetFolder);
+      }
+      catch
+      {
+        result = false;
+      }
+
+      p.OnUnpackFinished(result);
     }
 
     private static void UnpackSpritesProc(object procParams)
     {
       UnpackParams p = (procParams as UnpackParams);
       bool result = AGSSpriteSet.UnpackSprites(p.FilePath, p.TargetFolder);
+
+      p.OnUnpackFinished(result);
+    }
+
+    private static void RepackSpritesProc(object procParams)
+    {
+      UnpackParams p = (procParams as UnpackParams);
+
+      bool result = true;
+      try
+      {
+        string foo = Path.GetDirectoryName(p.FilePath);
+        AGSSpriteSet.PackSprites(p.TargetFolder, foo);
+      }
+      catch
+      {
+        result = false;
+      }
 
       p.OnUnpackFinished(result);
     }

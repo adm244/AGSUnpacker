@@ -7,6 +7,10 @@ using System.IO;
 using System.Text;
 using AGSUnpackerSharp.Graphics;
 using AGSUnpackerSharp.Assets;
+using AGSUnpackerSharp.Game;
+using AGSUnpackerSharp.Room;
+using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace AGSUnpackerSharp
 {
@@ -28,11 +32,87 @@ namespace AGSUnpackerSharp
 
   class Program
   {
+    private static string EncryptText(string text, string alphabet, string cypher)
+    {
+      List<char> skippedSymbols = new List<char>();
+
+      char[] symbols = text.ToCharArray();
+
+      for (int i = 0; i < symbols.Length; ++i)
+      {
+        char symbol = symbols[i];
+
+        int index = alphabet.IndexOf(symbol);
+        if (index == -1)
+        {
+          skippedSymbols.Add(symbol);
+          continue;
+        }
+
+        symbols[i] = cypher[index];
+      }
+
+      return new string(symbols);
+    }
+
     static void Main(string[] args)
     {
       if (args.Length > 0)
       {
         string filepath = args[0];
+
+        //byte[] symbols = Encoding.GetEncoding(1251).GetBytes("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдеёжзийклмнопрстуфхцчшщъыьэюя");
+        //int[] lengths = { 7, 7, 7, 6, 9, 6, 6, 13, 6, 7, 7, 6, 7, 9, 7, 8, 7, 7, 8, 7, 7, 11, 7, 8, 7, 10, 11, 9, 10, 7, 8, 11, 7, 5, 5, 5, 5, 5, 6, 6, 9, 8, 6, 6, 5, 5, 7, 6, 6, 6, 5, 6, 5, 5, 9, 5, 7, 6, 9, 10, 7, 7, 5, 6, 9, 5 };
+        //
+        //Debug.Assert(symbols.Length == lengths.Length);
+        //
+        //StringBuilder sb = new StringBuilder();
+        //for (int i = 0; i < symbols.Length; ++i)
+        //{
+        //  sb.AppendFormat("\tli ax, {0}\n", lengths[i] + 1);
+        //  sb.AppendLine("\tpush ax");
+        //  sb.AppendFormat("\tli ax, {0}\n", symbols[i]);
+        //  sb.AppendLine("\tpush ax");
+        //  sb.AppendLine("\tli ax, SimpleSetGlyph$2");
+        //  sb.AppendLine("\tcall ax");
+        //  sb.AppendLine("\tsubi sp, 8");
+        //  sb.AppendLine();
+        //}
+        //string code = sb.ToString();
+        //int foo = 0;
+
+        //string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        //StringBuilder sb = new StringBuilder();
+        //for (int i = 1; i <= 26; ++i)
+        //{
+        //  sb.AppendLine("\tptrstack 16");
+        //  sb.AppendLine("\tmemread4 ax");
+        //  sb.AppendLine("\tmr bx, ax");
+        //  sb.AppendLine(string.Format("\tli mar, {0}{1}", alphabet[i - 1], i));
+        //  sb.AppendLine("\tmr ax, mar");
+        //  sb.AppendLine("\tpush op");
+        //  sb.AppendLine("\tcallobj ax");
+        //  sb.AppendLine("\tfarpush bx");
+        //  sb.AppendLine("\tsetfuncargs 1");
+        //  sb.AppendLine("\tli ax, Button::set_Font");
+        //  sb.AppendLine("\tfarcall ax");
+        //  sb.AppendLine("\tfarsubsp 1");
+        //  sb.AppendLine("\tpop op");
+        //  sb.AppendLine();
+        //}
+        //string code = sb.ToString();
+
+        //string alphabet = "абвгдежзийклмнопрстухфьыюя";
+        //string cypher = "быстйнагяпзхлоьевуикрюджмф";
+        //string cypher = "жарзьпыктдумюенйхвгсляобфи";
+
+        //string alphabet = "жарзьпыктдумюенйхвгсляобфи";
+        //string cypher = "абвгдежзийклмнопрстухфьыюя";
+
+        //string text = "КЛЯНУСЬ Я БЕЗДНУЮ МОРСКОЙ,[К ТОСКЛИВЫМ БУДНЯМ НЕТ ВОЗВРАТА,[КОРАБЛЬ ВЕРНЫЙ, ХЛЕСТКИЙ КНУТ[СУДЬБА МОЯ И ЖИЗНЬ ПИРАТА.[ПОРУКОЙ СТАНУТ НЕБЕСА,[ДОБУДУ Я ЗАВЕТНЫЙ КЛАД,[НЕ БУДУ БРИТЬСЯ НИКОГДА[ОТНЫНЕ Я ПИРАТ!";
+        //string text = "УМИЕСВО И АПКЬЕСФ ЮНХВУНД,[У ГНВУМТРБЮ АСЬЕИЮ ЕПГ РНКРХЖГЖ,[УНХЖАМО РПХЕБД, ЛМПВГУТД УЕСГ[ВСЬОАЖ ЮНИ Т ЫТКЕО ЙТХЖГЖ.[ЙНХСУНД ВГЖЕСГ ЕПАПВЖ,[ЬНАСЬС И КЖРПГЕБД УМЖЬ,[ЕП АСЬС АХТГОВИ ЕТУНЗЬЖ[НГЕБЕП И ЙТХЖГ!";
+
+        //string cypherText = EncryptText(text.ToLower(), alphabet, cypher);
 
         //AGSTranslation original = AGSTranslation.ReadSourceFile(args[0]);
         //AGSTranslation translated = AGSTranslation.ReadSourceFile(args[1]);
@@ -55,8 +135,8 @@ namespace AGSUnpackerSharp
         //  (double)translatedCount / original.OriginalLines.Count);
         //File.AppendAllText(outputFilename, statsText, Encoding.GetEncoding(1251));
 
-        AssetsManager assets = AssetsManager.Create(args[0]);
-        assets.Extract(args[1]);
+        //AssetsManager assets = AssetsManager.Create(args[0]);
+        //assets.Extract(args[1]);
 
         //FIXME(adm244): can't extract resources from multilib's
         //AGSClibUtils.UnpackAGSAssetFiles(filepath, args[1]);
@@ -104,12 +184,21 @@ namespace AGSUnpackerSharp
         //image.SetPixels(buffer);
         //image.Save(args[1], ImageFormat.Png);
 
+        //string[] traFiles = Directory.GetFiles(args[0], "*.tra", SearchOption.TopDirectoryOnly);
+        //
+        //AGSTranslation translation = new AGSTranslation();
+        //for (int i = 0; i < traFiles.Length; ++i)
+        //{
+        //  translation.Decompile(traFiles[i]);
+        //  translation.WriteSourceFile(Path.GetFileNameWithoutExtension(traFiles[i]) + ".trs");
+        //}
+
         //AGSTranslation translation = new AGSTranslation();
         //translation.Decompile(filepath);
         //translation.WriteSourceFile(args[1]);
 
         //AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
-        //translation.Compile(args[1], 450455843, "Whispers of a Machine");
+        //translation.Compile(args[1], 1302728765, "A Golden Wake");
 
         //AGSSpriteSet.UnpackSprites(filepath, args[1]);
         //AGSSpriteSet.PackSprites(filepath, args[1]);
@@ -145,19 +234,57 @@ namespace AGSUnpackerSharp
         //SourceExtractor extractor = SourceExtractor.Create(AGSVersion.AGS262);
         //bool result = extractor.Extract(filepath);
 
-        /*AGSRoom room = new AGSRoom();
-        room.LoadFromFile(filepath);
-        room.backgrounds[0].Save(filepath + ".bmp", ImageFormat.Bmp);
+        //string[] filepaths = Directory.GetFiles(args[0]);
+        //for (int i = 0; i < filepaths.Length; ++i)
+        //{
+        //  if (Path.GetExtension(filepaths[i]) != ".crm")
+        //    continue;
+        //
+        //  AGSRoom room = new AGSRoom();
+        //  room.ReadFromFile(filepaths[i]);
+        //
+        //  string filename = Path.GetFileNameWithoutExtension(filepaths[i]);
+        //
+        //  using (FileStream stream = new FileStream(string.Format("{0}.o", filename), FileMode.Create, FileAccess.Write))
+        //  {
+        //    using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        //    {
+        //      room.Script.SCOM3.WriteToStream(writer);
+        //    }
+        //  }
+        //
+        //  //for (int j = 0; j < room.Background.Frames.Length; ++j)
+        //  //{
+        //  //  if (room.Background.Frames[j] == null)
+        //  //    continue;
+        //  //
+        //  //  room.Background.Frames[j].Save(string.Format("{0}_{1}.bmp", filename, j), ImageFormat.Bmp);
+        //  //}
+        //}
 
-        using (StreamWriter writer = new StreamWriter(new FileStream(filepath + ".asm", FileMode.Create)))
-        {
-          room.script.DumpInstructions(writer);
-        }*/
+        //using (StreamWriter writer = new StreamWriter(new FileStream(filepath + ".asm", FileMode.Create)))
+        //{
+        //  room.script.DumpInstructions(writer);
+        //}
 
         //AGSGameData dta = new AGSGameData();
         //dta.LoadFromFile(filepath);
+        //for (int i = 0; i < dta.scriptModules.Length; ++i)
+        //{
+        //    string scriptName = dta.scriptModules[i].Sections[dta.scriptModules[i].Sections.Length - 1].Name;
+        //    using (FileStream stream = new FileStream(scriptName, FileMode.Create, FileAccess.Write))
+        //    {
+        //        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        //        {
+        //            dta.scriptModules[i].WriteToStream(writer);
+        //        }
+        //    }
+        //}
+
         //AGSRoom room = new AGSRoom();
-        //room.LoadFromFile(filepath);
+        //room.ReadFromFile(filepath);
+
+        //room.Script.SCOM3.ExtractReferencedStrings(filepath + ".script.strings.trs");
 
         /*string[][] exports = new string[dta.scriptModules.Length][];
         for (int i = 0; i < dta.scriptModules.Length; ++i)
@@ -262,7 +389,14 @@ namespace AGSUnpackerSharp
         //AGSSpriteSet.PackSprites(args[0], args[1]);
 
         //AGSRoom room = new AGSRoom();
-        //room.LoadFromFile(filepath);
+        //room.ReadFromFile(filepath);
+        //using (FileStream stream = new FileStream(filepath + ".o", FileMode.Create, FileAccess.Write))
+        //{
+        //    using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        //    {
+        //        room.Script.SCOM3.WriteToStream(writer);
+        //    }
+        //}
 
         /*using (StreamWriter writer = new StreamWriter(filepath + ".dump", false, Encoding.GetEncoding(1252)))
         {
@@ -404,6 +538,88 @@ namespace AGSUnpackerSharp
 
         string filename = files[i].Split('.')[0];
         bitmap.Save(string.Format("{0}.png", filename), ImageFormat.Png);
+      }
+    }
+
+    struct AlphabetEntry
+    {
+      public char Symbol;
+      public int SeenTimes;
+
+      public AlphabetEntry(char symbol)
+      {
+        Symbol = symbol;
+        SeenTimes = 0;
+      }
+
+      public bool Encountered { get { return SeenTimes > 0; } }
+    }
+
+    private static AlphabetEntry[] GetAlphabetEntries(string text, string alphabet)
+    {
+      AlphabetEntry[] entries = new AlphabetEntry[alphabet.Length];
+
+      for (int i = 0; i < entries.Length; ++i)
+      {
+        entries[i] = new AlphabetEntry(alphabet[i]);
+      }
+
+      text = text.ToLower();
+      text = text.Trim();
+
+      for (int i = 0; i < text.Length; ++i)
+      {
+        int index = alphabet.IndexOf(text[i]);
+        if (index != -1)
+          ++entries[index].SeenTimes;
+      }
+
+      return entries;
+    }
+
+    private static void DumpAlphabetUsage(string filepath)
+    {
+      string alphabet = "абвгдеёжзийклмнопрстуфхцчшщьыъэюя";
+      string text = "Быстй! Нагяп -- зЧлоь, еву и крю. -Дж.М. х";
+
+      AlphabetEntry[] entries = GetAlphabetEntries(text, alphabet);
+
+      using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+      {
+        using (StreamWriter writer = new StreamWriter(stream))
+        {
+          writer.WriteLine("Text: {0}", text);
+          writer.WriteLine("Alphabet: {0}", alphabet);
+
+          writer.WriteLine();
+
+          writer.WriteLine("Symbols used: [");
+          for (int i = 0; i < entries.Length; ++i)
+          {
+            if (!entries[i].Encountered)
+              continue;
+
+            writer.WriteLine("\t{0} - {1}", entries[i].Symbol, entries[i].SeenTimes);
+          }
+          writer.WriteLine("]");
+
+          writer.WriteLine();
+
+          writer.Write("Symbols unused: [");
+          for (int i = 0, j = 0; i < entries.Length; ++i)
+          {
+            if (entries[i].Encountered)
+              continue;
+
+            if (j > 0)
+              writer.Write(", ");
+
+            writer.Write(entries[i].Symbol);
+
+            ++j;
+          }
+          writer.WriteLine("]");
+        }
       }
     }
   }

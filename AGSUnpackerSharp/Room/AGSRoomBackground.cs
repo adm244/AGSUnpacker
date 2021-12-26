@@ -1,4 +1,5 @@
 ﻿using System.Drawing;
+using System.Diagnostics;
 using System.IO;
 using AGSUnpackerSharp.Utils;
 
@@ -46,8 +47,10 @@ namespace AGSUnpackerSharp.Room
       if (roomVersion >= 20)
         PaletteShareFlags = reader.ReadBytes(framesCount);
 
-      Frames = new Bitmap[framesCount];
-      for (int i = 1; i < Frames.Length; ++i)
+      //Frames = new Bitmap[framesCount];
+      Debug.Assert(Frames.Length >= framesCount);
+
+      for (int i = 1; i < framesCount; ++i)
         Frames[i] = AGSGraphicUtils.ReadLZ77Image(reader, BytesPerPixel);
     }
 

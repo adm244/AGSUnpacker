@@ -20,7 +20,7 @@ namespace AGSUnpackerSharp.Utils
         using (BinaryReader r = new BinaryReader(fs, encoding))
         {
           Console.Write("Parsing {0}...", filePath);
-          AGSAssetInfo[] assetInfos = AGSClibUtils.ParseAGSAssetInfos(r);
+          AGSAssetInfo[] assetInfos = AGSClibUtilsDeprecated.ParseAGSAssetInfos(r);
           Console.WriteLine(" Done!");
 
           AGSGameData dta = GetGameData(r, assetInfos);
