@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
-using AGSUnpacker.Extensions;
 
-namespace AGSUnpacker.Shared
+using AGSUnpacker.Lib.Extensions;
+
+namespace AGSUnpacker.Lib.Shared
 {
   public class AGSPropertyStorage
   {

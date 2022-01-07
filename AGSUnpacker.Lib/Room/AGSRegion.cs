@@ -1,6 +1,6 @@
-﻿using AGSUnpacker.Shared;
+﻿using AGSUnpacker.Lib.Shared;
 
-namespace AGSUnpacker.Room
+namespace AGSUnpacker.Lib.Room
 {
   public class AGSRegion
   {

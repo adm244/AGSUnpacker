@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace AGSUnpacker.Shared
+﻿namespace AGSUnpacker.Lib.Shared
 {
   public struct AGSInteractionScriptEvent
   {

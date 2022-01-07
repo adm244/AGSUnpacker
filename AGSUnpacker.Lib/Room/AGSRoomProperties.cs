@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
-using AGSUnpacker.Shared;
 
-namespace AGSUnpacker.Room
+using AGSUnpacker.Lib.Shared;
+
+namespace AGSUnpacker.Lib.Room
 {
   public class AGSRoomProperties
   {

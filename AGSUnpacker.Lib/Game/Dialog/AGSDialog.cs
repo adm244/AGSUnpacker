@@ -1,8 +1,7 @@
 ﻿using System;
 using System.IO;
-using System.Diagnostics;
 
-namespace AGSUnpacker.Game
+namespace AGSUnpacker.Lib.Game
 {
   public class AGSDialog
   {

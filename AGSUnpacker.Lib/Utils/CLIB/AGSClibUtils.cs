@@ -2,9 +2,10 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker.Utils
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib.Utils
 {
   public static class AGSClibUtilsDeprecated
   {

@@ -1,4 +1,5 @@
-﻿using AGSUnpacker.Assets;
+﻿using AGSUnpacker.Lib.Assets;
+using AGSUnpacker.Lib.Graphics;
 
 namespace AGSUnpacker.CLI
 {
@@ -6,8 +7,10 @@ namespace AGSUnpacker.CLI
   {
     static void Main(string[] args)
     {
-      AssetsManager manager = AssetsManager.Create(args[0]);
-      manager.Extract(args[1]);
+      //AssetsManager manager = AssetsManager.Create(args[0]);
+      //manager.Extract(args[1]);
+
+      AGSSpriteSet.UnpackSprites(args[0], args[1]);
     }
   }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace AGSUnpacker.Shared.Interaction
+namespace AGSUnpacker.Lib.Shared.Interaction
 {
   public class AGSInteractionCommand
   {

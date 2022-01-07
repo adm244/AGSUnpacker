@@ -2,13 +2,14 @@
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Extensions;
-using AGSUnpacker.Shared;
-using AGSUnpacker.Shared.Interaction;
-using AGSUnpacker.Utils;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker.Room
+using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Shared.Interaction;
+using AGSUnpacker.Lib.Utils;
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib.Room
 {
   public class AGSRoom
   {

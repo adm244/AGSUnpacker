@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-namespace AGSUnpacker.Game.View
+namespace AGSUnpacker.Lib.Game.View
 {
   public class AGSView272
   {

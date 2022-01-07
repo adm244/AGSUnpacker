@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Text;
-using AGSUnpacker.Extensions;
 
-namespace AGSUnpacker.Utils
+using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Lib.Graphics;
+
+using SixLabors.ImageSharp.PixelFormats;
+
+namespace AGSUnpacker.Lib.Utils
 {
   public enum LiteralType
   {
@@ -65,70 +66,76 @@ namespace AGSUnpacker.Utils
 
   public static class AGSGraphicUtils
   {
-    public static int ToABGR(Color color)
+    public static int ToABGR(Bgra32 color)
     {
-      return (color.A << 24) | (color.B << 16) | (color.G << 8) | color.R;
+      //return (color.A << 24) | (color.B << 16) | (color.G << 8) | color.R;
+
+      return (int)color.PackedValue;
     }
 
-    public static Color FromABGR(int abgr)
+    public static Bgra32 FromABGR(int abgr)
     {
-      int red   = ((abgr >>  0) & 0xFF);
-      int green = ((abgr >>  8) & 0xFF);
-      int blue  = ((abgr >> 16) & 0xFF);
-      int alpha = ((abgr >> 24) & 0xFF);
+      byte red   = (byte)((abgr >>  0) & 0xFF);
+      byte green = (byte)((abgr >>  8) & 0xFF);
+      byte blue  = (byte)((abgr >> 16) & 0xFF);
+      byte alpha = (byte)((abgr >> 24) & 0xFF);
+      //
+      //return new Argb32(red, green, blue, alpha);
 
-      return Color.FromArgb(alpha, red, green, blue);
+      return new Bgra32(red, green, blue, alpha);
     }
 
-    public static PixelFormat ReadBitmapPixelFormat(string filepath)
-    {
-      PixelFormat format = PixelFormat.Undefined;
+    // DEPRECATED:
+    //
+    //public static PixelFormat ReadBitmapPixelFormat(string filepath)
+    //{
+    //  PixelFormat format = PixelFormat.Undefined;
+    //
+    //  using (FileStream file = new FileStream(filepath, FileMode.Open))
+    //  {
+    //    //NOTE(adm244): is there any reason for us to use ASCII encoding here specifically?
+    //    using (BinaryReader reader = new BinaryReader(file, Encoding.ASCII))
+    //    {
+    //      reader.BaseStream.Seek(28, SeekOrigin.Begin);
+    //      UInt16 bitCount = reader.ReadUInt16();
+    //
+    //      format = BitmapExtension.GetPixelFormat(bitCount / 8);
+    //    }
+    //  }
+    //
+    //  return format;
+    //}
+    //
+    //public static Bitmap ConvertToBitmap(byte[] buffer, int width, int height, int bytesPerPixel, Color[] palette)
+    //{
+    //  PixelFormat format = BitmapExtension.GetPixelFormat(bytesPerPixel);
+    //  Bitmap bitmap = new Bitmap(width, height, format);
+    //  bitmap.SetPixels(buffer);
+    //
+    //  if (bytesPerPixel == 1)
+    //    bitmap.SetPalette(palette);
+    //
+    //  return bitmap;
+    //}
 
-      using (FileStream file = new FileStream(filepath, FileMode.Open))
-      {
-        //NOTE(adm244): is there any reason for us to use ASCII encoding here specifically?
-        using (BinaryReader reader = new BinaryReader(file, Encoding.ASCII))
-        {
-          reader.BaseStream.Seek(28, SeekOrigin.Begin);
-          UInt16 bitCount = reader.ReadUInt16();
-
-          format = BitmapExtension.GetPixelFormat(bitCount / 8);
-        }
-      }
-
-      return format;
-    }
-
-    public static Bitmap ConvertToBitmap(byte[] buffer, int width, int height, int bytesPerPixel, Color[] palette)
-    {
-      PixelFormat format = BitmapExtension.GetPixelFormat(bytesPerPixel);
-      Bitmap bitmap = new Bitmap(width, height, format);
-      bitmap.SetPixels(buffer);
-
-      if (bytesPerPixel == 1)
-        bitmap.SetPalette(palette);
-
-      return bitmap;
-    }
-
-    public static byte[] ColorsToBytes(Color[] colors, ColorFormat format)
+    public static byte[] Bgra32ToBytes(Bgra32[] colors, ColorFormat format)
     {
       switch (format)
       {
         case ColorFormat.RGB6bits:
         case ColorFormat.RGB8bits:
-          return ColorsToRGB(colors, format);
+          return Bgra32ToRGB(colors, format);
 
         case ColorFormat.RGBA6bits:
         case ColorFormat.RGBA8bits:
-          return ColorsToRGBA(colors, format);
+          return Bgra32ToRGBA(colors, format);
 
         default:
           throw new NotImplementedException("Unimplemented palette format!");
       }
     }
 
-    private static byte[] ColorsToRGB(Color[] colors, ColorFormat format)
+    private static byte[] Bgra32ToRGB(Bgra32[] colors, ColorFormat format)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 3)
@@ -158,7 +165,7 @@ namespace AGSUnpacker.Utils
       return buffer;
     }
 
-    private static byte[] ColorsToRGBA(Color[] colors, ColorFormat format)
+    private static byte[] Bgra32ToRGBA(Bgra32[] colors, ColorFormat format)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 4)
@@ -190,37 +197,37 @@ namespace AGSUnpacker.Utils
       return buffer;
     }
 
-    public static Color[] BytesToColors(byte[] buffer, ColorFormat format)
+    public static Bgra32[] BytesToBgra32(byte[] buffer, ColorFormat format)
     {
       switch (format)
       {
         case ColorFormat.RGB6bits:
         case ColorFormat.RGB8bits:
-          return RGBToColors(buffer, format);
+          return RGBToRgba32(buffer, format);
 
         case ColorFormat.RGBA6bits:
         case ColorFormat.RGBA8bits:
-          return RGBAToColors(buffer, format);
+          return RGBAToRgba32(buffer, format);
 
         default:
           throw new NotImplementedException("Unimplemented palette format!");
       }
     }
 
-    private static Color[] RGBToColors(byte[] buffer, ColorFormat format)
+    private static Bgra32[] RGBToRgba32(byte[] buffer, ColorFormat format)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 3)
         throw new InvalidDataException("Invalid color format for RGB!");
 
       int count = (buffer.Length / bytesPerPixel);
-      Color[] colors = new Color[count];
+      Bgra32[] colors = new Bgra32[count];
 
       for (int i = 0; i < colors.Length; ++i)
       {
-        int red   = buffer[bytesPerPixel * i + 0];
-        int green = buffer[bytesPerPixel * i + 1];
-        int blue  = buffer[bytesPerPixel * i + 2];
+        byte red   = buffer[bytesPerPixel * i + 0];
+        byte green = buffer[bytesPerPixel * i + 1];
+        byte blue  = buffer[bytesPerPixel * i + 2];
 
         if (format == ColorFormat.RGB6bits)
         {
@@ -229,58 +236,58 @@ namespace AGSUnpacker.Utils
           red   = (byte)((red   / 64f) * 256f);
         }
 
-        colors[i] = Color.FromArgb(red, green, blue);
+        colors[i] = new Bgra32(red, green, blue);
       }
 
       return colors;
     }
 
-    private static Color[] RGBAToColors(byte[] buffer, ColorFormat format)
+    private static Bgra32[] RGBAToRgba32(byte[] buffer, ColorFormat format)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 4)
         throw new InvalidDataException("Invalid color format for RGBA!");
 
       int count = (buffer.Length / bytesPerPixel);
-      Color[] colors = new Color[count];
+      Bgra32[] colors = new Bgra32[count];
 
       for (int i = 0; i < colors.Length; ++i)
       {
-        int red   = buffer[bytesPerPixel * i + 0];
-        int green = buffer[bytesPerPixel * i + 1];
-        int blue  = buffer[bytesPerPixel * i + 2];
-        int alpha = buffer[bytesPerPixel * i + 3];
+        byte red   = buffer[bytesPerPixel * i + 0];
+        byte green = buffer[bytesPerPixel * i + 1];
+        byte blue  = buffer[bytesPerPixel * i + 2];
+        byte alpha = buffer[bytesPerPixel * i + 3];
 
         if (format == ColorFormat.RGBA6bits)
         {
-          red   = (int)((red   / 64f) * 256f);
-          green = (int)((green / 64f) * 256f);
-          blue  = (int)((blue  / 64f) * 256f);
-          alpha = (int)((alpha / 64f) * 256f);
+          red   = (byte)((red   / 64f) * 256f);
+          green = (byte)((green / 64f) * 256f);
+          blue  = (byte)((blue  / 64f) * 256f);
+          alpha = (byte)((alpha / 64f) * 256f);
         }
 
-        colors[i] = Color.FromArgb(alpha, red, green, blue);
+        colors[i] = new Bgra32(red, green, blue, alpha);
       }
 
       return colors;
     }
 
-    public static Color[] ReadPalette(BinaryReader reader, ColorFormat format)
+    public static Bgra32[] ReadPalette(BinaryReader reader, ColorFormat format)
     {
       //TODO(adm244): investigate if a palette can have a different colors count in it
       int size = (256 * format.GetBytesPerPixel());
       byte[] buffer = reader.ReadBytes(size);
 
-      return AGSGraphicUtils.BytesToColors(buffer, format);
+      return BytesToBgra32(buffer, format);
     }
 
-    public static void WritePalette(BinaryWriter writer, Color[] palette, ColorFormat format)
+    public static void WritePalette(BinaryWriter writer, Bgra32[] palette, ColorFormat format)
     {
-      byte[] buffer = ColorsToBytes(palette, format);
+      byte[] buffer = Bgra32ToBytes(palette, format);
       writer.Write((byte[])buffer);
     }
 
-    public static Bitmap ReadAllegroImage(BinaryReader reader)
+    public static Image ReadAllegroImage(BinaryReader reader)
     {
       Int16 bytesPerPixel = 1;
       Int16 width = reader.ReadInt16();
@@ -289,31 +296,33 @@ namespace AGSUnpacker.Utils
       byte[] buffer = ReadAllegro(reader, width, height);
       Debug.Assert(buffer.Length == (width * height * bytesPerPixel));
 
-      Color[] palette = ReadPalette(reader, ColorFormat.RGB6bits);
-      return ConvertToBitmap(buffer, width, height, bytesPerPixel, palette);
+      Bgra32[] palette = ReadPalette(reader, ColorFormat.RGB6bits);
+      return Image.FromBuffer(buffer, width, height, bytesPerPixel, palette);
+
+      //return ConvertToBitmap(buffer, width, height, bytesPerPixel, palette);
     }
 
-    public static void WriteAllegroImage(BinaryWriter writer, Bitmap bitmap)
+    public static void WriteAllegroImage(BinaryWriter writer, Image image)
     {
-      writer.Write((Int16)bitmap.Width);
-      writer.Write((Int16)bitmap.Height);
+      writer.Write((Int16)image.Width);
+      writer.Write((Int16)image.Height);
 
-      byte[] pixels = bitmap.GetPixels();
-      WriteAllegro(writer, pixels, bitmap.Width, bitmap.Height);
+      byte[] pixels = image.InternalImage.GetPixels();
+      WriteAllegro(writer, pixels, image.Width, image.Height);
 
-      byte[] palette = ColorsToBytes(bitmap.Palette.Entries, ColorFormat.RGB6bits);
+      byte[] palette = Bgra32ToBytes(image.Palette, ColorFormat.RGB6bits);
       writer.Write((byte[])palette);
     }
 
-    public static Bitmap ReadLZ77Image(BinaryReader reader, int bytesPerPixel)
+    public static Image ReadLZ77Image(BinaryReader reader, int bytesPerPixel)
     {
       byte[] bufferPalette = reader.ReadBytes(256 * sizeof(UInt32));
       Int32 sizeUncompressed = reader.ReadInt32();
+
+      // TODO(adm244): check compressed size
       Int32 sizeCompressed = reader.ReadInt32();
 
-      int width;
-      int height;
-      byte[] bufferPixels = ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out width, out height);
+      byte[] bufferPixels = ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
 
       ColorFormat paletteFormat = ColorFormat.RGBA8bits;
       //NOTE(adm244): AGS is using only 6-bits per channel for an indexed image,
@@ -321,32 +330,35 @@ namespace AGSUnpacker.Utils
       if (bytesPerPixel == 1)
         paletteFormat = ColorFormat.RGBA6bits;
 
-      Color[] palette = BytesToColors(bufferPalette, paletteFormat);
-      Bitmap bitmap = ConvertToBitmap(bufferPixels, width, height, bytesPerPixel, palette);
-
+      Bgra32[] palette = BytesToBgra32(bufferPalette, paletteFormat);
+      //Bitmap bitmap = ConvertToBitmap(bufferPixels, width, height, bytesPerPixel, palette);
+      //
       //NOTE(adm244): since AGS doesn't use alpha-channel for room backgrounds it is nullyfied
       // and we have to get rid of it by converting image into 24-bit pixel format (no alpha channel)
-      bitmap = bitmap.Convert(PixelFormat.Format24bppRgb);
+      //bitmap = bitmap.Convert(PixelFormat.Format24bppRgb);
+      //
+      //return bitmap;
 
-      return bitmap;
+      return Image.FromBuffer(bufferPixels, width, height, bytesPerPixel, palette);
     }
 
-    public static void WriteLZ77Image(BinaryWriter writer, Bitmap bitmap, int bytesPerPixel)
+    public static void WriteLZ77Image(BinaryWriter writer, Image image, int bytesPerPixel)
     {
       //FIX(adm244): 24-bit bitmaps are all messed up !!!
       //TODO(adm244): check if that's still true or I just forgot to remove this scary FIX
 
-      byte[] palette = ColorsToBytes(bitmap.Palette.Entries, ColorFormat.RGBA6bits);
+      byte[] palette = Bgra32ToBytes(image.Palette, ColorFormat.RGBA6bits);
       writer.Write((byte[])palette);
 
       //NOTE(adm244): convert bitmap to match requested bytesPerPixel
-      if (bitmap.GetBytesPerPixel() != bytesPerPixel)
-        bitmap.Convert(BitmapExtension.GetPixelFormat(bytesPerPixel));
+      if (image.BytesPerPixel != bytesPerPixel)
+        image = image.Convert(bytesPerPixel);
+      //image.Convert(BitmapExtension.GetPixelFormat(bytesPerPixel));
 
-      byte[] pixels = bitmap.GetPixels();
-      Debug.Assert(pixels.Length == (bitmap.Width * bitmap.Height * bytesPerPixel));
+      byte[] pixels = image.InternalImage.GetPixels();
+      Debug.Assert(pixels.Length == (image.Width * image.Height * bytesPerPixel));
 
-      byte[] buffer = AppendImageSize(bitmap.Width, bitmap.Height, bytesPerPixel, pixels);
+      byte[] buffer = AppendImageSize(image.Width, image.Height, bytesPerPixel, pixels);
       byte[] bufferCompressed = LZ77Compress(buffer);
 
       writer.Write((UInt32)buffer.Length);

@@ -1,8 +1,9 @@
 ﻿using System;
-using AGSUnpacker.Shared;
-using AGSUnpacker.Shared.Interaction;
 
-namespace AGSUnpacker.Game
+using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Shared.Interaction;
+
+namespace AGSUnpacker.Lib.Game
 {
   public class AGSCharacter
   {

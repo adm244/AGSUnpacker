@@ -1,8 +1,9 @@
 ﻿using System;
-using AGSUnpacker.Shared;
-using AGSUnpacker.Shared.Interaction;
 
-namespace AGSUnpacker
+using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Shared.Interaction;
+
+namespace AGSUnpacker.Lib
 {
   public class AGSInventoryItem
   {

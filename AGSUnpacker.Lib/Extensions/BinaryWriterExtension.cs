@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker.Extensions
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib.Extensions
 {
   public static class BinaryWriterExtension
   {

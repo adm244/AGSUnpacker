@@ -3,9 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Extensions;
 
-namespace AGSUnpacker.Translation
+using AGSUnpacker.Lib.Extensions;
+
+namespace AGSUnpacker.Lib.Translation
 {
   public class AGSTranslation
   {

@@ -1,23 +1,24 @@
-﻿using System.Drawing;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.IO;
-using AGSUnpacker.Utils;
 
-namespace AGSUnpacker.Room
+using AGSUnpacker.Lib.Graphics;
+using AGSUnpacker.Lib.Utils;
+
+namespace AGSUnpacker.Lib.Room
 {
   public class AGSRoomBackground
   {
     public int BytesPerPixel;
     public int AnimationSpeed;
-    public Bitmap[] Frames;
+    public Image[] Frames;
     public byte[] PaletteShareFlags;
 
-    public Bitmap WalkableAreasMask;
-    public Bitmap WalkbehindAreasMask;
-    public Bitmap HotspotsMask;
-    public Bitmap RegionsMask;
+    public Image WalkableAreasMask;
+    public Image WalkbehindAreasMask;
+    public Image HotspotsMask;
+    public Image RegionsMask;
 
-    public Bitmap MainBackground
+    public Image MainBackground
     {
       get { return Frames[0]; }
       set { Frames[0] = value; }
@@ -27,7 +28,7 @@ namespace AGSUnpacker.Room
     {
       BytesPerPixel = 1;
       AnimationSpeed = 4;
-      Frames = new Bitmap[5];
+      Frames = new Image[5];
       PaletteShareFlags = new byte[5];
 
       WalkableAreasMask = null;

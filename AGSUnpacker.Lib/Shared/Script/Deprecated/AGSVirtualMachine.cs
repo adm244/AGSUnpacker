@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Diagnostics;
-using AGSUnpacker.Extensions;
-using AGSUnpacker.Utils;
 
-namespace AGSUnpacker.Shared.Script.Deprecated
+using AGSUnpacker.Lib.Utils;
+
+namespace AGSUnpacker.Lib.Shared.Script.Deprecated
 {
   public struct AGSInstruction
   {

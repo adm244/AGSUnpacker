@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
-using AGSUnpacker.Extensions;
 
-namespace AGSUnpacker.Shared
+using AGSUnpacker.Lib.Extensions;
+
+namespace AGSUnpacker.Lib.Shared
 {
   public class AGSInteractionScript
   {

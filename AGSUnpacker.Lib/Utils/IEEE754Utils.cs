@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AGSUnpacker.Utils
+namespace AGSUnpacker.Lib.Utils
 {
   public static class IEEE754Utils
   {

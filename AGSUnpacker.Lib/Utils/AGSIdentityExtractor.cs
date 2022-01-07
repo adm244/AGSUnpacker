@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Game;
 
-namespace AGSUnpacker.Utils
+using AGSUnpacker.Lib.Game;
+
+namespace AGSUnpacker.Lib.Utils
 {
   public static class AGSIdentityExtractor
   {

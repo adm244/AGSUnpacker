@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
-using System.Diagnostics;
-using AGSUnpacker.Extensions;
-using System.Collections;
+
+using AGSUnpacker.Lib.Extensions;
 //using AGSUnpackerSharp.Shared.Script.Deprecated;
 
-namespace AGSUnpacker.Shared.Script
+namespace AGSUnpacker.Lib.Shared.Script
 {
   public struct AGSScriptExport
   {
@@ -121,13 +122,13 @@ namespace AGSUnpacker.Shared.Script
       // write imports section
       w.Write((Int32)Imports.Length);
       for (int i = 0; i < Imports.Length; ++i)
-        w.WriteNullTerminatedString(Imports[i], 300);
+        w.WriteFixedCString(Imports[i], 300);
 
       // write exports section
       w.Write((Int32)Exports.Length);
       for (int i = 0; i < Exports.Length; ++i)
       {
-        w.WriteNullTerminatedString(Exports[i].Name, 300);
+        w.WriteFixedCString(Exports[i].Name, 300);
 
         UInt32 value = (UInt32)Exports[i].Pointer;
         value |= ((uint)Exports[i].Type << 24);
@@ -141,7 +142,7 @@ namespace AGSUnpacker.Shared.Script
         w.Write((Int32)Sections.Length);
         for (int i = 0; i < Sections.Length; ++i)
         {
-          w.WriteNullTerminatedString(Sections[i].Name, 300);
+          w.WriteFixedCString(Sections[i].Name, 300);
           w.Write((Int32)Sections[i].Offset);
         }
       }
@@ -205,7 +206,7 @@ namespace AGSUnpacker.Shared.Script
       Imports = new string[imports_count];
       for (int i = 0; i < imports_count; ++i)
       {
-        Imports[i] = r.ReadNullTerminatedString(300);
+        Imports[i] = r.ReadFixedCString(300);
       }
 
       // parse exports section
@@ -213,7 +214,7 @@ namespace AGSUnpacker.Shared.Script
       Exports = new AGSScriptExport[exports_count];
       for (int i = 0; i < exports_count; ++i)
       {
-        Exports[i].Name = r.ReadNullTerminatedString(300);
+        Exports[i].Name = r.ReadFixedCString(300);
         //Exports[i].Pointer = r.ReadInt32();
         
         UInt32 data = r.ReadUInt32();
@@ -228,7 +229,7 @@ namespace AGSUnpacker.Shared.Script
         Sections = new AGSScriptSection[sections_count];
         for (int i = 0; i < sections_count; ++i)
         {
-          Sections[i].Name = r.ReadNullTerminatedString(300);
+          Sections[i].Name = r.ReadFixedCString(300);
           Sections[i].Offset = r.ReadInt32();
         }
       }

@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker.Assets
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib.Assets
 {
   public class AssetsManager
   {
@@ -13,7 +14,8 @@ namespace AGSUnpacker.Assets
 
     private static readonly Int32 EncryptionSeedSalt = 9338638;
 
-    private Encoding FileEncoding = Encoding.GetEncoding(1252);
+    //private Encoding FileEncoding = CodePagesEncodingProvider.Instance.GetEncoding(1252);
+    private Encoding FileEncoding = Encoding.Latin1;
 
     private string RootFilename;
     private string RootFolder;

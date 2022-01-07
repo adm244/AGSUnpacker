@@ -1,10 +1,12 @@
 ﻿using System;
-using System.Drawing;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Utils;
 
-namespace AGSUnpacker.Graphics
+using AGSUnpacker.Lib.Utils;
+
+using SixLabors.ImageSharp.PixelFormats;
+
+namespace AGSUnpacker.Lib.Graphics
 {
   public enum CompressionType
   {
@@ -21,20 +23,20 @@ namespace AGSUnpacker.Graphics
     public static readonly CompressionType DefaultCompression = CompressionType.Uncompressed;
     public static readonly UInt32 DefaultFileID = 0xDEADBEEF;
     public static readonly UInt16 DefaultSpritesCount = 0;
-    public static readonly Color[] DefaultPalette = AGSSpriteSet.DefaultPalette;
+    public static readonly Bgra32[] DefaultPalette = AGSSpriteSet.DefaultPalette;
 
     public Int16 Version { get; private set; }
     public CompressionType Compression { get; private set; }
     public UInt32 FileID { get; private set; }
     public UInt16 SpritesCount { get; private set; }
-    public Color[] Palette { get; private set; }
+    public Bgra32[] Palette { get; private set; }
 
     private SpriteSetHeader()
       : this(DefaultVersion, DefaultCompression, DefaultFileID, DefaultSpritesCount, DefaultPalette)
     {
     }
 
-    public SpriteSetHeader(Int16 version, CompressionType compression, UInt32 fileID, UInt16 spritesCount, Color[] palette)
+    public SpriteSetHeader(Int16 version, CompressionType compression, UInt32 fileID, UInt16 spritesCount, Bgra32[] palette)
     {
       Version = version;
       Compression = compression;
@@ -49,7 +51,7 @@ namespace AGSUnpacker.Graphics
 
       using (FileStream stream = new FileStream(filepath, FileMode.Open))
       {
-        using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        using (BinaryReader reader = new BinaryReader(stream, Encoding.Latin1))
         {
           header.Version = reader.ReadInt16();
 
@@ -75,7 +77,7 @@ namespace AGSUnpacker.Graphics
 
       using (FileStream stream = new FileStream(filepath, FileMode.Create))
       {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           writer.Write((UInt16)Version);
           writer.Write((byte)Compression);
@@ -88,9 +90,9 @@ namespace AGSUnpacker.Graphics
       }
     }
 
-    private static Color[] ReadPalette(BinaryReader reader)
+    private static Bgra32[] ReadPalette(BinaryReader reader)
     {
-      Color[] palette = new Color[256];
+      Bgra32[] palette = new Bgra32[256];
 
       for (int i = 0; i < palette.Length; ++i)
       {

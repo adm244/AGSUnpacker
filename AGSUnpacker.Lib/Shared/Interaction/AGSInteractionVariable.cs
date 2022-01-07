@@ -1,8 +1,9 @@
 ﻿using System;
 using System.IO;
-using AGSUnpacker.Extensions;
 
-namespace AGSUnpacker.Shared.Interaction
+using AGSUnpacker.Lib.Extensions;
+
+namespace AGSUnpacker.Lib.Shared.Interaction
 {
   public class AGSInteractionVariable
   {

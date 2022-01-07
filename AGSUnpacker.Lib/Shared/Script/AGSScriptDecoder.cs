@@ -1,9 +1,6 @@
-﻿using System;
-using System.Diagnostics;
-using System.IO;
-using System.Collections.Generic;
+﻿using System.Diagnostics;
 
-namespace AGSUnpacker.Shared.Script
+namespace AGSUnpacker.Lib.Shared.Script
 {
   public class AGSScriptDecoder
   {

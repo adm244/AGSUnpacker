@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib
 {
   public static class BinaryReaderExtension
   {

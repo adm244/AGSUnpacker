@@ -1,8 +1,9 @@
 ﻿using System.Diagnostics;
 using System.IO;
-using AGSUnpacker.Extensions;
 
-namespace AGSUnpacker.Room
+using AGSUnpacker.Lib.Extensions;
+
+namespace AGSUnpacker.Lib.Room
 {
   public class AGSRoomMarkup
   {

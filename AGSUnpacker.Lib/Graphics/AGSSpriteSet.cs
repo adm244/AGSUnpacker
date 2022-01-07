@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Extensions;
-using AGSUnpacker.Utils;
 
-namespace AGSUnpacker.Graphics
+using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Lib.Utils;
+
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.PixelFormats;
+
+namespace AGSUnpacker.Lib.Graphics
 {
   public class AGSSpriteSet
   {
@@ -17,93 +19,93 @@ namespace AGSUnpacker.Graphics
     private static readonly string SpriteSetIndexSignature = "SPRINDEX";
     private static readonly string SpriteSetIndexFileName = "sprindex.dat";
 
-    public static Color[] DefaultPalette = new Color[] {
-      Color.FromArgb(255,   0,   0,   0),  Color.FromArgb(255,   0,   0, 168),  Color.FromArgb(255,   0, 168,   0),
-      Color.FromArgb(255,   0, 168, 168),  Color.FromArgb(255, 168,   0,   0),  Color.FromArgb(255, 168,   0, 168),
-      Color.FromArgb(255, 168,  84,   0),  Color.FromArgb(255, 168, 168, 168),  Color.FromArgb(255,  84,  84,  84),
-      Color.FromArgb(255,  84,  84, 252),  Color.FromArgb(255,  84, 252,  84),  Color.FromArgb(255,  84, 252, 252),
-      Color.FromArgb(255, 252,  84,  84),  Color.FromArgb(255, 252,  84, 252),  Color.FromArgb(255, 252, 252,  84),
-      Color.FromArgb(255, 252, 252, 252),  Color.FromArgb(255,   0,   0,   0),  Color.FromArgb(255,  20,  20,  20),
-      Color.FromArgb(255,  32,  32,  32),  Color.FromArgb(255,  44,  44,  44),  Color.FromArgb(255,  56,  56,  56),
-      Color.FromArgb(255,  68,  68,  68),  Color.FromArgb(255,  80,  80,  80),  Color.FromArgb(255,  96,  96,  96),
-      Color.FromArgb(255, 112, 112, 112),  Color.FromArgb(255, 128, 128, 128),  Color.FromArgb(255, 144, 144, 144),
-      Color.FromArgb(255, 160, 160, 160),  Color.FromArgb(255, 180, 180, 180),  Color.FromArgb(255, 200, 200, 200),
-      Color.FromArgb(255, 224, 224, 224),  Color.FromArgb(255, 252, 252, 252),  Color.FromArgb(255,   0,   0, 252),
-      Color.FromArgb(255,  68,   0, 252),  Color.FromArgb(255, 124,   0, 252),  Color.FromArgb(255, 184, 148,   0),
-      Color.FromArgb(255, 184, 128,   0),  Color.FromArgb(255, 252,   0, 188),  Color.FromArgb(255, 252,   0, 128),
-      Color.FromArgb(255, 252,   0,  84),  Color.FromArgb(255, 252,   0,   0),  Color.FromArgb(255, 252,  68,   0),
-      Color.FromArgb(255, 128, 120, 120),  Color.FromArgb(255, 136, 116, 112),  Color.FromArgb(255, 132,   8,   4),
-      Color.FromArgb(255,  20,   4,   4),  Color.FromArgb(255, 196,  20,   4),  Color.FromArgb(255, 148, 136, 132),
-      Color.FromArgb(255,  68,  12,   4),  Color.FromArgb(255, 148, 124, 120),  Color.FromArgb(255, 176, 168, 168),
-      Color.FromArgb(255, 164, 128, 124),  Color.FromArgb(255,  88,  84,  84),  Color.FromArgb(255, 128, 116, 112),
-      Color.FromArgb(255, 148, 120, 112),  Color.FromArgb(255, 192, 160, 148),  Color.FromArgb(255, 152, 128, 116),
-      Color.FromArgb(255, 172, 152, 140),  Color.FromArgb(255, 104,  44,  12),  Color.FromArgb(255, 160, 144, 132),
-      Color.FromArgb(255, 156,  76,  24),  Color.FromArgb(255, 176, 128,  92),  Color.FromArgb(255, 200, 108,  32),
-      Color.FromArgb(255, 204, 192, 176),  Color.FromArgb(255, 176, 168, 148),  Color.FromArgb(255, 188, 180, 164),
-      Color.FromArgb(255, 136, 132, 120),  Color.FromArgb(255, 232, 228, 196),  Color.FromArgb(255, 212, 208, 200),
-      Color.FromArgb(255, 116, 112,  92),  Color.FromArgb(255, 232, 232, 232),  Color.FromArgb(255, 188, 188,  44),
-      Color.FromArgb(255, 216, 212,  16),  Color.FromArgb(255, 144, 144,  92),  Color.FromArgb(255, 168, 168,  68),
-      Color.FromArgb(255, 124, 128, 104),  Color.FromArgb(255, 196, 200, 192),  Color.FromArgb(255,   0, 228, 204),
-      Color.FromArgb(255,  40, 200, 188),  Color.FromArgb(255,  80, 172, 168),  Color.FromArgb(255,   4, 184, 176),
-      Color.FromArgb(255,  16, 144, 156),  Color.FromArgb(255, 176, 188, 192),  Color.FromArgb(255, 188, 212, 216),
-      Color.FromArgb(255, 152, 180, 192),  Color.FromArgb(255,  56, 152, 212),  Color.FromArgb(255, 112, 176, 216),
-      Color.FromArgb(255,   0, 120, 200),  Color.FromArgb(255,  96, 104, 112),  Color.FromArgb(255, 112, 120, 128),
-      Color.FromArgb(255, 180, 200, 216),  Color.FromArgb(255, 128, 164, 192),  Color.FromArgb(255, 140, 164, 180),
-      Color.FromArgb(255, 108, 148, 192),  Color.FromArgb(255,  88, 140, 192),  Color.FromArgb(255, 116, 144, 172),
-      Color.FromArgb(255,  68, 128, 192),  Color.FromArgb(255, 120, 132, 144),  Color.FromArgb(255,  32,  76, 140),
-      Color.FromArgb(255,  64,  76,  96),  Color.FromArgb(255,  68,  76,  84),  Color.FromArgb(255,  68,  96, 140),
-      Color.FromArgb(255, 112, 120, 140),  Color.FromArgb(255,  76,  84, 100),  Color.FromArgb(255,  52,  60,  76),
-      Color.FromArgb(255,  80, 108, 152),  Color.FromArgb(255,  96, 104, 120),  Color.FromArgb(255, 100, 120, 160),
-      Color.FromArgb(255,  80,  92, 112),  Color.FromArgb(255,  96, 108, 140),  Color.FromArgb(255,   8,  32,  88),
-      Color.FromArgb(255,  96, 108, 128),  Color.FromArgb(255,  88, 100, 120),  Color.FromArgb(255,   8,  32, 100),
-      Color.FromArgb(255,  88, 100, 132),  Color.FromArgb(255,   8,  24,  80),  Color.FromArgb(255,  80,  88, 120),
-      Color.FromArgb(255,   8,  24,  88),  Color.FromArgb(255,   0,  16,  80),  Color.FromArgb(255,   0,  16,  88),
-      Color.FromArgb(255, 112, 112, 128),  Color.FromArgb(255,  56,  64, 104),  Color.FromArgb(255,  72,  80, 128),
-      Color.FromArgb(255,  40,  48,  96),  Color.FromArgb(255,  36,  48, 116),  Color.FromArgb(255,  24,  36, 100),
-      Color.FromArgb(255,  24,  36, 120),  Color.FromArgb(255,   4,  16,  72),  Color.FromArgb(255,  48,  56, 104),
-      Color.FromArgb(255,  48,  56, 116),  Color.FromArgb(255,  44,  56, 136),  Color.FromArgb(255,  24,  32,  88),
-      Color.FromArgb(255,   8,  24, 100),  Color.FromArgb(255,  64,  72, 136),  Color.FromArgb(255,  56,  64, 124),
-      Color.FromArgb(255,  16,  24,  80),  Color.FromArgb(255,  16,  24,  88),  Color.FromArgb(255,   8,  16,  80),
-      Color.FromArgb(255, 128, 132, 148),  Color.FromArgb(255,  68,  72, 120),  Color.FromArgb(255,  16,  24,  96),
-      Color.FromArgb(255,   8,  16,  88),  Color.FromArgb(255,   0,   8,  88),  Color.FromArgb(255,  96,  96, 112),
-      Color.FromArgb(255, 104, 108, 140),  Color.FromArgb(255,  84,  88, 132),  Color.FromArgb(255,  36,  40,  96),
-      Color.FromArgb(255,  24,  28,  80),  Color.FromArgb(255,  56,  56,  96),  Color.FromArgb(255,  44,  48, 108),
-      Color.FromArgb(255,  36,  40,  88),  Color.FromArgb(255,  24,  32, 164),  Color.FromArgb(255,  32,  40, 216),
-      Color.FromArgb(255,  24,  32, 216),  Color.FromArgb(255,  20,  28, 200),  Color.FromArgb(255,  24,  36, 228),
-      Color.FromArgb(255,  16,  24, 216),  Color.FromArgb(255,  12,  20, 192),  Color.FromArgb(255,   8,  20, 232),
-      Color.FromArgb(255,  96,  96, 140),  Color.FromArgb(255,  72,  76, 112),  Color.FromArgb(255,   8,   8,  72),
-      Color.FromArgb(255,  44,  48, 232),  Color.FromArgb(255,  32,  40, 228),  Color.FromArgb(255,  16,  24, 228),
-      Color.FromArgb(255, 104, 104, 112),  Color.FromArgb(255, 120, 120, 128),  Color.FromArgb(255, 104, 104, 128),
-      Color.FromArgb(255, 112, 112, 140),  Color.FromArgb(255,  96,  96, 120),  Color.FromArgb(255,  88,  88, 112),
-      Color.FromArgb(255,  96,  96, 128),  Color.FromArgb(255,  88,  88, 120),  Color.FromArgb(255,  24,  24,  36),
-      Color.FromArgb(255,  68,  68, 104),  Color.FromArgb(255,  80,  80, 124),  Color.FromArgb(255,  56,  56, 108),
-      Color.FromArgb(255,  48,  48,  96),  Color.FromArgb(255,  96,  96, 228),  Color.FromArgb(255,  24,  24,  88),
-      Color.FromArgb(255,  16,  16,  80),  Color.FromArgb(255,  16,  16,  88),  Color.FromArgb(255, 124, 120, 140),
-      Color.FromArgb(255,  44,  44,  60),  Color.FromArgb(255,  68,  64,  96),  Color.FromArgb(255,  84,  80, 112),
-      Color.FromArgb(255,  36,  28,  80),  Color.FromArgb(255,  32,  24,  96),  Color.FromArgb(255,  24,  16,  88),
-      Color.FromArgb(255,  16,  12,  72),  Color.FromArgb(255,  56,  48,  88),  Color.FromArgb(255,  56,  48,  96),
-      Color.FromArgb(255,  56,  48, 108),  Color.FromArgb(255,  88,  80, 124),  Color.FromArgb(255,  64,  56, 100),
-      Color.FromArgb(255, 104,  96, 136),  Color.FromArgb(255,  68,  56, 120),  Color.FromArgb(255,  76,  64, 104),
-      Color.FromArgb(255,  80,  72,  96),  Color.FromArgb(255, 104,  96, 128),  Color.FromArgb(255,  96,  88, 120),
-      Color.FromArgb(255, 100,  88, 132),  Color.FromArgb(255,  52,  40,  88),  Color.FromArgb(255,  84,  72, 112),
-      Color.FromArgb(255, 104,  96, 120),  Color.FromArgb(255, 120, 112, 140),  Color.FromArgb(255,  96,  88, 112),
-      Color.FromArgb(255, 144, 140, 148),  Color.FromArgb(255,  68,  52,  88),  Color.FromArgb(255,  88,  72, 104),
-      Color.FromArgb(255, 120, 112, 128),  Color.FromArgb(255, 112, 104, 120),  Color.FromArgb(255, 116, 104, 128),
-      Color.FromArgb(255, 104,  88, 120),  Color.FromArgb(255,  96,  80, 112),  Color.FromArgb(255, 104,  96, 112),
-      Color.FromArgb(255, 136, 128, 140),  Color.FromArgb(255, 100,  68, 120),  Color.FromArgb(255,  92,  80, 100),
-      Color.FromArgb(255, 112,  96, 120),  Color.FromArgb(255,  84,  64,  96),  Color.FromArgb(255, 140, 108, 156),
-      Color.FromArgb(255, 104,  88, 112),  Color.FromArgb(255, 120,  84, 132),  Color.FromArgb(255, 160, 120, 168),
-      Color.FromArgb(255, 116,  88, 120),  Color.FromArgb(255, 132,  88, 136),  Color.FromArgb(255, 128, 112, 128),
-      Color.FromArgb(255, 120, 104, 120),  Color.FromArgb(255, 124,  72, 120),  Color.FromArgb(255, 112, 108, 112),
-      Color.FromArgb(255, 120,  96, 116),  Color.FromArgb(255, 108,  84, 100),  Color.FromArgb(255, 148, 104, 136),
-      Color.FromArgb(255, 140,  80, 120),  Color.FromArgb(255, 156, 152, 156),  Color.FromArgb(255, 112,  96, 108),
-      Color.FromArgb(255, 180, 120, 156),  Color.FromArgb(255, 176,  88, 140),  Color.FromArgb(255, 152,  56, 112),
-      Color.FromArgb(255, 116, 116, 116),  Color.FromArgb(255, 128, 112, 120),  Color.FromArgb(255, 212,  84, 136),
-      Color.FromArgb(255, 144, 120, 132),  Color.FromArgb(255, 188,  28,  88),  Color.FromArgb(255, 136, 124, 128),
-      Color.FromArgb(255, 136, 112, 120),  Color.FromArgb(255, 124,  96, 104),  Color.FromArgb(255, 124,  36,  52),
-      Color.FromArgb(255, 132, 104, 108),  Color.FromArgb(255, 120, 108, 108),  Color.FromArgb(255, 228, 224, 224),
-      Color.FromArgb(255, 180, 180, 180),  Color.FromArgb(255, 200, 200, 200),  Color.FromArgb(255, 160, 160, 160),
-      Color.FromArgb(255, 120, 120, 120),
+    public static Bgra32[] DefaultPalette = new Bgra32[] {
+      new Bgra32(  0,   0,   0), new Bgra32(  0,   0, 168), new Bgra32(  0, 168,   0),
+      new Bgra32(  0, 168, 168), new Bgra32(168,   0,   0), new Bgra32(168,   0, 168),
+      new Bgra32(168,  84,   0), new Bgra32(168, 168, 168), new Bgra32( 84,  84,  84),
+      new Bgra32( 84,  84, 252), new Bgra32( 84, 252,  84), new Bgra32( 84, 252, 252),
+      new Bgra32(252,  84,  84), new Bgra32(252,  84, 252), new Bgra32(252, 252,  84),
+      new Bgra32(252, 252, 252), new Bgra32(  0,   0,   0), new Bgra32( 20,  20,  20),
+      new Bgra32( 32,  32,  32), new Bgra32( 44,  44,  44), new Bgra32( 56,  56,  56),
+      new Bgra32( 68,  68,  68), new Bgra32( 80,  80,  80), new Bgra32( 96,  96,  96),
+      new Bgra32(112, 112, 112), new Bgra32(128, 128, 128), new Bgra32(144, 144, 144),
+      new Bgra32(160, 160, 160), new Bgra32(180, 180, 180), new Bgra32(200, 200, 200),
+      new Bgra32(224, 224, 224), new Bgra32(252, 252, 252), new Bgra32(  0,   0, 252),
+      new Bgra32( 68,   0, 252), new Bgra32(124,   0, 252), new Bgra32(184, 148,   0),
+      new Bgra32(184, 128,   0), new Bgra32(252,   0, 188), new Bgra32(252,   0, 128),
+      new Bgra32(252,   0,  84), new Bgra32(252,   0,   0), new Bgra32(252,  68,   0),
+      new Bgra32(128, 120, 120), new Bgra32(136, 116, 112), new Bgra32(132,   8,   4),
+      new Bgra32( 20,   4,   4), new Bgra32(196,  20,   4), new Bgra32(148, 136, 132),
+      new Bgra32( 68,  12,   4), new Bgra32(148, 124, 120), new Bgra32(176, 168, 168),
+      new Bgra32(164, 128, 124), new Bgra32( 88,  84,  84), new Bgra32(128, 116, 112),
+      new Bgra32(148, 120, 112), new Bgra32(192, 160, 148), new Bgra32(152, 128, 116),
+      new Bgra32(172, 152, 140), new Bgra32(104,  44,  12), new Bgra32(160, 144, 132),
+      new Bgra32(156,  76,  24), new Bgra32(176, 128,  92), new Bgra32(200, 108,  32),
+      new Bgra32(204, 192, 176), new Bgra32(176, 168, 148), new Bgra32(188, 180, 164),
+      new Bgra32(136, 132, 120), new Bgra32(232, 228, 196), new Bgra32(212, 208, 200),
+      new Bgra32(116, 112,  92), new Bgra32(232, 232, 232), new Bgra32(188, 188,  44),
+      new Bgra32(216, 212,  16), new Bgra32(144, 144,  92), new Bgra32(168, 168,  68),
+      new Bgra32(124, 128, 104), new Bgra32(196, 200, 192), new Bgra32(  0, 228, 204),
+      new Bgra32( 40, 200, 188), new Bgra32( 80, 172, 168), new Bgra32(  4, 184, 176),
+      new Bgra32( 16, 144, 156), new Bgra32(176, 188, 192), new Bgra32(188, 212, 216),
+      new Bgra32(152, 180, 192), new Bgra32( 56, 152, 212), new Bgra32(112, 176, 216),
+      new Bgra32(  0, 120, 200), new Bgra32( 96, 104, 112), new Bgra32(112, 120, 128),
+      new Bgra32(180, 200, 216), new Bgra32(128, 164, 192), new Bgra32(140, 164, 180),
+      new Bgra32(108, 148, 192), new Bgra32( 88, 140, 192), new Bgra32(116, 144, 172),
+      new Bgra32( 68, 128, 192), new Bgra32(120, 132, 144), new Bgra32( 32,  76, 140),
+      new Bgra32( 64,  76,  96), new Bgra32( 68,  76,  84), new Bgra32( 68,  96, 140),
+      new Bgra32(112, 120, 140), new Bgra32( 76,  84, 100), new Bgra32( 52,  60,  76),
+      new Bgra32( 80, 108, 152), new Bgra32( 96, 104, 120), new Bgra32(100, 120, 160),
+      new Bgra32( 80,  92, 112), new Bgra32( 96, 108, 140), new Bgra32(  8,  32,  88),
+      new Bgra32( 96, 108, 128), new Bgra32( 88, 100, 120), new Bgra32(  8,  32, 100),
+      new Bgra32( 88, 100, 132), new Bgra32(  8,  24,  80), new Bgra32( 80,  88, 120),
+      new Bgra32(  8,  24,  88), new Bgra32(  0,  16,  80), new Bgra32(  0,  16,  88),
+      new Bgra32(112, 112, 128), new Bgra32( 56,  64, 104), new Bgra32( 72,  80, 128),
+      new Bgra32( 40,  48,  96), new Bgra32( 36,  48, 116), new Bgra32( 24,  36, 100),
+      new Bgra32( 24,  36, 120), new Bgra32(  4,  16,  72), new Bgra32( 48,  56, 104),
+      new Bgra32( 48,  56, 116), new Bgra32( 44,  56, 136), new Bgra32( 24,  32,  88),
+      new Bgra32(  8,  24, 100), new Bgra32( 64,  72, 136), new Bgra32( 56,  64, 124),
+      new Bgra32( 16,  24,  80), new Bgra32( 16,  24,  88), new Bgra32(  8,  16,  80),
+      new Bgra32(128, 132, 148), new Bgra32( 68,  72, 120), new Bgra32( 16,  24,  96),
+      new Bgra32(  8,  16,  88), new Bgra32(  0,   8,  88), new Bgra32( 96,  96, 112),
+      new Bgra32(104, 108, 140), new Bgra32( 84,  88, 132), new Bgra32( 36,  40,  96),
+      new Bgra32( 24,  28,  80), new Bgra32( 56,  56,  96), new Bgra32( 44,  48, 108),
+      new Bgra32( 36,  40,  88), new Bgra32( 24,  32, 164), new Bgra32( 32,  40, 216),
+      new Bgra32( 24,  32, 216), new Bgra32( 20,  28, 200), new Bgra32( 24,  36, 228),
+      new Bgra32( 16,  24, 216), new Bgra32( 12,  20, 192), new Bgra32(  8,  20, 232),
+      new Bgra32( 96,  96, 140), new Bgra32( 72,  76, 112), new Bgra32(  8,   8,  72),
+      new Bgra32( 44,  48, 232), new Bgra32( 32,  40, 228), new Bgra32( 16,  24, 228),
+      new Bgra32(104, 104, 112), new Bgra32(120, 120, 128), new Bgra32(104, 104, 128),
+      new Bgra32(112, 112, 140), new Bgra32( 96,  96, 120), new Bgra32( 88,  88, 112),
+      new Bgra32( 96,  96, 128), new Bgra32( 88,  88, 120), new Bgra32( 24,  24,  36),
+      new Bgra32( 68,  68, 104), new Bgra32( 80,  80, 124), new Bgra32( 56,  56, 108),
+      new Bgra32( 48,  48,  96), new Bgra32( 96,  96, 228), new Bgra32( 24,  24,  88),
+      new Bgra32( 16,  16,  80), new Bgra32( 16,  16,  88), new Bgra32(124, 120, 140),
+      new Bgra32( 44,  44,  60), new Bgra32( 68,  64,  96), new Bgra32( 84,  80, 112),
+      new Bgra32( 36,  28,  80), new Bgra32( 32,  24,  96), new Bgra32( 24,  16,  88),
+      new Bgra32( 16,  12,  72), new Bgra32( 56,  48,  88), new Bgra32( 56,  48,  96),
+      new Bgra32( 56,  48, 108), new Bgra32( 88,  80, 124), new Bgra32( 64,  56, 100),
+      new Bgra32(104,  96, 136), new Bgra32( 68,  56, 120), new Bgra32( 76,  64, 104),
+      new Bgra32( 80,  72,  96), new Bgra32(104,  96, 128), new Bgra32( 96,  88, 120),
+      new Bgra32(100,  88, 132), new Bgra32( 52,  40,  88), new Bgra32( 84,  72, 112),
+      new Bgra32(104,  96, 120), new Bgra32(120, 112, 140), new Bgra32( 96,  88, 112),
+      new Bgra32(144, 140, 148), new Bgra32( 68,  52,  88), new Bgra32( 88,  72, 104),
+      new Bgra32(120, 112, 128), new Bgra32(112, 104, 120), new Bgra32(116, 104, 128),
+      new Bgra32(104,  88, 120), new Bgra32( 96,  80, 112), new Bgra32(104,  96, 112),
+      new Bgra32(136, 128, 140), new Bgra32(100,  68, 120), new Bgra32( 92,  80, 100),
+      new Bgra32(112,  96, 120), new Bgra32( 84,  64,  96), new Bgra32(140, 108, 156),
+      new Bgra32(104,  88, 112), new Bgra32(120,  84, 132), new Bgra32(160, 120, 168),
+      new Bgra32(116,  88, 120), new Bgra32(132,  88, 136), new Bgra32(128, 112, 128),
+      new Bgra32(120, 104, 120), new Bgra32(124,  72, 120), new Bgra32(112, 108, 112),
+      new Bgra32(120,  96, 116), new Bgra32(108,  84, 100), new Bgra32(148, 104, 136),
+      new Bgra32(140,  80, 120), new Bgra32(156, 152, 156), new Bgra32(112,  96, 108),
+      new Bgra32(180, 120, 156), new Bgra32(176,  88, 140), new Bgra32(152,  56, 112),
+      new Bgra32(116, 116, 116), new Bgra32(128, 112, 120), new Bgra32(212,  84, 136),
+      new Bgra32(144, 120, 132), new Bgra32(188,  28,  88), new Bgra32(136, 124, 128),
+      new Bgra32(136, 112, 120), new Bgra32(124,  96, 104), new Bgra32(124,  36,  52),
+      new Bgra32(132, 104, 108), new Bgra32(120, 108, 108), new Bgra32(228, 224, 224),
+      new Bgra32(180, 180, 180), new Bgra32(200, 200, 200), new Bgra32(160, 160, 160),
+      new Bgra32(120, 120, 120),
     };
 
     public static void PackSprites(string folderPath, string outputFolderPath)
@@ -230,7 +232,7 @@ namespace AGSUnpacker.Graphics
 
       using (FileStream stream = new FileStream(spriteFilePath, FileMode.Open))
       {
-        using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        using (BinaryReader reader = new BinaryReader(stream, Encoding.Latin1))
         {
           Console.WriteLine(" Done!");
           Console.Write("Parsing {0}...", spriteFilePath);
@@ -246,14 +248,14 @@ namespace AGSUnpacker.Graphics
           {
             Console.Write(string.Format("\tExtracting spr{0:D5}...", index));
 
-            Bitmap bitmap = ReadSprite(reader, header);
-            if (bitmap == null)
+            Image sprite = ReadSprite(reader, header);
+            if (sprite == null)
             {
               Console.WriteLine(" Skipping (empty).");
               continue;
             }
 
-            SaveBitmap(targetFolderPath, bitmap, index);
+            SaveSprite(sprite, targetFolderPath, index);
 
             Console.WriteLine(" Done!");
           }
@@ -295,33 +297,35 @@ namespace AGSUnpacker.Graphics
 
       for (int i = 0; i < filePaths.Length; ++i)
       {
-        Bitmap bitmap = null;
-
-        //RANT(adm244): thanks to Bitmap's busted constructor that does not close a file in time
-        // (and apparently doesn't allow reading), we are forced to handle it ourselves.
-        // Have I told you already that .NET is a setup for a failure?
-        using (FileStream stream = new FileStream(filePaths[i], FileMode.Open, FileAccess.Read))
-          bitmap = new Bitmap(stream);
-
-        if (bitmap == null)
-          continue;
-
-        //NOTE(adm244): .NET decides for some reason that 16-bits is 32-bits when loading bmp (a bug?),
-        // so we have to parse bits count field manually...
-        //TODO(adm244): double check that
-        if (Path.GetExtension(filePaths[i]) == ".bmp")
-        {
-          PixelFormat format = AGSGraphicUtils.ReadBitmapPixelFormat(filePaths[i]);
-          bitmap = bitmap.Convert(format);
-        }
+        // DEPRECATED:
+        //
+        //Image sprite = null;
+        //
+        ////RANT(adm244): thanks to Bitmap's busted constructor that does not close a file in time
+        //// (and apparently doesn't allow reading), we are forced to handle it ourselves.
+        //// Have I told you already that .NET is a setup for a failure?
+        //using (FileStream stream = new FileStream(filePaths[i], FileMode.Open, FileAccess.Read))
+        //  sprite = new Bitmap(stream);
+        //
+        //if (sprite == null)
+        //  continue;
+        //
+        ////NOTE(adm244): .NET decides for some reason that 16-bits is 32-bits when loading bmp (a bug?),
+        //// so we have to parse bits count field manually...
+        ////TODO(adm244): double check that
+        //if (Path.GetExtension(filePaths[i]) == ".bmp")
+        //{
+        //  PixelFormat format = AGSGraphicUtils.ReadBitmapPixelFormat(filePaths[i]);
+        //  sprite = sprite.Convert(format);
+        //}
 
         string filename = Path.GetFileNameWithoutExtension(filePaths[i]);
 
-        int index;
-        if (!GetSpriteIndex(filename, out index))
+        if (!GetSpriteIndex(filename, out int index))
           continue;
 
-        sprites.Add(new SpriteEntry(index, bitmap));
+        Image sprite = Image.LoadFromFile(filePaths[i]);
+        sprites.Add(new SpriteEntry(index, sprite));
       }
 
       sprites.Sort();
@@ -346,7 +350,7 @@ namespace AGSUnpacker.Graphics
       {
         if (sprites[listIndex].Index == spriteIndex)
         {
-          SpriteIndexInfo spriteWritten = WriteSprite(writer, header, sprites[listIndex].Image);
+          SpriteIndexInfo spriteWritten = WriteSprite(writer, header, sprites[listIndex].Sprite);
           spriteIndexData.Add(spriteWritten);
           ++listIndex;
         }
@@ -363,7 +367,7 @@ namespace AGSUnpacker.Graphics
       return spriteIndexData.ToArray();
     }
 
-    private static SpriteIndexInfo WriteSprite(BinaryWriter writer, SpriteSetHeader header, Bitmap sprite)
+    private static SpriteIndexInfo WriteSprite(BinaryWriter writer, SpriteSetHeader header, Image sprite)
     {
       SpriteIndexInfo spriteIndexData = new SpriteIndexInfo();
 
@@ -374,22 +378,23 @@ namespace AGSUnpacker.Graphics
       if (header.Compression == CompressionType.RLE)
       {
         //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp
-        if (sprite.PixelFormat == PixelFormat.Format24bppRgb)
-        {
-          sprite = sprite.Convert(PixelFormat.Format32bppArgb);
-        }
+        //if (sprite.PixelFormat == PixelFormat.Format24bppRgb)
+        //{
+        //  sprite = sprite.Convert(PixelFormat.Format32bppArgb);
+        //}
+
+        if (sprite.BytesPerPixel == 2)
+          sprite = sprite.Convert(PixelFormat.Argb32);
       }
 
-      int bytesPerPixel = sprite.GetBytesPerPixel();
-
-      writer.Write((UInt16)bytesPerPixel);
+      writer.Write((UInt16)sprite.BytesPerPixel);
       writer.Write((UInt16)sprite.Width);
       writer.Write((UInt16)sprite.Height);
 
-      byte[] buffer = sprite.GetPixels();
+      byte[] buffer = sprite.InternalImage.GetPixels();
 
       if (header.Compression == CompressionType.RLE)
-        buffer = CompressRLE(buffer, sprite.Width, sprite.Height, bytesPerPixel);
+        buffer = CompressRLE(buffer, sprite.Width, sprite.Height, sprite.BytesPerPixel);
 
       if (header.Version >= 6)
       {
@@ -430,7 +435,7 @@ namespace AGSUnpacker.Graphics
       //TODO(adm244): we should probably get palette from a DTA file instead
       //TODO(adm244): it seems like we should take paluses into consideration here
       //TODO(adm244): double check that palette color format is RGB6bits
-      Color[] palette = SpriteSetHeader.DefaultPalette;
+      Bgra32[] palette = SpriteSetHeader.DefaultPalette;
       if (version < 5)
         palette = AGSGraphicUtils.ReadPalette(reader, ColorFormat.RGB6bits);
 
@@ -490,18 +495,13 @@ namespace AGSUnpacker.Graphics
       }
     }
 
-    private static Bitmap ReadSprite(BinaryReader reader, SpriteSetHeader header)
+    private static Image ReadSprite(BinaryReader reader, SpriteSetHeader header)
     {
-      int width;
-      int height;
-      int bytesPerPixel;
-
-      byte[] buffer = ReadSprite(reader, header, out width, out height, out bytesPerPixel);
+      byte[] buffer = ReadSprite(reader, header, out int width, out int height, out int bytesPerPixel);
       if (buffer == null)
         return null;
 
-      //TODO(adm244): check all pixel format cases on real data
-      return AGSGraphicUtils.ConvertToBitmap(buffer, width, height, bytesPerPixel, header.Palette);
+      return Image.FromBuffer(buffer, width, height, bytesPerPixel, header.Palette);
     }
 
     private static byte[] ReadSprite(BinaryReader reader, SpriteSetHeader header, out int width, out int height, out int bytesPerPixel)
@@ -509,12 +509,12 @@ namespace AGSUnpacker.Graphics
       width = 0;
       height = 0;
 
-      bytesPerPixel = (int)reader.ReadUInt16();
+      bytesPerPixel = reader.ReadUInt16();
       if (bytesPerPixel == 0)
         return null;
 
-      width = (int)reader.ReadUInt16();
-      height = (int)reader.ReadUInt16();
+      width = reader.ReadUInt16();
+      height = reader.ReadUInt16();
 
       long size = (long)width * height * bytesPerPixel;
       long sizeUncompressed = size;
@@ -533,26 +533,24 @@ namespace AGSUnpacker.Graphics
       return reader.ReadBytes((int)size);
     }
 
-    private static void SaveBitmap(string folderPath, Bitmap bitmap, int index)
+    private static void SaveSprite(Image image, string folderPath, int index)
     {
       string fileName = string.Format("spr{0:D5}", index);
       string filePath = Path.Combine(folderPath, fileName);
 
-      if (bitmap.HasAlphaChannel())
-        bitmap.Save(filePath + ".png", ImageFormat.Png);
-      else
-        bitmap.Save(filePath + ".bmp", ImageFormat.Bmp);
+      // TODO(adm244): check if it needs ".png" part
+      image.InternalImage.SaveAsPng(filePath + ".png");
     }
 
     private class SpriteEntry : IComparable<SpriteEntry>
     {
-      public int Index { get; private set; }
-      public Bitmap Image { get; private set; }
+      public int Index { get; }
+      public Image Sprite { get; }
 
-      public SpriteEntry(int index, Bitmap image)
+      public SpriteEntry(int index, Image sprite)
       {
         Index = index;
-        Image = image;
+        Sprite = sprite;
       }
 
       public int CompareTo(SpriteEntry other)

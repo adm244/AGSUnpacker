@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Game;
-using AGSUnpacker.Room;
 
-namespace AGSUnpacker.Utils
+using AGSUnpacker.Lib.Game;
+using AGSUnpacker.Lib.Room;
+
+namespace AGSUnpacker.Lib.Utils
 {
   public static class TextExtractor
   {

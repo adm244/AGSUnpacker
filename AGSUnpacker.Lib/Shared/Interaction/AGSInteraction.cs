@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 
-namespace AGSUnpacker.Shared.Interaction
+namespace AGSUnpacker.Lib.Shared.Interaction
 {
   public class AGSInteraction
   {

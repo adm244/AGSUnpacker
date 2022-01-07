@@ -1,9 +1,10 @@
 ﻿using System;
 using System.IO;
-using AGSUnpacker.Shared;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker.Room
+using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib.Room
 {
   public class AGSRoomScript
   {

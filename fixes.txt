@@ -1,5 +1,11 @@
 v06:
-Project is now based on .NET 5.0
+Project: System.Drawing -> SixLabors.ImageSharp
+Project: AGSUnpacker.CLI project
+Project: Renamed AGSUnpackerSharp -> AGSUnpacker.Lib
+Project: Removed AGSDisassembler
+Project: Removed AGSUnpackerTests
+Project: Removed WinForms project
+Project: Project is now based on .NET 5.0
 
 v05:
 Fixed: Incorrect encoding for script referenced strings

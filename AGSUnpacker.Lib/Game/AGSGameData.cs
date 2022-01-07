@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
-using AGSUnpacker.Game.View;
-using AGSUnpacker.Shared;
-using AGSUnpacker.Shared.Interaction;
-using AGSUnpacker.Utils.Encryption;
 
-namespace AGSUnpacker.Game
+using AGSUnpacker.Lib.Game.View;
+using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Shared.Interaction;
+using AGSUnpacker.Lib.Utils.Encryption;
+
+namespace AGSUnpacker.Lib.Game
 {
   public struct AGSRoomDebugInfo
   {

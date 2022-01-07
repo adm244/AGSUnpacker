@@ -1,5 +1,5 @@
 ﻿
-namespace AGSUnpacker.Utils.Encryption
+namespace AGSUnpacker.Lib.Utils.Encryption
 {
   public static class AGSEncryption
   {

@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Extensions;
+using AGSUnpacker.Lib.Extensions;
 
-namespace AGSUnpacker.Shared
+namespace AGSUnpacker.Lib.Shared
 {
   public class AGSScript
   {

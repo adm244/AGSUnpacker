@@ -1,7 +1,8 @@
 ﻿using System;
-using AGSUnpacker.Extractors.SourceExtractors;
 
-namespace AGSUnpacker.Extractors
+using AGSUnpacker.Lib.Extractors.SourceExtractors;
+
+namespace AGSUnpacker.Lib.Extractors
 {
   //TODO(adm244): move to proper place
   public enum AGSVersion

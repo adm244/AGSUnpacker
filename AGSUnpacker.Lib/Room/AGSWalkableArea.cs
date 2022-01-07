@@ -1,5 +1,5 @@
 ﻿
-namespace AGSUnpacker.Room
+namespace AGSUnpacker.Lib.Room
 {
   public struct AGSWalkableArea
   {

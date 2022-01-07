@@ -2,14 +2,15 @@
 using System.IO;
 using System.Text;
 
-namespace AGSUnpacker
+namespace AGSUnpacker.Lib
 {
   public static class AGSStringUtils
   {
     //RANT(adm244): 50.000.000 sounds like a non-sense, but so is AGS being a good engine
     public static readonly int MaxCStringLength = 5000000;
 
-    public static readonly Encoding Encoding = Encoding.GetEncoding(1252);
+    //public static readonly Encoding Encoding = Encoding.GetEncoding(1252);
+    public static readonly Encoding Encoding = Encoding.Latin1;
 
     public static int GetCStringLength(byte[] buffer, int index)
     {

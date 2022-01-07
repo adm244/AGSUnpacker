@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
-using AGSUnpacker.Shared.Script;
-
-namespace AGSUnpacker.Disassembler
+﻿namespace AGSUnpacker.Lib.Disassembler
 {
 //  public static class AGSDecompiler
 //  {

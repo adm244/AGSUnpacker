@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
 using System.Diagnostics;
+using System.IO;
 
-namespace AGSUnpacker.Game
+namespace AGSUnpacker.Lib.Game
 {
   public class AGSCustomProperiesSchema
   {

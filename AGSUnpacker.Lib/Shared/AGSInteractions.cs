@@ -1,6 +1,6 @@
-﻿using AGSUnpacker.Shared.Interaction;
+﻿using AGSUnpacker.Lib.Shared.Interaction;
 
-namespace AGSUnpacker.Shared
+namespace AGSUnpacker.Lib.Shared
 {
   public class AGSInteractions
   {

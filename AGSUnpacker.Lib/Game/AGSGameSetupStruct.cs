@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AGSUnpacker
+namespace AGSUnpacker.Lib
 {
   public class AGSGameSetupStruct
   {
