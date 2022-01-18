@@ -60,7 +60,7 @@ namespace AGSUnpacker.Lib.Translation
 
       using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
       {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           writer.WriteFixedString(TRA_SIGNATURE, TRA_SIGNATURE.Length);
 
@@ -133,7 +133,7 @@ namespace AGSUnpacker.Lib.Translation
     {
       using (FileStream stream = new FileStream(filepath, FileMode.Open))
       {
-        using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        using (BinaryReader reader = new BinaryReader(stream, Encoding.Latin1))
         {
           string signature = reader.ReadFixedString(15);
           if (signature != TRA_SIGNATURE)
@@ -187,7 +187,7 @@ namespace AGSUnpacker.Lib.Translation
 
       using (FileStream stream = new FileStream(filename, FileMode.Open, FileAccess.Read))
       {
-        using (StreamReader reader = new StreamReader(stream, Encoding.GetEncoding(1252)))
+        using (StreamReader reader = new StreamReader(stream, Encoding.Latin1))
         {
           ReadState state = ReadState.Original;
 
@@ -229,7 +229,7 @@ namespace AGSUnpacker.Lib.Translation
     {
       using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
       {
-        using (StreamWriter writer = new StreamWriter(stream, Encoding.GetEncoding(1252)))
+        using (StreamWriter writer = new StreamWriter(stream, Encoding.Latin1))
         {
           Debug.Assert(OriginalLines.Count == TranslatedLines.Count);
 

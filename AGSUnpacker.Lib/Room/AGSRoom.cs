@@ -4,9 +4,9 @@ using System.IO;
 using System.Text;
 
 using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Lib.Graphics;
 using AGSUnpacker.Lib.Shared;
 using AGSUnpacker.Lib.Shared.Interaction;
-using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.Lib.Utils.Encryption;
 
 namespace AGSUnpacker.Lib.Room
@@ -864,27 +864,27 @@ namespace AGSUnpacker.Lib.Room
     private void ReadRoomBitmaps(BinaryReader reader, int roomVersion)
     {
       if (roomVersion >= 5) // ???
-        Background.MainBackground = AGSGraphicUtils.ReadLZ77Image(reader, Background.BytesPerPixel);
+        Background.MainBackground = AGSGraphics.ReadLZ77Image(reader, Background.BytesPerPixel);
       else
-        Background.MainBackground = AGSGraphicUtils.ReadAllegroImage(reader);
+        Background.MainBackground = AGSGraphics.ReadAllegroImage(reader);
 
-      Background.RegionsMask = AGSGraphicUtils.ReadAllegroImage(reader);
-      Background.WalkableAreasMask = AGSGraphicUtils.ReadAllegroImage(reader);
-      Background.WalkbehindAreasMask = AGSGraphicUtils.ReadAllegroImage(reader);
-      Background.HotspotsMask = AGSGraphicUtils.ReadAllegroImage(reader);
+      Background.RegionsMask = AGSGraphics.ReadAllegroImage(reader);
+      Background.WalkableAreasMask = AGSGraphics.ReadAllegroImage(reader);
+      Background.WalkbehindAreasMask = AGSGraphics.ReadAllegroImage(reader);
+      Background.HotspotsMask = AGSGraphics.ReadAllegroImage(reader);
     }
 
     private void WriteRoomBitmaps(BinaryWriter writer, int roomVersion)
     {
       if (roomVersion >= 5)
-        AGSGraphicUtils.WriteLZ77Image(writer, Background.MainBackground, Background.BytesPerPixel);
+        AGSGraphics.WriteLZ77Image(writer, Background.MainBackground, Background.BytesPerPixel);
       else
-        AGSGraphicUtils.WriteAllegroImage(writer, Background.MainBackground);
+        AGSGraphics.WriteAllegroImage(writer, Background.MainBackground);
 
-      AGSGraphicUtils.WriteAllegroImage(writer, Background.RegionsMask);
-      AGSGraphicUtils.WriteAllegroImage(writer, Background.WalkableAreasMask);
-      AGSGraphicUtils.WriteAllegroImage(writer, Background.WalkbehindAreasMask);
-      AGSGraphicUtils.WriteAllegroImage(writer, Background.HotspotsMask);
+      AGSGraphics.WriteAllegroImage(writer, Background.RegionsMask);
+      AGSGraphics.WriteAllegroImage(writer, Background.WalkableAreasMask);
+      AGSGraphics.WriteAllegroImage(writer, Background.WalkbehindAreasMask);
+      AGSGraphics.WriteAllegroImage(writer, Background.HotspotsMask);
     }
 
     private enum BlockType

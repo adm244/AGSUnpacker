@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net5.0</TargetFramework>
+    <AssemblyName>AGSUnpacker.Graphics</AssemblyName>
+  </PropertyGroup>
+
+  <Import Project="..\AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems" Label="Shared" />
+
+</Project>

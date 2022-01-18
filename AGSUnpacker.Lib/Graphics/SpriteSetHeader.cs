@@ -2,9 +2,7 @@
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Utils;
-
-using SixLabors.ImageSharp.PixelFormats;
+using AGSUnpacker.Graphics;
 
 namespace AGSUnpacker.Lib.Graphics
 {
@@ -23,20 +21,20 @@ namespace AGSUnpacker.Lib.Graphics
     public static readonly CompressionType DefaultCompression = CompressionType.Uncompressed;
     public static readonly UInt32 DefaultFileID = 0xDEADBEEF;
     public static readonly UInt16 DefaultSpritesCount = 0;
-    public static readonly Bgra32[] DefaultPalette = AGSSpriteSet.DefaultPalette;
+    public static readonly Palette DefaultPalette = AGSSpriteSet.DefaultPalette;
 
     public Int16 Version { get; private set; }
     public CompressionType Compression { get; private set; }
     public UInt32 FileID { get; private set; }
     public UInt16 SpritesCount { get; private set; }
-    public Bgra32[] Palette { get; private set; }
+    public Palette Palette { get; private set; }
 
     private SpriteSetHeader()
       : this(DefaultVersion, DefaultCompression, DefaultFileID, DefaultSpritesCount, DefaultPalette)
     {
     }
 
-    public SpriteSetHeader(Int16 version, CompressionType compression, UInt32 fileID, UInt16 spritesCount, Bgra32[] palette)
+    public SpriteSetHeader(Int16 version, CompressionType compression, UInt32 fileID, UInt16 spritesCount, Palette palette)
     {
       Version = version;
       Compression = compression;
@@ -90,25 +88,25 @@ namespace AGSUnpacker.Lib.Graphics
       }
     }
 
-    private static Bgra32[] ReadPalette(BinaryReader reader)
+    private static Palette ReadPalette(BinaryReader reader)
     {
-      Bgra32[] palette = new Bgra32[256];
+      Color[] colors = new Color[256];
 
-      for (int i = 0; i < palette.Length; ++i)
+      for (int i = 0; i < colors.Length; ++i)
       {
-        Int32 color = reader.ReadInt32();
-        palette[i] = AGSGraphicUtils.FromABGR(color);
+        int rgba32 = reader.ReadInt32();
+        colors[i] = Color.FromRgba32(rgba32);
       }
 
-      return palette;
+      return new Palette(colors);
     }
 
     private void WritePalette(BinaryWriter writer)
     {
       for (int i = 0; i < Palette.Length; ++i)
       {
-        Int32 color = AGSGraphicUtils.ToABGR(Palette[i]);
-        writer.Write((UInt32)color);
+        int rgba32 = Palette[i].ToRgba32();
+        writer.Write((UInt32)rgba32);
       }
     }
   }

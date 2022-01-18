@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
+    <ProjectReference Include="..\AGSUnpacker.Graphics.GDI\AGSUnpacker.Graphics.GDI.csproj" />
   </ItemGroup>
 
 </Project>

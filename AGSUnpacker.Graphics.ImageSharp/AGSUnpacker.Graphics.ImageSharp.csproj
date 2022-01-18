@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <AssemblyName>AGSUnpacker.Graphics</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.4" />
+  </ItemGroup>
+
+  <Import Project="..\AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems" Label="Shared" />
+
+</Project>

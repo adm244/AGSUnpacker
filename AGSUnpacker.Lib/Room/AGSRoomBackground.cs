@@ -1,8 +1,8 @@
 ﻿using System.Diagnostics;
 using System.IO;
 
+using AGSUnpacker.Graphics;
 using AGSUnpacker.Lib.Graphics;
-using AGSUnpacker.Lib.Utils;
 
 namespace AGSUnpacker.Lib.Room
 {
@@ -10,15 +10,15 @@ namespace AGSUnpacker.Lib.Room
   {
     public int BytesPerPixel;
     public int AnimationSpeed;
-    public Image[] Frames;
+    public Bitmap[] Frames;
     public byte[] PaletteShareFlags;
 
-    public Image WalkableAreasMask;
-    public Image WalkbehindAreasMask;
-    public Image HotspotsMask;
-    public Image RegionsMask;
+    public Bitmap WalkableAreasMask;
+    public Bitmap WalkbehindAreasMask;
+    public Bitmap HotspotsMask;
+    public Bitmap RegionsMask;
 
-    public Image MainBackground
+    public Bitmap MainBackground
     {
       get { return Frames[0]; }
       set { Frames[0] = value; }
@@ -28,7 +28,7 @@ namespace AGSUnpacker.Lib.Room
     {
       BytesPerPixel = 1;
       AnimationSpeed = 4;
-      Frames = new Image[5];
+      Frames = new Bitmap[5];
       PaletteShareFlags = new byte[5];
 
       WalkableAreasMask = null;
@@ -52,7 +52,7 @@ namespace AGSUnpacker.Lib.Room
       Debug.Assert(Frames.Length >= framesCount);
 
       for (int i = 1; i < framesCount; ++i)
-        Frames[i] = AGSGraphicUtils.ReadLZ77Image(reader, BytesPerPixel);
+        Frames[i] = AGSGraphics.ReadLZ77Image(reader, BytesPerPixel);
     }
 
     public void WriteBlock(BinaryWriter writer, int roomVersion)
@@ -64,7 +64,7 @@ namespace AGSUnpacker.Lib.Room
         writer.Write((byte[])PaletteShareFlags);
 
       for (int i = 1; i < Frames.Length; ++i)
-        AGSGraphicUtils.WriteLZ77Image(writer, Frames[i], BytesPerPixel);
+        AGSGraphics.WriteLZ77Image(writer, Frames[i], BytesPerPixel);
     }
   }
 }
