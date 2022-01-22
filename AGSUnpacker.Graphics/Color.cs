@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace AGSUnpacker.Graphics
+﻿namespace AGSUnpacker.Graphics
 {
   public struct Color
   {

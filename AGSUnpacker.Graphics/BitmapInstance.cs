@@ -1,5 +1,7 @@
 ﻿using System;
 
+using AGSUnpacker.Graphics.Formats;
+
 namespace AGSUnpacker.Graphics
 {
   public abstract class BitmapInstance

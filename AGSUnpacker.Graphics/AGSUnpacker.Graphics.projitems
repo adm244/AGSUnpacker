@@ -12,8 +12,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Bitmap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Color.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BitmapInstance.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ImageFormat.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Formats\ImageFormat.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Palette.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PixelFormat.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Formats\PixelFormat.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Formats\" />
   </ItemGroup>
 </Project>

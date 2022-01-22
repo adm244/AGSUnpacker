@@ -1,5 +1,7 @@
 ﻿using System.IO;
 
+using AGSUnpacker.Graphics.Formats;
+
 namespace AGSUnpacker.Graphics
 {
   public class Bitmap

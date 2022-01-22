@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.Versioning;
 
+using AGSUnpacker.Graphics.Formats;
 using AGSUnpacker.Graphics.GDI.Extensions;
 
 [assembly: SupportedOSPlatform("windows")]

@@ -1,5 +1,4 @@
 v06:
-Project: System.Drawing -> SixLabors.ImageSharp
 Project: AGSUnpacker.CLI project
 Project: Renamed AGSUnpackerSharp -> AGSUnpacker.Lib
 Project: Removed AGSDisassembler

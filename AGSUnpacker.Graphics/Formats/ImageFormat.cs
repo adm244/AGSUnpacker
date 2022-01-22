@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AGSUnpacker.Graphics
+namespace AGSUnpacker.Graphics.Formats
 {
   public enum ImageFormat
   {

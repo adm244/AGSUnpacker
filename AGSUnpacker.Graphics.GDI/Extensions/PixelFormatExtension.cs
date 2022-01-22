@@ -1,5 +1,7 @@
 ﻿using System;
 
+using AGSUnpacker.Graphics.Formats;
+
 namespace AGSUnpacker.Graphics.GDI.Extensions
 {
   internal static partial class PixelFormatExtension

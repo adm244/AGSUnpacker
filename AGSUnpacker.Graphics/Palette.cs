@@ -1,5 +1,7 @@
 ﻿using System;
 
+using AGSUnpacker.Graphics.Formats;
+
 namespace AGSUnpacker.Graphics
 {
   public struct Palette
@@ -9,6 +11,8 @@ namespace AGSUnpacker.Graphics
       Entries = new Color[entries.Length];
       entries.CopyTo(Entries, 0);
 
+      // FIX(adm244): just use tRNS chunk in png
+      //
       // HACK(adm244): treat palette index 0 as transparent color
       // some palette colors are the same as color 0, assuming color 0 is transparent
       //Entries[0] = new Color(Entries[0].R, Entries[0].G, Entries[0].B, 0);

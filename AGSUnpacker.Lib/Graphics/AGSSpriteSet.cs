@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 
 using AGSUnpacker.Graphics;
+using AGSUnpacker.Graphics.Formats;
 using AGSUnpacker.Lib.Utils;
 
 namespace AGSUnpacker.Lib.Graphics
