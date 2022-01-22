@@ -1,7 +1,13 @@
+v06:
+Project: AGSUnpacker.CLI project
+Project: Renamed AGSUnpackerSharp -> AGSUnpacker.Lib
+Project: Removed AGSDisassembler
+Project: Removed AGSUnpackerTests
+Project: Removed WinForms project
+Project: Project is now based on .NET 5.0
 
 v05:
 Fixed: Incorrect encoding for script referenced strings
-
 Added: Support for CLib version 6 (vox files)
 Added: Support for multiple CLib files
 Added: Reimplemented CLib reader
@@ -12,7 +18,6 @@ Refactor: Moved encryption methods into AGSEncryption
 Refactor: Cleaned up AGSRoom, AGSStringUtils code
 Added: Support for 64-bit room block length
 Fixed: Removed garbage from script strings
-
 Re-added: AGSSpriteSet outputs sprindex.dat
 Fixed: AGSSpriteSet::Pack now properly packs sprites based on their index
 Fixed: AGSSpriteSet::Pack writting compression type for file version below 6
