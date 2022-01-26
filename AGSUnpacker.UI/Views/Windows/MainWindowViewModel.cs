@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 
 using AGSUnpacker.Lib.Assets;
+using AGSUnpacker.Lib.Graphics;
 using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Core.Commands;
 
@@ -71,6 +72,44 @@ namespace AGSUnpacker.UI.Views.Windows
       });
     }
     #endregion
+
+    #region UnpackSpritesCommand
+    private IAsyncCommand _unpackSpritesCommand;
+    public IAsyncCommand UnpackSpritesCommand
+    {
+      get => _unpackSpritesCommand;
+      set => SetProperty(ref _unpackSpritesCommand, value);
+    }
+    
+    private async Task OnUnpackSpritesCommandExecuteAsync(object parameter)
+    {
+      OpenFileDialog openDialog = new OpenFileDialog()
+      {
+        Title = "Select acsprset.spr file",
+        Filter = "AGS sprite set|*.spr",
+        Multiselect = false,
+        CheckFileExists = true,
+        CheckPathExists = true
+      };
+
+      if (openDialog.ShowDialog(App.Current.MainWindow) != true)
+        return;
+
+      string sprsetFilepath = openDialog.FileName;
+      string sprsetFilename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
+      string sprsetFolder = Path.GetDirectoryName(openDialog.FileName);
+      string sprsetTargetFolder = Path.Combine(sprsetFolder, sprsetFilename);
+
+      // FIX(adm244): should caller create a folder or callee?
+      if (!Directory.Exists(sprsetTargetFolder))
+        Directory.CreateDirectory(sprsetTargetFolder);
+
+      await Task.Run(() =>
+      {
+        AGSSpriteSet.UnpackSprites(sprsetFilepath, sprsetTargetFolder);
+      });
+    }
+    #endregion
     #endregion
 
     private void OnIsExecutingChanged(object sender, bool newValue)
@@ -84,6 +123,9 @@ namespace AGSUnpacker.UI.Views.Windows
 
       UnpackAssetsCommand = new AsyncExecuteCommand(OnUnpackAssetsCommandExecuteAsync);
       UnpackAssetsCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      UnpackSpritesCommand = new AsyncExecuteCommand(OnUnpackSpritesCommandExecuteAsync);
+      UnpackSpritesCommand.IsExecutingChanged += OnIsExecutingChanged;
     }
   }
 }

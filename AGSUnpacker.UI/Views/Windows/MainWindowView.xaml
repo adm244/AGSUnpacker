@@ -38,7 +38,7 @@
         <GroupBox Header="Unpack">
           <StackPanel>
             <Button Content="Unpack Assets" Command="{Binding UnpackAssetsCommand}"/>
-            <Button Content="Unpack Sprites"/>
+            <Button Content="Unpack Sprites" Command="{Binding UnpackSpritesCommand}"/>
           </StackPanel>
         </GroupBox>
 
