@@ -1,0 +1,77 @@
+﻿<Window x:Class="AGSUnpacker.UI.Views.Windows.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
+        mc:Ignorable="d"
+        Title="{Binding Title}"
+        Height="480" Width="210" ResizeMode="NoResize"
+        Margin="0" Padding="0">
+  <Window.Resources>
+    <Style x:Key="SideMenu" TargetType="FrameworkElement">
+      <Style.Resources>
+        <Style TargetType="GroupBox">
+          <Setter Property="Padding" Value="5"/>
+          <Setter Property="Margin" Value="0,0,0,5"/>
+        </Style>
+
+        <Style TargetType="Button">
+          <Setter Property="Margin" Value="0,2"/>
+        </Style>
+      </Style.Resources>
+    </Style>
+  </Window.Resources>
+
+  <Window.DataContext>
+    <local:MainWindowViewModel/>
+  </Window.DataContext>
+
+  <DockPanel>
+    <StatusBar DockPanel.Dock="Bottom" Background="#ddd">
+      <TextBlock Text="{Binding StatusText}"/>
+    </StatusBar>
+    
+    <Border Margin="0" Background="#eee">
+      <StackPanel Margin="10" Style="{StaticResource SideMenu}">
+        <!-- Unpack section -->
+        <GroupBox Header="Unpack">
+          <StackPanel>
+            <Button Content="Unpack Assets" Command="{Binding UnpackAssetsCommand}"/>
+            <Button Content="Unpack Sprites"/>
+          </StackPanel>
+        </GroupBox>
+
+        <!-- Repack section -->
+        <GroupBox Header="Repack">
+          <StackPanel>
+            <Button Content="Repack Assets"/>
+            <Button Content="Repack Sprites"/>
+          </StackPanel>
+        </GroupBox>
+
+        <!-- Translation section -->
+        <GroupBox Header="Translation">
+          <StackPanel>
+            <Button Content="Extract TRS from Assets"/>
+            <Button Content="Decompile TRA"/>
+            <Button Content="Compile TRS"/>
+          </StackPanel>
+        </GroupBox>
+
+        <!-- Extra section -->
+        <GroupBox Header="Extra">
+          <StackPanel>
+            <Button Content="Extract Game ID"/>
+            <Button Content="Change room background"/>
+          </StackPanel>
+        </GroupBox>
+
+        <Grid>
+          <TextBlock HorizontalAlignment="Left" Text="{Binding ProgramName}"/>
+          <TextBlock HorizontalAlignment="Right" Text="{Binding ProgramVersion}"/>
+        </Grid>
+      </StackPanel>
+    </Border>
+  </DockPanel>
+</Window>
