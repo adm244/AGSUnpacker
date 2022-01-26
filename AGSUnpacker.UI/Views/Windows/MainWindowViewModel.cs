@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.UI.Core;
@@ -39,19 +38,14 @@ namespace AGSUnpacker.UI.Views.Windows
 
     #region Commands
     #region UnpackAssetsCommand
-    private ICommand _unpackAssetsCommand;
-    public ICommand UnpackAssetsCommand
+    private IAsyncCommand _unpackAssetsCommand;
+    public IAsyncCommand UnpackAssetsCommand
     {
       get => _unpackAssetsCommand;
       set => SetProperty(ref _unpackAssetsCommand, value);
     }
 
-    private bool OnUnpackAssetsCommandCanExecute(object parameter)
-    {
-      return Status == AppStatus.Ready;
-    }
-
-    private async void OnUnpackAssetsCommandExecute(object parameter)
+    private async Task OnUnpackAssetsCommandExecuteAsync(object parameter)
     {
       OpenFileDialog openDialog = new OpenFileDialog()
       {
@@ -70,27 +64,26 @@ namespace AGSUnpacker.UI.Views.Windows
       string assetsFolder = Path.GetDirectoryName(openDialog.FileName);
       string assetsTargetFolder = Path.Combine(assetsFolder, assetsFilename);
 
-      Status = AppStatus.Busy;
-
       await Task.Run(() =>
       {
         AssetsManager assetsManager = AssetsManager.Create(assetsFilepath);
         assetsManager.Extract(assetsTargetFolder);
-      }).ConfigureAwait(true);
-
-      Status = AppStatus.Ready;
-
-      // HACK(adm244): force command bindings to update CanExecute value
-      CommandManager.InvalidateRequerySuggested();
+      });
     }
     #endregion
     #endregion
+
+    private void OnIsExecutingChanged(object sender, bool newValue)
+    {
+      Status = newValue ? AppStatus.Busy : AppStatus.Ready;
+    }
 
     public MainWindowViewModel()
     {
       Title = ProgramName;
 
-      UnpackAssetsCommand = new ExecuteCommand(OnUnpackAssetsCommandExecute, OnUnpackAssetsCommandCanExecute);
+      UnpackAssetsCommand = new AsyncExecuteCommand(OnUnpackAssetsCommandExecuteAsync);
+      UnpackAssetsCommand.IsExecutingChanged += OnIsExecutingChanged;
     }
   }
 }

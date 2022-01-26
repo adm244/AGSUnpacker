@@ -7,12 +7,7 @@ namespace AGSUnpacker.UI.Core.Commands
     private readonly Action<object> _executeMethod;
     private readonly Func<object, bool> _canExecuteMethod;
 
-    public ExecuteCommand(Action<object> executeMethod)
-    {
-      _executeMethod = executeMethod;
-    }
-
-    public ExecuteCommand(Action<object> executeMethod, Func<object, bool> canExecuteMethod)
+    public ExecuteCommand(Action<object> executeMethod, Func<object, bool> canExecuteMethod = null)
     {
       _executeMethod = executeMethod;
       _canExecuteMethod = canExecuteMethod;
