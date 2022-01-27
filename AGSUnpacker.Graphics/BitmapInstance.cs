@@ -70,7 +70,7 @@ namespace AGSUnpacker.Graphics
       public int Width;
       public int Height;
 
-      public Palette Palette;
+      public Palette? Palette;
 
       // TODO(adm244): make a PixelBuffer struct?
       public PixelFormat Format;

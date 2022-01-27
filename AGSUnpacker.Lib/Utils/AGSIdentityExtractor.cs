@@ -14,7 +14,7 @@ namespace AGSUnpacker.Lib.Utils
 
     public static bool ExtractIdentity(string filePath, string targetFolder)
     {
-      Encoding encoding = Encoding.GetEncoding(1252);
+      Encoding encoding = Encoding.Latin1;
 
       using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
       {
@@ -37,6 +37,7 @@ namespace AGSUnpacker.Lib.Utils
       return true;
     }
 
+    // FIXME(adm244): code duplication; see TextExtractor
     private static AGSGameData GetGameData(BinaryReader r, AGSAssetInfo[] assets)
     {
       if (assets == null)
@@ -51,7 +52,7 @@ namespace AGSUnpacker.Lib.Utils
           byte[] buffer = r.ReadBytes((int)assets[i].Size);
           using (MemoryStream stream = new MemoryStream(buffer))
           {
-            using (BinaryReader streamReader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+            using (BinaryReader streamReader = new BinaryReader(stream, Encoding.Latin1))
             {
               AGSGameData dta = new AGSGameData();
               dta.LoadFromStream(streamReader);

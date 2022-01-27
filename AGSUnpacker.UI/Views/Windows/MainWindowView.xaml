@@ -45,24 +45,25 @@
         <!-- Repack section -->
         <GroupBox Header="Repack">
           <StackPanel>
-            <Button Content="Repack Assets"/>
-            <Button Content="Repack Sprites"/>
+            <Button Content="Repack Assets" Command="{Binding RepackAssetsCommand}"
+                    ToolTipService.ShowOnDisabled="True" ToolTip="Not implemented yet"/>
+            <Button Content="Repack Sprites" Command="{Binding RepackSpritesCommand}"/>
           </StackPanel>
         </GroupBox>
 
         <!-- Translation section -->
         <GroupBox Header="Translation">
           <StackPanel>
-            <Button Content="Extract TRS from Assets"/>
-            <Button Content="Decompile TRA"/>
-            <Button Content="Compile TRS"/>
+            <Button Content="Extract TRS from Assets" Command="{Binding ExtractTRSCommand}"/>
+            <Button Content="Decompile TRA" Command="{Binding DecompileTRACommand}"/>
+            <Button Content="Compile TRS" Command="{Binding CompileTRSCommand}"/>
           </StackPanel>
         </GroupBox>
 
         <!-- Extra section -->
         <GroupBox Header="Extra">
           <StackPanel>
-            <Button Content="Extract Game ID"/>
+            <Button Content="Extract Game ID" Command="{Binding ExtractGameIdCommand}"/>
             <Button Content="Change room background"/>
           </StackPanel>
         </GroupBox>

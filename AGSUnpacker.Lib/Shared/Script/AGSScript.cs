@@ -84,7 +84,7 @@ namespace AGSUnpacker.Lib.Shared.Script
       for (int i = 0; i < strings.Length; ++i)
       {
         char[] chars = strings[i].ToCharArray();
-        byte[] bytes = Encoding.GetEncoding(1252).GetBytes(chars);
+        byte[] bytes = Encoding.Latin1.GetBytes(chars);
 
         stream.Write(bytes, 0, bytes.Length);
         stream.WriteByte(0);

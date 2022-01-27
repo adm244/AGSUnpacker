@@ -1,8 +1,11 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 
 using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Graphics;
+using AGSUnpacker.Lib.Translation;
+using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Core.Commands;
 
@@ -46,30 +49,15 @@ namespace AGSUnpacker.UI.Views.Windows
       set => SetProperty(ref _unpackAssetsCommand, value);
     }
 
-    private async Task OnUnpackAssetsCommandExecuteAsync(object parameter)
+    private Task OnUnpackAssetsCommandExecuteAsync(object parameter)
     {
-      OpenFileDialog openDialog = new OpenFileDialog()
-      {
-        Title = "Select AGS game executable",
-        Filter = "AGS game executable|*.exe",
-        Multiselect = false,
-        CheckFileExists = true,
-        CheckPathExists = true
-      };
-
-      if (openDialog.ShowDialog(App.Current.MainWindow) != true)
-        return;
-
-      string assetsFilepath = openDialog.FileName;
-      string assetsFilename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
-      string assetsFolder = Path.GetDirectoryName(openDialog.FileName);
-      string assetsTargetFolder = Path.Combine(assetsFolder, assetsFilename);
-
-      await Task.Run(() =>
-      {
-        AssetsManager assetsManager = AssetsManager.Create(assetsFilepath);
-        assetsManager.Extract(assetsTargetFolder);
-      });
+      return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
+        (filepath, targetFolder) =>
+        {
+          AssetsManager assetsManager = AssetsManager.Create(filepath);
+          assetsManager.Extract(targetFolder);
+        }
+      );
     }
     #endregion
 
@@ -80,37 +68,202 @@ namespace AGSUnpacker.UI.Views.Windows
       get => _unpackSpritesCommand;
       set => SetProperty(ref _unpackSpritesCommand, value);
     }
-    
-    private async Task OnUnpackSpritesCommandExecuteAsync(object parameter)
+
+    private Task OnUnpackSpritesCommandExecuteAsync(object parameter)
+    {
+      return UnpackAsync("Select acsprset.spr file", "AGS sprite set|*.spr",
+        (filepath, targetFolder) => AGSSpriteSet.UnpackSprites(filepath, targetFolder)
+      );
+    }
+    #endregion
+
+    #region RepackAssetsCommand
+    private IAsyncCommand _repackAssetsCommand;
+    public IAsyncCommand RepackAssetsCommand
+    {
+      get => _repackAssetsCommand;
+      set => SetProperty(ref _repackAssetsCommand, value);
+    }
+
+    private Task OnRepackAssetsCommandExecuteAsync(object parameter)
+    {
+      // TODO(adm244): implement assets packing logic
+      return Task.CompletedTask;
+    }
+    #endregion
+
+    #region RepackSpritesCommand
+    private IAsyncCommand _repackSpritesCommand;
+    public IAsyncCommand RepackSpritesCommand
+    {
+      get => _repackSpritesCommand;
+      set => SetProperty(ref _repackSpritesCommand, value);
+    }
+
+    private Task OnRepackSpritesCommandExecuteAsync(object parameter)
+    {
+      return RepackAsync("Select header.bin file", "Sprite set header|header.bin",
+        (filepath, targetFolder) =>
+        {
+          string inputFolder = Path.GetDirectoryName(filepath);
+          AGSSpriteSet.PackSprites(inputFolder, targetFolder);
+        }
+      );
+    }
+    #endregion
+
+    #region ExtractTRSCommand
+    private IAsyncCommand _extractTRSCommand;
+    public IAsyncCommand ExtractTRSCommand
+    {
+      get => _extractTRSCommand;
+      set => SetProperty(ref _extractTRSCommand, value);
+    }
+
+    private Task OnExtractTRSCommandExecuteAsync(object parameter)
+    {
+      return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
+        (filepath, targetFolder) =>
+        {
+          string targetFilepath = Path.Combine(targetFolder, "Extracted.trs");
+          TextExtractor.Extract(filepath, targetFilepath);
+        }
+      );
+    }
+    #endregion
+
+    #region DecompileTRACommand
+    private IAsyncCommand _decompileTRACommand;
+    public IAsyncCommand DecompileTRACommand
+    {
+      get => _decompileTRACommand;
+      set => SetProperty(ref _decompileTRACommand, value);
+    }
+
+    private Task OnDecompileTRACommandExecuteAsync(object parameter)
+    {
+      return SelectFileAsync("Select TRA file", "AGS compiled translation|*.tra",
+        (filepath) =>
+        {
+          string targetFilepath = Path.ChangeExtension(filepath, "trs");
+          AGSTranslation translation = new AGSTranslation();
+
+          translation.Decompile(filepath);
+          translation.WriteSourceFile(targetFilepath);
+        }
+      );
+    }
+    #endregion
+
+    #region CompileTRSCommand
+    private IAsyncCommand _compileTRSCommand;
+    public IAsyncCommand CompileTRSCommand
+    {
+      get => _compileTRSCommand;
+      set => SetProperty(ref _compileTRSCommand, value);
+    }
+
+    private Task OnCompileTRSCommandExecuteAsync(object parameter)
+    {
+      return SelectFileAsync("Select TRS file", "AGS translation|*.trs",
+        (filepath) =>
+        {
+          string targetFilepath = Path.ChangeExtension(filepath, "tra");
+          AGSTranslation translation = AGSTranslation.ReadSourceFile(filepath);
+          translation.Compile(targetFilepath);
+        }
+      );
+    }
+    #endregion
+
+    #region ExtractGameIdCommand
+    private IAsyncCommand _extractGameIdCommand;
+    public IAsyncCommand ExtractGameIdCommand
+    {
+      get => _extractGameIdCommand;
+      set => SetProperty(ref _extractGameIdCommand, value);
+    }
+
+    private Task OnExtractGameIdCommandExecuteAsync(object parameter)
+    {
+      return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
+        (filepath, targetFolder) => AGSIdentityExtractor.ExtractIdentity(filepath, targetFolder)
+      );
+    }
+    #endregion
+    #endregion
+
+    private static Task SelectFileAsync(string title, string filter, Action<string> action)
     {
       OpenFileDialog openDialog = new OpenFileDialog()
       {
-        Title = "Select acsprset.spr file",
-        Filter = "AGS sprite set|*.spr",
+        Title = title,
+        Filter = filter,
         Multiselect = false,
         CheckFileExists = true,
         CheckPathExists = true
       };
 
       if (openDialog.ShowDialog(App.Current.MainWindow) != true)
-        return;
+        return Task.CompletedTask;
 
-      string sprsetFilepath = openDialog.FileName;
-      string sprsetFilename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
-      string sprsetFolder = Path.GetDirectoryName(openDialog.FileName);
-      string sprsetTargetFolder = Path.Combine(sprsetFolder, sprsetFilename);
-
-      // FIX(adm244): should caller create a folder or callee?
-      if (!Directory.Exists(sprsetTargetFolder))
-        Directory.CreateDirectory(sprsetTargetFolder);
-
-      await Task.Run(() =>
-      {
-        AGSSpriteSet.UnpackSprites(sprsetFilepath, sprsetTargetFolder);
-      });
+      return Task.Run(
+        () => action(openDialog.FileName)
+      );
     }
-    #endregion
-    #endregion
+
+    private static Task UnpackAsync(string title, string filter, Action<string, string> action)
+    {
+      OpenFileDialog openDialog = new OpenFileDialog()
+      {
+        Title = title,
+        Filter = filter,
+        Multiselect = false,
+        CheckFileExists = true,
+        CheckPathExists = true
+      };
+
+      if (openDialog.ShowDialog(App.Current.MainWindow) != true)
+        return Task.CompletedTask;
+
+      string filepath = openDialog.FileName;
+      string filename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
+      string folder = Path.GetDirectoryName(openDialog.FileName);
+      string targetFolder = Path.Combine(folder, filename);
+
+      if (!Directory.Exists(targetFolder))
+        Directory.CreateDirectory(targetFolder);
+
+      return Task.Run(
+        () => action(filepath, targetFolder)
+      );
+    }
+
+    private static Task RepackAsync(string title, string filter, Action<string, string> action)
+    {
+      OpenFileDialog openDialog = new OpenFileDialog()
+      {
+        Title = title,
+        Filter = filter,
+        Multiselect = false,
+        CheckFileExists = true,
+        CheckPathExists = true
+      };
+
+      if (openDialog.ShowDialog(App.Current.MainWindow) != true)
+        return Task.CompletedTask;
+
+      string filepath = openDialog.FileName;
+      string folder = Path.GetDirectoryName(openDialog.FileName);
+      string targetFolder = Path.Combine(folder, "packed");
+
+      if (!Directory.Exists(targetFolder))
+        Directory.CreateDirectory(targetFolder);
+
+      return Task.Run(
+        () => action(filepath, targetFolder)
+      );
+    }
 
     private void OnIsExecutingChanged(object sender, bool newValue)
     {
@@ -121,11 +274,32 @@ namespace AGSUnpacker.UI.Views.Windows
     {
       Title = ProgramName;
 
+      // TODO(adm244): automate this somehow (reflection maybe?)
+
       UnpackAssetsCommand = new AsyncExecuteCommand(OnUnpackAssetsCommandExecuteAsync);
       UnpackAssetsCommand.IsExecutingChanged += OnIsExecutingChanged;
 
       UnpackSpritesCommand = new AsyncExecuteCommand(OnUnpackSpritesCommandExecuteAsync);
       UnpackSpritesCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      // NOTE(adm244): temporary disabled (no assets packing logic yet)
+      RepackAssetsCommand = new AsyncExecuteCommand(OnRepackAssetsCommandExecuteAsync, (o) => false);
+      RepackAssetsCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      RepackSpritesCommand = new AsyncExecuteCommand(OnRepackSpritesCommandExecuteAsync);
+      RepackSpritesCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      ExtractTRSCommand = new AsyncExecuteCommand(OnExtractTRSCommandExecuteAsync);
+      ExtractTRSCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      DecompileTRACommand = new AsyncExecuteCommand(OnDecompileTRACommandExecuteAsync);
+      DecompileTRACommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      CompileTRSCommand = new AsyncExecuteCommand(OnCompileTRSCommandExecuteAsync);
+      CompileTRSCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      ExtractGameIdCommand = new AsyncExecuteCommand(OnExtractGameIdCommandExecuteAsync);
+      ExtractGameIdCommand.IsExecutingChanged += OnIsExecutingChanged;
     }
   }
 }

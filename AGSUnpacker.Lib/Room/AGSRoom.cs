@@ -61,23 +61,28 @@ namespace AGSUnpacker.Lib.Room
     {
       using (FileStream stream = new FileStream(filepath, FileMode.Open))
       {
-        using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        using (BinaryReader reader = new BinaryReader(stream, Encoding.Latin1))
         {
-          Version = reader.ReadInt16();
-
-          while (true)
-          {
-            byte blockTypeRead = reader.ReadByte();
-            if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
-              throw new InvalidDataException("Unknown room block type!");
-
-            BlockType blockType = (BlockType)blockTypeRead;
-            if (blockType == BlockType.EndOfFile)
-              break;
-
-            ReadRoomBlock(reader, Version, blockType);
-          }
+          ReadFromStream(reader);
         }
+      }
+    }
+
+    public void ReadFromStream(BinaryReader reader)
+    {
+      Version = reader.ReadInt16();
+
+      while (true)
+      {
+        byte blockTypeRead = reader.ReadByte();
+        if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
+          throw new InvalidDataException("Unknown room block type!");
+
+        BlockType blockType = (BlockType)blockTypeRead;
+        if (blockType == BlockType.EndOfFile)
+          break;
+
+        ReadRoomBlock(reader, Version, blockType);
       }
     }
 
@@ -86,7 +91,7 @@ namespace AGSUnpacker.Lib.Room
     {
       using (FileStream stream = new FileStream(filePath, FileMode.Create))
       {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           writer.Write((UInt16)roomVersion);
 

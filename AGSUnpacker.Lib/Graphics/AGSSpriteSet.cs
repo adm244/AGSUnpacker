@@ -211,7 +211,7 @@ namespace AGSUnpacker.Lib.Graphics
 
       using (FileStream stream = new FileStream(outputFilepath, FileMode.Create))
       {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           int spritesCount = GetLargestIndex(sprites);
           WriteSpriteSetHeader(writer, header, spritesCount);
@@ -446,7 +446,7 @@ namespace AGSUnpacker.Lib.Graphics
 
       using (FileStream stream = new FileStream(targetFilepath, FileMode.Create))
       {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           writer.Write((char[])SpriteSetIndexSignature.ToCharArray());
 

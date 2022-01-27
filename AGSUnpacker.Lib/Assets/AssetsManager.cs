@@ -14,12 +14,11 @@ namespace AGSUnpacker.Lib.Assets
 
     private static readonly Int32 EncryptionSeedSalt = 9338638;
 
-    //private Encoding FileEncoding = CodePagesEncodingProvider.Instance.GetEncoding(1252);
     private Encoding FileEncoding = Encoding.Latin1;
 
     private string RootFilename;
     private string RootFolder;
-    private CLibFile[] Files;
+    public CLibFile[] Files { get; private set; }
 
     private string RootFile
     {
@@ -107,6 +106,8 @@ namespace AGSUnpacker.Lib.Assets
     {
       RootFilename = Path.GetFileName(filePath);
       Files = null;
+
+      // FIXME(adm244): check if file exists (!)
 
       using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
       {
@@ -415,7 +416,7 @@ namespace AGSUnpacker.Lib.Assets
       }
     }
 
-    private class CLibAsset
+    public class CLibAsset
     {
       public string Filename;
       public long Offset;
@@ -429,7 +430,7 @@ namespace AGSUnpacker.Lib.Assets
       }
     }
 
-    private class CLibFile
+    public class CLibFile
     {
       public string Filename;
       public long Offset;

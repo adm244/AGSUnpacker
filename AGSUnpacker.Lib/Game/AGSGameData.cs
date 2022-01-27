@@ -97,7 +97,7 @@ namespace AGSUnpacker.Lib.Game
     {
       using (FileStream fs = new FileStream(filepath, FileMode.Open))
       {
-        using (BinaryReader r = new BinaryReader(fs, Encoding.GetEncoding(1252)))
+        using (BinaryReader r = new BinaryReader(fs, Encoding.Latin1))
         {
           LoadFromStream(r);
         }

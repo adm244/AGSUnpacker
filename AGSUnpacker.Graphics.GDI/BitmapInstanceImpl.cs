@@ -92,7 +92,7 @@ namespace AGSUnpacker.Graphics
       {
         Width = Instance.Width,
         Height = Instance.Height,
-        Palette = Instance.Palette.ToAGSPalette(),
+        Palette = Instance.Palette.Entries.Length > 0 ? Instance.Palette.ToAGSPalette() : null,
         Format = Instance.PixelFormat.ToAGSFormat(),
         Buffer = Instance.GetPixels()
       };

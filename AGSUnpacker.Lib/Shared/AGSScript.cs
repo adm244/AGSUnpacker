@@ -142,7 +142,7 @@ namespace AGSUnpacker.Lib.Shared
 
       using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
       {
-        using (StreamWriter writer = new StreamWriter(stream, Encoding.GetEncoding(1252)))
+        using (StreamWriter writer = new StreamWriter(stream, Encoding.Latin1))
         {
           for (int i = 0; i < StringsReferenced.Length; ++i)
           {
@@ -157,7 +157,7 @@ namespace AGSUnpacker.Lib.Shared
     {
       using (MemoryStream buffer = new MemoryStream())
       {
-        using (BinaryWriter writer = new BinaryWriter(buffer, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(buffer, Encoding.Latin1))
         {
           for (int i = 0; i < StringsReferenced.Length; ++i)
           {
