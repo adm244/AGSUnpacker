@@ -1,6 +1,8 @@
 ﻿using System;
+using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows.Input;
 
 using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Graphics;
@@ -8,6 +10,7 @@ using AGSUnpacker.Lib.Translation;
 using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Core.Commands;
+using AGSUnpacker.UI.Service;
 
 using Microsoft.Win32;
 
@@ -18,6 +21,8 @@ namespace AGSUnpacker.UI.Views.Windows
     #region Properties
     public static string ProgramName => AppDescription.ProgramName;
     public static string ProgramVersion => AppDescription.ProgramVersion;
+
+    private WindowService WindowService { get; }
 
     private string _title;
     public string Title
@@ -191,6 +196,20 @@ namespace AGSUnpacker.UI.Views.Windows
       );
     }
     #endregion
+
+    #region ShowRoomManagerWindowCommand
+    private ICommand _showRoomManagerWindowCommand;
+    public ICommand ShowRoomManagerWindowCommand
+    {
+      get => _showRoomManagerWindowCommand;
+      set => SetProperty(ref _showRoomManagerWindowCommand, value);
+    }
+
+    private void OnShowRoomManagerWindowCommandExecute(object parameter)
+    {
+      WindowService.Show(new RoomManagerWindowViewModel());
+    }
+    #endregion
     #endregion
 
     private static Task SelectFileAsync(string title, string filter, Action<string> action)
@@ -270,9 +289,10 @@ namespace AGSUnpacker.UI.Views.Windows
       Status = newValue ? AppStatus.Busy : AppStatus.Ready;
     }
 
-    public MainWindowViewModel()
+    public MainWindowViewModel(WindowService windowService)
     {
       Title = ProgramName;
+      WindowService = windowService;
 
       // TODO(adm244): automate this somehow (reflection maybe?)
 
@@ -300,6 +320,8 @@ namespace AGSUnpacker.UI.Views.Windows
 
       ExtractGameIdCommand = new AsyncExecuteCommand(OnExtractGameIdCommandExecuteAsync);
       ExtractGameIdCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      ShowRoomManagerWindowCommand = new ExecuteCommand(OnShowRoomManagerWindowCommandExecute);
     }
   }
 }

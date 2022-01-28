@@ -1,11 +1,11 @@
-﻿<Window x:Class="AGSUnpacker.UI.Views.Windows.MainWindow"
+﻿<Window x:Class="AGSUnpacker.UI.Views.Windows.MainWindowView"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
         mc:Ignorable="d"
-        Title="{Binding Title}"
+        Title="{Binding Title, FallbackValue='Title'}"
         Height="480" Width="210" ResizeMode="NoResize"
         Margin="0" Padding="0">
   <Window.Resources>
@@ -23,13 +23,9 @@
     </Style>
   </Window.Resources>
 
-  <Window.DataContext>
-    <local:MainWindowViewModel/>
-  </Window.DataContext>
-
   <DockPanel>
     <StatusBar DockPanel.Dock="Bottom" Background="#ddd">
-      <TextBlock Text="{Binding StatusText}"/>
+      <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
     </StatusBar>
     
     <Border Margin="0" Background="#eee">
@@ -64,13 +60,13 @@
         <GroupBox Header="Extra">
           <StackPanel>
             <Button Content="Extract Game ID" Command="{Binding ExtractGameIdCommand}"/>
-            <Button Content="Change room background"/>
+            <Button Content="Change room background" Command="{Binding ShowRoomManagerWindowCommand}"/>
           </StackPanel>
         </GroupBox>
 
         <Grid>
-          <TextBlock HorizontalAlignment="Left" Text="{Binding ProgramName}"/>
-          <TextBlock HorizontalAlignment="Right" Text="{Binding ProgramVersion}"/>
+          <TextBlock HorizontalAlignment="Left" Text="{Binding ProgramName, FallbackValue='Program name'}"/>
+          <TextBlock HorizontalAlignment="Right" Text="{Binding ProgramVersion, FallbackValue='Version'}"/>
         </Grid>
       </StackPanel>
     </Border>

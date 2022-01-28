@@ -1,0 +1,28 @@
+﻿<Window x:Class="AGSUnpacker.UI.Views.Windows.RoomManagerWindowView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
+        mc:Ignorable="d"
+        Title="RoomManagerWindowView"
+        Height="450" Width="800"
+        d:Width="600" d:Height="400">
+  <DockPanel>
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="File">
+        <MenuItem Header="Open"/>
+        <MenuItem Header="Save"/>
+        <MenuItem Header="Close"/>
+        <Separator/>
+        <MenuItem Header="Quit"/>
+      </MenuItem>
+    </Menu>
+
+    <StatusBar DockPanel.Dock="Bottom">
+      <TextBlock Text="Ready."/>
+    </StatusBar>
+
+    <ContentControl/>
+  </DockPanel>
+</Window>
