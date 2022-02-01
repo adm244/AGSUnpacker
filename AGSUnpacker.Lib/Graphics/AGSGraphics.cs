@@ -47,7 +47,10 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] pixels = image.GetPixels();
       AGSCompression.WriteAllegro(writer, pixels, image.Width, image.Height);
 
-      byte[] palette = image.Palette.ToBuffer(PixelFormat.Rgb666);
+      if (image.Palette == null)
+        throw new ArgumentException();
+
+      byte[] palette = image.Palette?.ToBuffer(PixelFormat.Rgb666);
       writer.Write((byte[])palette);
     }
 
@@ -56,7 +59,7 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] bufferPalette = reader.ReadBytes(256 * sizeof(UInt32));
       Int32 sizeUncompressed = reader.ReadInt32();
 
-      // TODO(adm244): check compressed size
+      // TODO(adm244): check compressed size; or read buffer first and then decode
       Int32 sizeCompressed = reader.ReadInt32();
 
       byte[] bufferPixels = AGSCompression.ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
@@ -76,11 +79,14 @@ namespace AGSUnpacker.Lib.Graphics
 
     public static void WriteLZ77Image(BinaryWriter writer, Bitmap image, int bytesPerPixel)
     {
-      //FIX(adm244): 24-bit bitmaps are all messed up !!!
-      //TODO(adm244): check if that's still true or I just forgot to remove this scary FIX
+      // CHECK(adm244): palette format in room files
+      PixelFormat paletteFormat = PixelFormat.Argb32;
+      if (image.Format == PixelFormat.Indexed)
+        paletteFormat = PixelFormat.Argb6666;
 
-      byte[] palette = image.Palette.ToBuffer(PixelFormat.Rgb666);
-      writer.Write((byte[])palette);
+      Palette palette = image.Palette.HasValue ? image.Palette.Value : AGSSpriteSet.DefaultPalette;
+      byte[] paletteBuffer = palette.ToBuffer(paletteFormat);
+      writer.Write((byte[])paletteBuffer);
 
       //NOTE(adm244): convert bitmap to match requested bytesPerPixel
       PixelFormat targetFormat = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);

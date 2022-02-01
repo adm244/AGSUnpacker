@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace AGSUnpacker.Graphics.GDI.Extensions
@@ -84,6 +85,10 @@ namespace AGSUnpacker.Graphics.GDI.Extensions
 
     internal static void SetPalette(this System.Drawing.Bitmap bitmap, Palette palette)
     {
+      Debug.Assert(palette.Entries != null);
+      Debug.Assert(palette.Entries.Length > 0);
+      Debug.Assert(palette.Entries.Length == palette.Length);
+
       System.Drawing.Imaging.ColorPalette currentPalette = bitmap.Palette;
       for (int i = 0; i < currentPalette.Entries.Length; ++i)
       {

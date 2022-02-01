@@ -9,7 +9,7 @@ namespace AGSUnpacker.Graphics
     protected byte[] _buffer;
 
     public PixelFormat Format { get; private set; }
-    public Palette Palette { get; private set; }
+    public Palette? Palette { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 

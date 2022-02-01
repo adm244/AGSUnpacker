@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -18,11 +17,11 @@ namespace AGSUnpacker.UI.Views.Windows
 {
   internal class MainWindowViewModel : ViewModel
   {
+    private readonly WindowService _windowService;
+
     #region Properties
     public static string ProgramName => AppDescription.ProgramName;
     public static string ProgramVersion => AppDescription.ProgramVersion;
-
-    private WindowService WindowService { get; }
 
     private string _title;
     public string Title
@@ -43,6 +42,14 @@ namespace AGSUnpacker.UI.Views.Windows
     }
 
     public string StatusText => Status.AsString();
+
+
+    private int _tasksRunning;
+    public int TasksRunning
+    {
+      get => _tasksRunning;
+      set => SetProperty(ref _tasksRunning, value);
+    }
     #endregion
 
     #region Commands
@@ -207,11 +214,12 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private void OnShowRoomManagerWindowCommandExecute(object parameter)
     {
-      WindowService.Show(new RoomManagerWindowViewModel());
+      _windowService.Show(new RoomManagerWindowViewModel(_windowService));
     }
     #endregion
     #endregion
 
+    // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
     private static Task SelectFileAsync(string title, string filter, Action<string> action)
     {
       OpenFileDialog openDialog = new OpenFileDialog()
@@ -286,13 +294,19 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private void OnIsExecutingChanged(object sender, bool newValue)
     {
-      Status = newValue ? AppStatus.Busy : AppStatus.Ready;
+      TasksRunning += newValue ? 1 : -1;
+
+      if (TasksRunning < 0)
+        TasksRunning = 0;
+
+      Status = TasksRunning > 0 ? AppStatus.Busy : AppStatus.Ready;
     }
 
     public MainWindowViewModel(WindowService windowService)
     {
+      _windowService = windowService;
       Title = ProgramName;
-      WindowService = windowService;
+      TasksRunning = 0;
 
       // TODO(adm244): automate this somehow (reflection maybe?)
 

@@ -38,6 +38,8 @@ namespace AGSUnpacker.Graphics
         Palette = bitmap.Palette.ToAGSPalette()
       };
 
+      Instance = bitmap;
+
       Initialize(bitmapInfo);
     }
 
@@ -92,7 +94,7 @@ namespace AGSUnpacker.Graphics
       {
         Width = Instance.Width,
         Height = Instance.Height,
-        Palette = Instance.Palette.Entries.Length > 0 ? Instance.Palette.ToAGSPalette() : null,
+        Palette = Instance.Palette.ToAGSPalette(),
         Format = Instance.PixelFormat.ToAGSFormat(),
         Buffer = Instance.GetPixels()
       };

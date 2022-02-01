@@ -5,7 +5,8 @@ namespace AGSUnpacker.UI
   internal enum AppStatus
   {
     Ready,
-    Busy
+    Busy,
+    Loading
   }
 
   internal static class AppStatusExtension
@@ -18,6 +19,8 @@ namespace AGSUnpacker.UI
           return "Ready.";
         case AppStatus.Busy:
           return "Working...";
+        case AppStatus.Loading:
+          return "Loading...";
 
         default:
           throw new NotImplementedException();

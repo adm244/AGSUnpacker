@@ -15,7 +15,7 @@ namespace AGSUnpacker.UI.Core.Commands
       set
       {
         _isExecuting = value;
-        IsExecutingChanged(this, value);
+        IsExecutingChanged?.Invoke(this, value);
         OnIsExecutingChanged();
       }
     }

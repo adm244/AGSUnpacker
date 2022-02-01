@@ -9,10 +9,12 @@ namespace AGSUnpacker.UI.Service
   internal class WindowService
   {
     private IDictionary<Type, Type> Mappings { get; }
+    private IDictionary<ViewModel, Window> CreatedWindows { get; }
 
     public WindowService()
     {
       Mappings = new Dictionary<Type, Type>();
+      CreatedWindows = new Dictionary<ViewModel, Window>();
     }
 
     public void Register<TViewModel, TWindow>()
@@ -31,8 +33,26 @@ namespace AGSUnpacker.UI.Service
       Type windowType = Mappings[typeof(TViewModel)];
       Window window = (Window)Activator.CreateInstance(windowType);
 
+      if (CreatedWindows.ContainsKey(viewModel))
+        CreatedWindows[viewModel] = window;
+      else
+        CreatedWindows.Add(viewModel, window);
+
       window.DataContext = viewModel;
       window.Show();
+    }
+
+    public Window GetWindow(ViewModel viewModel)
+    {
+      if (!CreatedWindows.ContainsKey(viewModel))
+        throw new ArgumentException($"Attempt to get {viewModel} window that doesn't exist");
+
+      return CreatedWindows[viewModel];
+    }
+
+    public void Close(ViewModel viewModel)
+    {
+      GetWindow(viewModel).Close();
     }
   }
 }

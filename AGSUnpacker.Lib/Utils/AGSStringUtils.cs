@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
@@ -21,6 +23,9 @@ namespace AGSUnpacker.Lib
           break;
 
         ++i;
+
+        if (i >= buffer.Length)
+          throw new ArgumentException("Buffer does not contain a c-string");
       }
 
       return i;
@@ -44,6 +49,14 @@ namespace AGSUnpacker.Lib
         return new string(p);
     }
 
+    public static string ConvertToString(byte[] buffer)
+    {
+      Debug.Assert(buffer != null);
+
+      return Encoding.GetString(buffer);
+    }
+
+    // REDO(adm244): use Encoding to convert string to byte[] instead
     public static byte[] GetASCIIBytes(string text)
     {
       byte[] buffer = new byte[text.Length];

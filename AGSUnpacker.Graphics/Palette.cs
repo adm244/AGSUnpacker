@@ -161,7 +161,7 @@ namespace AGSUnpacker.Graphics
         byte blue  = buffer[bytesPerPixel * i + 2];
         byte alpha = buffer[bytesPerPixel * i + 3];
 
-        if (format == PixelFormat.Rgb666)
+        if (format == PixelFormat.Argb6666)
         {
           red   = (byte)((red   / 64f) * 256f);
           green = (byte)((green / 64f) * 256f);

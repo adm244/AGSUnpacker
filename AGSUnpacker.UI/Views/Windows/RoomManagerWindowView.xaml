@@ -4,25 +4,74 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
+        d:DataContext="{d:DesignInstance Type=local:RoomManagerWindowViewModel}"
         mc:Ignorable="d"
-        Title="RoomManagerWindowView"
-        Height="450" Width="800"
+        Title="{Binding Title, StringFormat='Room Manager - {0}', TargetNullValue='Room Manager', FallbackValue='Title'}"
+        Width="800" Height="600"
         d:Width="600" d:Height="400">
+  <Window.Resources>
+    <Style x:Key="FramesList" TargetType="ListBox">
+      <Setter Property="Width" Value="125"/>
+      <Setter Property="MinWidth" Value="125"/>
+      <Setter Property="BorderThickness" Value="0"/>
+
+      <Style.Resources>
+        <Style TargetType="ListBoxItem">
+          <Setter Property="HorizontalAlignment" Value="Center"/>
+          <Setter Property="Margin" Value="5"/>
+        </Style>
+      </Style.Resources>
+    </Style>
+  </Window.Resources>
+  
   <DockPanel>
     <Menu DockPanel.Dock="Top">
       <MenuItem Header="File">
-        <MenuItem Header="Open"/>
-        <MenuItem Header="Save"/>
-        <MenuItem Header="Close"/>
+        <MenuItem Header="Open" Command="{Binding LoadRoomCommand}"/>
+        <MenuItem Header="Save" Command="{Binding SaveRoomCommand}"/>
+        <MenuItem Header="Close" Command="{Binding CloseRoomCommand}"/>
         <Separator/>
-        <MenuItem Header="Quit"/>
+        <MenuItem Header="Quit" Command="{Binding QuitCommand}"/>
       </MenuItem>
     </Menu>
 
     <StatusBar DockPanel.Dock="Bottom">
-      <TextBlock Text="Ready."/>
+      <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
     </StatusBar>
 
-    <ContentControl/>
+    <DockPanel>
+      <ListBox DockPanel.Dock="Left" Style="{StaticResource FramesList}"
+               ItemsSource="{Binding Room.Background.Frames}"
+               SelectedItem="{Binding SelectedFrame}"
+               SelectedIndex="{Binding SelectedIndex}">
+        <ListBox.ItemTemplate>
+          <DataTemplate>
+            <StackPanel Margin="5">
+              <Image Source="{Binding Source}" Stretch="Uniform"
+                     HorizontalAlignment="Center"
+                     Width="80"/>
+              <TextBlock Text="{Binding Name}" HorizontalAlignment="Center"/>
+            </StackPanel>
+          </DataTemplate>
+        </ListBox.ItemTemplate>
+      </ListBox>
+
+      <GridSplitter IsEnabled="False" Width="10" Background="#eee"/>
+
+      <DockPanel>
+        <Border DockPanel.Dock="Top" Background="#eee">
+          <UniformGrid HorizontalAlignment="Left" Rows="1" Margin="0,5">
+            <Button Content="Save image" Padding="20,3" Margin="0,0,5,0"/>
+            <Button Content="Replace image" Padding="20,3"/>
+          </UniformGrid>
+        </Border>
+
+        <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Auto">
+          <Image Source="{Binding SelectedFrame.Source}" Stretch="None"
+                 HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        </ScrollViewer>
+      </DockPanel>
+    </DockPanel>
   </DockPanel>
 </Window>

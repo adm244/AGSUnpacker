@@ -7,7 +7,7 @@ namespace AGSUnpacker.Graphics
   public class Bitmap
   {
     public PixelFormat Format => Instance.Format;
-    public Palette Palette => Instance.Palette;
+    public Palette? Palette => Instance.Palette;
 
     public int Width => Instance.Width;
     public int Height => Instance.Height;

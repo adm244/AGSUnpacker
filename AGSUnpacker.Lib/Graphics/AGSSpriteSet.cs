@@ -17,6 +17,7 @@ namespace AGSUnpacker.Lib.Graphics
     private static readonly string SpriteSetIndexSignature = "SPRINDEX";
     private static readonly string SpriteSetIndexFileName = "sprindex.dat";
 
+    // TODO(adm244): move this somewhere else
     public static readonly Palette DefaultPalette = new Palette(
       new Color[] {
         new Color(  0,   0,   0), new Color(  0,   0, 168), new Color(  0, 168,   0),

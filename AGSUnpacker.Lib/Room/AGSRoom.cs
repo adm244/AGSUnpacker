@@ -20,7 +20,6 @@ namespace AGSUnpacker.Lib.Room
     public int ResolutionType;
     public uint GameID;
     public byte[] Password;
-    public byte[] PaletteShareFlags;
 
     public AGSRoomState State;
     public AGSRoomBackground Background;
@@ -103,7 +102,7 @@ namespace AGSUnpacker.Lib.Room
 
           WriteRoomBlock(writer, roomVersion, BlockType.ObjectNames);
 
-          if (Background.Frames.Length > 0)
+          if (Background.Frames.Count > 1)
             WriteRoomBlock(writer, roomVersion, BlockType.BackgroundFrames);
 
           WriteRoomBlock(writer, roomVersion, BlockType.ScriptSCOM3);
@@ -447,7 +446,7 @@ namespace AGSUnpacker.Lib.Room
       for (int i = 0; i < Markup.Hotspots.Length; ++i)
         Markup.Hotspots[i].Interactions.Interaction.WriteToStream(writer);
 
-      for (int i = 0; i < Markup.Hotspots.Length; ++i)
+      for (int i = 0; i < Markup.Objects.Length; ++i)
         Markup.Hotspots[i].Interactions.Interaction.WriteToStream(writer);
 
       Interactions.Interaction.WriteToStream(writer);
@@ -869,9 +868,9 @@ namespace AGSUnpacker.Lib.Room
     private void ReadRoomBitmaps(BinaryReader reader, int roomVersion)
     {
       if (roomVersion >= 5) // ???
-        Background.MainBackground = AGSGraphics.ReadLZ77Image(reader, Background.BytesPerPixel);
+        Background.Frames.Add(AGSGraphics.ReadLZ77Image(reader, Background.BytesPerPixel));
       else
-        Background.MainBackground = AGSGraphics.ReadAllegroImage(reader);
+        Background.Frames.Add(AGSGraphics.ReadAllegroImage(reader));
 
       Background.RegionsMask = AGSGraphics.ReadAllegroImage(reader);
       Background.WalkableAreasMask = AGSGraphics.ReadAllegroImage(reader);
