@@ -1,24 +1,9 @@
-﻿using System.ComponentModel;
-using System.Runtime.CompilerServices;
+﻿
+using Microsoft.Toolkit.Mvvm.ComponentModel;
 
 namespace AGSUnpacker.UI.Core
 {
-  internal class ViewModel : INotifyPropertyChanged
+  internal class ViewModel : ObservableRecipient
   {
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    protected virtual void SetProperty<T>(ref T member, T value, [CallerMemberName] string propertyName = null)
-    {
-      if (Equals(member, value))
-        return;
-
-      member = value;
-      OnPropertyChanged(propertyName);
-    }
-
-    protected virtual void OnPropertyChanged(string propertyName)
-    {
-      PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
   }
 }

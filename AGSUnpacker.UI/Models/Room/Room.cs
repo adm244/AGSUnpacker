@@ -1,5 +1,4 @@
-﻿
-using AGSUnpacker.Lib.Room;
+﻿using AGSUnpacker.Lib.Room;
 
 namespace AGSUnpacker.UI.Models.Room
 {

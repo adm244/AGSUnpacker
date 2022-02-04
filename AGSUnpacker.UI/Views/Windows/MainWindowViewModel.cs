@@ -1,16 +1,17 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Graphics;
 using AGSUnpacker.Lib.Translation;
 using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.UI.Core;
-using AGSUnpacker.UI.Core.Commands;
 using AGSUnpacker.UI.Service;
 
+using Microsoft.Toolkit.Mvvm.Input;
 using Microsoft.Win32;
 
 namespace AGSUnpacker.UI.Views.Windows
@@ -54,14 +55,14 @@ namespace AGSUnpacker.UI.Views.Windows
 
     #region Commands
     #region UnpackAssetsCommand
-    private IAsyncCommand _unpackAssetsCommand;
-    public IAsyncCommand UnpackAssetsCommand
+    private IAsyncRelayCommand _unpackAssetsCommand;
+    public IAsyncRelayCommand UnpackAssetsCommand
     {
       get => _unpackAssetsCommand;
       set => SetProperty(ref _unpackAssetsCommand, value);
     }
 
-    private Task OnUnpackAssetsCommandExecuteAsync(object parameter)
+    private Task OnUnpackAssetsExecute()
     {
       return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
         (filepath, targetFolder) =>
@@ -71,48 +72,64 @@ namespace AGSUnpacker.UI.Views.Windows
         }
       );
     }
+
+    private bool OnCanUnpackAssetsExecute()
+    {
+      return !UnpackAssetsCommand.IsRunning;
+    }
     #endregion
 
     #region UnpackSpritesCommand
-    private IAsyncCommand _unpackSpritesCommand;
-    public IAsyncCommand UnpackSpritesCommand
+    private IAsyncRelayCommand _unpackSpritesCommand;
+    public IAsyncRelayCommand UnpackSpritesCommand
     {
       get => _unpackSpritesCommand;
       set => SetProperty(ref _unpackSpritesCommand, value);
     }
 
-    private Task OnUnpackSpritesCommandExecuteAsync(object parameter)
+    private Task OnUnpackSpritesExecute()
     {
       return UnpackAsync("Select acsprset.spr file", "AGS sprite set|*.spr",
         (filepath, targetFolder) => AGSSpriteSet.UnpackSprites(filepath, targetFolder)
       );
     }
+
+    private bool OnCanUnpackSpritesExecute()
+    {
+      return !UnpackSpritesCommand.IsRunning;
+    }
     #endregion
 
     #region RepackAssetsCommand
-    private IAsyncCommand _repackAssetsCommand;
-    public IAsyncCommand RepackAssetsCommand
+    private IAsyncRelayCommand _repackAssetsCommand;
+    public IAsyncRelayCommand RepackAssetsCommand
     {
       get => _repackAssetsCommand;
       set => SetProperty(ref _repackAssetsCommand, value);
     }
 
-    private Task OnRepackAssetsCommandExecuteAsync(object parameter)
+    private Task OnRepackAssetsExecute()
     {
       // TODO(adm244): implement assets packing logic
       return Task.CompletedTask;
     }
+
+    private bool OnCanRepackAssetsExecute()
+    {
+      // NOTE(adm244): temporary disabled (no assets packing logic yet)
+      return false;
+    }
     #endregion
 
     #region RepackSpritesCommand
-    private IAsyncCommand _repackSpritesCommand;
-    public IAsyncCommand RepackSpritesCommand
+    private IAsyncRelayCommand _repackSpritesCommand;
+    public IAsyncRelayCommand RepackSpritesCommand
     {
       get => _repackSpritesCommand;
       set => SetProperty(ref _repackSpritesCommand, value);
     }
 
-    private Task OnRepackSpritesCommandExecuteAsync(object parameter)
+    private Task OnRepackSpritesExecute()
     {
       return RepackAsync("Select header.bin file", "Sprite set header|header.bin",
         (filepath, targetFolder) =>
@@ -122,17 +139,22 @@ namespace AGSUnpacker.UI.Views.Windows
         }
       );
     }
+
+    private bool OnCanRepackSpritesExecute()
+    {
+      return !RepackSpritesCommand.IsRunning;
+    }
     #endregion
 
     #region ExtractTRSCommand
-    private IAsyncCommand _extractTRSCommand;
-    public IAsyncCommand ExtractTRSCommand
+    private IAsyncRelayCommand _extractTRSCommand;
+    public IAsyncRelayCommand ExtractTranslationCommand
     {
       get => _extractTRSCommand;
       set => SetProperty(ref _extractTRSCommand, value);
     }
 
-    private Task OnExtractTRSCommandExecuteAsync(object parameter)
+    private Task OnExtractTranslationExecute()
     {
       return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
         (filepath, targetFolder) =>
@@ -142,17 +164,22 @@ namespace AGSUnpacker.UI.Views.Windows
         }
       );
     }
+
+    private bool OnCanExtractTranslationExecute()
+    {
+      return !ExtractTranslationCommand.IsRunning;
+    }
     #endregion
 
     #region DecompileTRACommand
-    private IAsyncCommand _decompileTRACommand;
-    public IAsyncCommand DecompileTRACommand
+    private IAsyncRelayCommand _decompileTRACommand;
+    public IAsyncRelayCommand DecompileTranslationCommand
     {
       get => _decompileTRACommand;
       set => SetProperty(ref _decompileTRACommand, value);
     }
 
-    private Task OnDecompileTRACommandExecuteAsync(object parameter)
+    private Task OnDecompileTranslationExecute()
     {
       return SelectFileAsync("Select TRA file", "AGS compiled translation|*.tra",
         (filepath) =>
@@ -165,17 +192,22 @@ namespace AGSUnpacker.UI.Views.Windows
         }
       );
     }
+
+    private bool OnCanDecompileTranslationExecute()
+    {
+      return !DecompileTranslationCommand.IsRunning;
+    }
     #endregion
 
     #region CompileTRSCommand
-    private IAsyncCommand _compileTRSCommand;
-    public IAsyncCommand CompileTRSCommand
+    private IAsyncRelayCommand _compileTRSCommand;
+    public IAsyncRelayCommand CompileTranslationCommand
     {
       get => _compileTRSCommand;
       set => SetProperty(ref _compileTRSCommand, value);
     }
 
-    private Task OnCompileTRSCommandExecuteAsync(object parameter)
+    private Task OnCompileTraslationExecute()
     {
       return SelectFileAsync("Select TRS file", "AGS translation|*.trs",
         (filepath) =>
@@ -186,33 +218,43 @@ namespace AGSUnpacker.UI.Views.Windows
         }
       );
     }
+
+    private bool OnCanCompileTranslationExecute()
+    {
+      return !CompileTranslationCommand.IsRunning;
+    }
     #endregion
 
     #region ExtractGameIdCommand
-    private IAsyncCommand _extractGameIdCommand;
-    public IAsyncCommand ExtractGameIdCommand
+    private IAsyncRelayCommand _extractGameIdCommand;
+    public IAsyncRelayCommand ExtractGameIdCommand
     {
       get => _extractGameIdCommand;
       set => SetProperty(ref _extractGameIdCommand, value);
     }
 
-    private Task OnExtractGameIdCommandExecuteAsync(object parameter)
+    private Task OnExtractGameIdExecute()
     {
       return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
         (filepath, targetFolder) => AGSIdentityExtractor.ExtractIdentity(filepath, targetFolder)
       );
     }
+
+    private bool OnCanExtractGameIdExecute()
+    {
+      return !ExtractGameIdCommand.IsRunning;
+    }
     #endregion
 
     #region ShowRoomManagerWindowCommand
-    private ICommand _showRoomManagerWindowCommand;
-    public ICommand ShowRoomManagerWindowCommand
+    private IRelayCommand _showRoomManagerWindowCommand;
+    public IRelayCommand ShowRoomManagerCommand
     {
       get => _showRoomManagerWindowCommand;
       set => SetProperty(ref _showRoomManagerWindowCommand, value);
     }
 
-    private void OnShowRoomManagerWindowCommandExecute(object parameter)
+    private void OnShowRoomManagerExecute()
     {
       _windowService.Show(new RoomManagerWindowViewModel(_windowService));
     }
@@ -292,7 +334,7 @@ namespace AGSUnpacker.UI.Views.Windows
       );
     }
 
-    private void OnIsExecutingChanged(object sender, bool newValue)
+    private void OnIsRunningChanged(bool newValue)
     {
       TasksRunning += newValue ? 1 : -1;
 
@@ -302,40 +344,58 @@ namespace AGSUnpacker.UI.Views.Windows
       Status = TasksRunning > 0 ? AppStatus.Busy : AppStatus.Ready;
     }
 
+    private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+      IAsyncRelayCommand command = sender as IAsyncRelayCommand;
+      Debug.Assert(command != null);
+
+      switch (e.PropertyName)
+      {
+        case nameof(IAsyncRelayCommand.IsRunning):
+          OnIsRunningChanged(command.IsRunning);
+          command.NotifyCanExecuteChanged();
+          break;
+
+        default:
+          break;
+      }
+    }
+
     public MainWindowViewModel(WindowService windowService)
     {
       _windowService = windowService;
+
       Title = ProgramName;
+      Status = AppStatus.Ready;
       TasksRunning = 0;
 
-      // TODO(adm244): automate this somehow (reflection maybe?)
+      // TODO(adm244): automate this
 
-      UnpackAssetsCommand = new AsyncExecuteCommand(OnUnpackAssetsCommandExecuteAsync);
-      UnpackAssetsCommand.IsExecutingChanged += OnIsExecutingChanged;
+      UnpackAssetsCommand = new AsyncRelayCommand(OnUnpackAssetsExecute, OnCanUnpackAssetsExecute);
+      UnpackAssetsCommand.PropertyChanged += OnPropertyChanged;
 
-      UnpackSpritesCommand = new AsyncExecuteCommand(OnUnpackSpritesCommandExecuteAsync);
-      UnpackSpritesCommand.IsExecutingChanged += OnIsExecutingChanged;
+      UnpackSpritesCommand = new AsyncRelayCommand(OnUnpackSpritesExecute, OnCanUnpackSpritesExecute);
+      UnpackSpritesCommand.PropertyChanged += OnPropertyChanged;
 
-      // NOTE(adm244): temporary disabled (no assets packing logic yet)
-      RepackAssetsCommand = new AsyncExecuteCommand(OnRepackAssetsCommandExecuteAsync, (o) => false);
-      RepackAssetsCommand.IsExecutingChanged += OnIsExecutingChanged;
+      RepackAssetsCommand = new AsyncRelayCommand(OnRepackAssetsExecute, OnCanRepackAssetsExecute);
+      RepackAssetsCommand.PropertyChanged += OnPropertyChanged;
 
-      RepackSpritesCommand = new AsyncExecuteCommand(OnRepackSpritesCommandExecuteAsync);
-      RepackSpritesCommand.IsExecutingChanged += OnIsExecutingChanged;
+      RepackSpritesCommand = new AsyncRelayCommand(OnRepackSpritesExecute, OnCanRepackSpritesExecute);
+      RepackSpritesCommand.PropertyChanged += OnPropertyChanged;
 
-      ExtractTRSCommand = new AsyncExecuteCommand(OnExtractTRSCommandExecuteAsync);
-      ExtractTRSCommand.IsExecutingChanged += OnIsExecutingChanged;
+      ExtractTranslationCommand = new AsyncRelayCommand(OnExtractTranslationExecute, OnCanExtractTranslationExecute);
+      ExtractTranslationCommand.PropertyChanged += OnPropertyChanged;
 
-      DecompileTRACommand = new AsyncExecuteCommand(OnDecompileTRACommandExecuteAsync);
-      DecompileTRACommand.IsExecutingChanged += OnIsExecutingChanged;
+      DecompileTranslationCommand = new AsyncRelayCommand(OnDecompileTranslationExecute, OnCanDecompileTranslationExecute);
+      DecompileTranslationCommand.PropertyChanged += OnPropertyChanged;
 
-      CompileTRSCommand = new AsyncExecuteCommand(OnCompileTRSCommandExecuteAsync);
-      CompileTRSCommand.IsExecutingChanged += OnIsExecutingChanged;
+      CompileTranslationCommand = new AsyncRelayCommand(OnCompileTraslationExecute, OnCanCompileTranslationExecute);
+      CompileTranslationCommand.PropertyChanged += OnPropertyChanged;
 
-      ExtractGameIdCommand = new AsyncExecuteCommand(OnExtractGameIdCommandExecuteAsync);
-      ExtractGameIdCommand.IsExecutingChanged += OnIsExecutingChanged;
+      ExtractGameIdCommand = new AsyncRelayCommand(OnExtractGameIdExecute, OnCanExtractGameIdExecute);
+      ExtractGameIdCommand.PropertyChanged += OnPropertyChanged;
 
-      ShowRoomManagerWindowCommand = new ExecuteCommand(OnShowRoomManagerWindowCommandExecute);
+      ShowRoomManagerCommand = new RelayCommand(OnShowRoomManagerExecute);
     }
   }
 }

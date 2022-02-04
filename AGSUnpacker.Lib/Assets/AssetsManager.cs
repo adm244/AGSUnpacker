@@ -282,6 +282,8 @@ namespace AGSUnpacker.Lib.Assets
 
       for (int i = 0; i < assets.Length; ++i)
       {
+        assets[i] = new AGSCLibAsset();
+
         if (version == 20)
         {
           Int16 length = reader.ReadInt16();
@@ -328,6 +330,8 @@ namespace AGSUnpacker.Lib.Assets
 
       for (int i = 0; i < assets.Length; ++i)
       {
+        assets[i] = new AGSCLibAsset();
+
         string filename = reader.ReadFixedCString(13);
         assets[i].Filename = AGSEncryption.DecryptSalt(filename, salt);
       }

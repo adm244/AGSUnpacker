@@ -8,7 +8,8 @@
         mc:Ignorable="d"
         Title="{Binding Title, StringFormat='Room Manager - {0}', TargetNullValue='Room Manager', FallbackValue='Title'}"
         Width="800" Height="600"
-        d:Width="600" d:Height="400">
+        d:Width="600" d:Height="400"
+        ResizeMode="CanResizeWithGrip">
   <Window.Resources>
     <Style x:Key="FramesList" TargetType="ListBox">
       <Setter Property="Width" Value="125"/>
@@ -36,7 +37,9 @@
     </Menu>
 
     <StatusBar DockPanel.Dock="Bottom">
-      <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
+      <StatusBarItem>
+        <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
+      </StatusBarItem>
     </StatusBar>
 
     <DockPanel>

@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
+        d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel}"
         mc:Ignorable="d"
         Title="{Binding Title, FallbackValue='Title'}"
         Height="480" Width="210" ResizeMode="NoResize"
@@ -25,7 +26,13 @@
 
   <DockPanel>
     <StatusBar DockPanel.Dock="Bottom" Background="#ddd">
-      <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
+      <StatusBarItem>
+        <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
+      </StatusBarItem>
+      <StatusBarItem HorizontalAlignment="Right">
+        <TextBlock Text="{Binding TasksRunning, StringFormat='\{0} tasks running',
+        FallbackValue='0 tasks running'}"/>
+      </StatusBarItem>
     </StatusBar>
     
     <Border Margin="0" Background="#eee">
@@ -50,9 +57,9 @@
         <!-- Translation section -->
         <GroupBox Header="Translation">
           <StackPanel>
-            <Button Content="Extract TRS from Assets" Command="{Binding ExtractTRSCommand}"/>
-            <Button Content="Decompile TRA" Command="{Binding DecompileTRACommand}"/>
-            <Button Content="Compile TRS" Command="{Binding CompileTRSCommand}"/>
+            <Button Content="Extract TRS from Assets" Command="{Binding ExtractTranslationCommand}"/>
+            <Button Content="Decompile TRA" Command="{Binding DecompileTranslationCommand}"/>
+            <Button Content="Compile TRS" Command="{Binding CompileTranslationCommand}"/>
           </StackPanel>
         </GroupBox>
 
@@ -60,7 +67,7 @@
         <GroupBox Header="Extra">
           <StackPanel>
             <Button Content="Extract Game ID" Command="{Binding ExtractGameIdCommand}"/>
-            <Button Content="Change room background" Command="{Binding ShowRoomManagerWindowCommand}"/>
+            <Button Content="Change room background" Command="{Binding ShowRoomManagerCommand}"/>
           </StackPanel>
         </GroupBox>
 

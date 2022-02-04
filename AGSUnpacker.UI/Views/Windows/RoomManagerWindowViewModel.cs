@@ -1,14 +1,15 @@
-﻿using System.IO;
+﻿using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Input;
 using System.Windows.Media.Imaging;
 
 using AGSUnpacker.UI.Core;
-using AGSUnpacker.UI.Core.Commands;
 using AGSUnpacker.UI.Models.Room;
 using AGSUnpacker.UI.Service;
 
+using Microsoft.Toolkit.Mvvm.Input;
 using Microsoft.Win32;
 
 namespace AGSUnpacker.UI.Views.Windows
@@ -65,8 +66,8 @@ namespace AGSUnpacker.UI.Views.Windows
       set
       {
         SetProperty(ref _selectedFrame, value);
-        SaveImageCommand.NotifyCanExecuteChanged();
-        ReplaceImageCommand.NotifyCanExecuteChanged();
+        SaveImageCommand?.NotifyCanExecuteChanged();
+        ReplaceImageCommand?.NotifyCanExecuteChanged();
       }
     }
 
@@ -80,14 +81,14 @@ namespace AGSUnpacker.UI.Views.Windows
 
     #region Commands
     #region LoadRoomCommand
-    private ICommand _loadRoomCommand;
-    public ICommand LoadRoomCommand
+    private IRelayCommand _loadRoomCommand;
+    public IRelayCommand LoadRoomCommand
     {
       get => _loadRoomCommand;
       set => SetProperty(ref _loadRoomCommand, value);
     }
 
-    private async void OnLoadRoomCommandExecuted(object parameter)
+    private async void OnLoadRoomExecute()
     {
       OpenFileDialog openDialog = new OpenFileDialog()
       {
@@ -113,14 +114,14 @@ namespace AGSUnpacker.UI.Views.Windows
     #endregion
 
     #region SaveRoomCommand
-    private BaseCommand _saveRoomCommand;
-    public BaseCommand SaveRoomCommand
+    private IRelayCommand _saveRoomCommand;
+    public IRelayCommand SaveRoomCommand
     {
       get => _saveRoomCommand;
       set => SetProperty(ref _saveRoomCommand, value);
     }
 
-    private async void OnSaveRoomCommandExecuted(object parameter)
+    private async void OnSaveRoomExecute()
     {
       SaveFileDialog saveDialog = new SaveFileDialog()
       {
@@ -140,54 +141,55 @@ namespace AGSUnpacker.UI.Views.Windows
       Status = AppStatus.Ready;
     }
 
-    private bool OnCanSaveRoomCommandExecuted(object parameter)
+    private bool OnCanSaveRoomExecute()
     {
       return Room != null;
     }
     #endregion
 
     #region CloseRoomCommand
-    private BaseCommand _closeRoomCommand;
-    public BaseCommand CloseRoomCommand
+    private IRelayCommand _closeRoomCommand;
+    public IRelayCommand CloseRoomCommand
     {
       get => _closeRoomCommand;
       set => SetProperty(ref _closeRoomCommand, value);
     }
 
-    private void OnCloseRoomCommandExecuted(object parameter)
+    private void OnCloseRoomExecute()
     {
       Room = null;
+      Title = null;
     }
 
-    private bool OnCanCloseRoomCommandExecuted(object parameter)
+    private bool OnCanCloseRoomExecute()
     {
       return Room != null;
     }
     #endregion
 
     #region QuitCommand
-    private ICommand _quitCommand;
-    public ICommand QuitCommand
+    private IRelayCommand _quitCommand;
+    public IRelayCommand QuitCommand
     {
       get => _quitCommand;
       set => SetProperty(ref _quitCommand, value);
     }
 
-    private void OnQuitCommandExecuted(object parameter)
+    private void OnQuitExecute()
     {
       _windowService.Close(this);
     }
     #endregion
 
     #region SaveImageCommand
-    private AsyncBaseCommand _saveImageCommand;
-    public AsyncBaseCommand SaveImageCommand
+    private IAsyncRelayCommand _saveImageCommand;
+    public IAsyncRelayCommand SaveImageCommand
     {
       get => _saveImageCommand;
       set => SetProperty(ref _saveImageCommand, value);
     }
 
-    private Task OnSaveImageCommandExecuted(object parameter)
+    private Task OnSaveImageExecute()
     {
       SaveFileDialog saveDialog = new SaveFileDialog()
       {
@@ -216,21 +218,21 @@ namespace AGSUnpacker.UI.Views.Windows
       );
     }
 
-    private bool OnCanSaveImageCommandExecuted(object parameter)
+    private bool OnCanSaveImageExecute()
     {
-      return !SaveImageCommand.IsExecuting && SelectedFrame != null;
+      return !SaveImageCommand.IsRunning && !ReplaceImageCommand.IsRunning && SelectedFrame != null;
     }
     #endregion
 
     #region ReplaceImageCommand
-    private BaseCommand _replaceImageCommand;
-    public BaseCommand ReplaceImageCommand
+    private IAsyncRelayCommand _replaceImageCommand;
+    public IAsyncRelayCommand ReplaceImageCommand
     {
       get => _replaceImageCommand;
       set => SetProperty(ref _replaceImageCommand, value);
     }
 
-    private async void OnReplaceImageCommandExecuted(object parameter)
+    private async Task OnReplaceImageExecute()
     {
       OpenFileDialog openDialog = new OpenFileDialog()
       {
@@ -244,27 +246,24 @@ namespace AGSUnpacker.UI.Views.Windows
       if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return;
 
-      Status = AppStatus.Loading;
-
       Graphics.Bitmap image = await Task.Run(
         () => new Graphics.Bitmap(openDialog.FileName)
       );
 
       Room.ChangeFrame(SelectedIndex, image);
-
-      Status = AppStatus.Ready;
     }
 
-    private bool OnCanReplaceImageCommandExecuted(object parameter)
+    private bool OnCanReplaceImageExecute()
     {
-      return (Status == AppStatus.Ready) && SelectedFrame != null;
+      return !ReplaceImageCommand.IsRunning && SelectedFrame != null;
     }
     #endregion
     #endregion
 
-    private void OnIsExecutingChanged(object sender, bool newValue)
+    // FIXME(adm244): code duplication; see MainWindowViewModel
+    private void OnIsRunningChanged(IAsyncRelayCommand command)
     {
-      TasksRunning += newValue ? 1 : -1;
+      TasksRunning += command.IsRunning ? 1 : -1;
 
       if (TasksRunning < 0)
         TasksRunning = 0;
@@ -272,22 +271,47 @@ namespace AGSUnpacker.UI.Views.Windows
       Status = TasksRunning > 0 ? AppStatus.Busy : AppStatus.Ready;
     }
 
+    private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+      IAsyncRelayCommand command = sender as IAsyncRelayCommand;
+      Debug.Assert(command != null);
+
+      switch (e.PropertyName)
+      {
+        case nameof(IAsyncRelayCommand.IsRunning):
+          OnIsRunningChanged(command);
+          command.NotifyCanExecuteChanged();
+          break;
+
+        default:
+          break;
+      }
+    }
+
+    private void OnReplaceImagePropertyChanged(object sender, PropertyChangedEventArgs e)
+    {
+      OnPropertyChanged(sender, e);
+      SaveImageCommand.NotifyCanExecuteChanged();
+    }
+
     public RoomManagerWindowViewModel(WindowService windowService)
     {
       _windowService = windowService;
 
       Room = null;
+      Title = null;
       Status = AppStatus.Ready;
 
-      LoadRoomCommand = new ExecuteCommand(OnLoadRoomCommandExecuted);
-      SaveRoomCommand = new ExecuteCommand(OnSaveRoomCommandExecuted, OnCanSaveRoomCommandExecuted);
-      CloseRoomCommand = new ExecuteCommand(OnCloseRoomCommandExecuted, OnCanCloseRoomCommandExecuted);
-      QuitCommand = new ExecuteCommand(OnQuitCommandExecuted);
+      LoadRoomCommand = new RelayCommand(OnLoadRoomExecute);
+      SaveRoomCommand = new RelayCommand(OnSaveRoomExecute, OnCanSaveRoomExecute);
+      CloseRoomCommand = new RelayCommand(OnCloseRoomExecute, OnCanCloseRoomExecute);
+      QuitCommand = new RelayCommand(OnQuitExecute);
 
-      SaveImageCommand = new AsyncExecuteCommand(OnSaveImageCommandExecuted, OnCanSaveImageCommandExecuted);
-      SaveImageCommand.IsExecutingChanged += OnIsExecutingChanged;
+      SaveImageCommand = new AsyncRelayCommand(OnSaveImageExecute, OnCanSaveImageExecute);
+      SaveImageCommand.PropertyChanged += OnPropertyChanged;
 
-      ReplaceImageCommand = new ExecuteCommand(OnReplaceImageCommandExecuted, OnCanReplaceImageCommandExecuted);
+      ReplaceImageCommand = new AsyncRelayCommand(OnReplaceImageExecute, OnCanReplaceImageExecute);
+      ReplaceImageCommand.PropertyChanged += OnReplaceImagePropertyChanged;
     }
   }
 }
