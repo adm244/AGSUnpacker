@@ -5,10 +5,11 @@ namespace AGSUnpacker.UI.Core.Commands
 {
   internal abstract class BaseCommand : ICommand
   {
-    public event EventHandler CanExecuteChanged
+    public event EventHandler CanExecuteChanged;
+
+    public void NotifyCanExecuteChanged()
     {
-      add => CommandManager.RequerySuggested += value;
-      remove => CommandManager.RequerySuggested -= value;
+      CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public abstract bool CanExecute(object parameter);

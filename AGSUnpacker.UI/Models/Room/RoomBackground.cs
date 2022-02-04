@@ -10,7 +10,7 @@ namespace AGSUnpacker.UI.Models.Room
   internal class RoomBackground
   {
     public AGSRoomBackground Base { get; }
-    public IEnumerable<RoomFrame> Frames { get; }
+    public IList<RoomFrame> Frames { get; }
 
     public RoomBackground(AGSRoomBackground roomBackground)
     {
@@ -25,24 +25,41 @@ namespace AGSUnpacker.UI.Models.Room
 
       Frames = frames;
     }
+
+    public void ChangeFrame(int index, Graphics.Bitmap bitmap)
+    {
+      Frames[index].ChangeImage(bitmap);
+    }
   }
 
   internal class RoomFrame
   {
     public string Name { get; }
-    public BitmapSource Source { get; }
+    public BitmapSource Source { get; private set; }
 
     public RoomFrame(Graphics.Bitmap bitmap, string name)
     {
       Name = name;
+      Source = bitmap.ToWpf();
+    }
 
+    public void ChangeImage(Graphics.Bitmap bitmap)
+    {
+      Source = bitmap.ToWpf();
+    }
+  }
+
+  internal static partial class BitmapExtensions
+  {
+    public static BitmapSource ToWpf(this Graphics.Bitmap bitmap)
+    {
       // HACK(adm244): get rid of transparent alpha channel
       if (bitmap.Format == Graphics.Formats.PixelFormat.Argb32)
         bitmap = bitmap.Convert(Graphics.Formats.PixelFormat.Rgb24);
 
       byte[] buffer = bitmap.GetPixels();
       int stride = bitmap.Width * bitmap.BytesPerPixel;
-      Source = BitmapSource.Create(bitmap.Width, bitmap.Height, 96, 96,
+      return BitmapSource.Create(bitmap.Width, bitmap.Height, 96, 96,
         bitmap.Format.ToWpf(), bitmap.Palette?.ToWpf(), buffer, stride);
     }
   }

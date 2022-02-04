@@ -61,8 +61,10 @@
       <DockPanel>
         <Border DockPanel.Dock="Top" Background="#eee">
           <UniformGrid HorizontalAlignment="Left" Rows="1" Margin="0,5">
-            <Button Content="Save image" Padding="20,3" Margin="0,0,5,0"/>
-            <Button Content="Replace image" Padding="20,3"/>
+            <Button Content="Save image" Command="{Binding SaveImageCommand}"
+                    Padding="20,3" Margin="0,0,5,0"/>
+            <Button Content="Replace image" Command="{Binding ReplaceImageCommand}"
+                    Padding="20,3"/>
           </UniformGrid>
         </Border>
 

@@ -1,4 +1,8 @@
-﻿using System.Windows.Input;
+﻿using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Core.Commands;
@@ -35,18 +39,35 @@ namespace AGSUnpacker.UI.Views.Windows
     // TODO(adm244): just use converters
     public string StatusText => Status.AsString();
 
+    private int _tasksRunning;
+    public int TasksRunning
+    {
+      get => _tasksRunning;
+      set => SetProperty(ref _tasksRunning, value);
+    }
+
     private Room _room;
     public Room Room
     {
       get => _room;
-      set => SetProperty(ref _room, value);
+      set
+      {
+        SetProperty(ref _room, value);
+        SaveRoomCommand?.NotifyCanExecuteChanged();
+        CloseRoomCommand?.NotifyCanExecuteChanged();
+      }
     }
 
     private RoomFrame _selectedFrame;
     public RoomFrame SelectedFrame
     {
       get => _selectedFrame;
-      set => SetProperty(ref _selectedFrame, value);
+      set
+      {
+        SetProperty(ref _selectedFrame, value);
+        SaveImageCommand.NotifyCanExecuteChanged();
+        ReplaceImageCommand.NotifyCanExecuteChanged();
+      }
     }
 
     private int _selectedIndex;
@@ -92,8 +113,8 @@ namespace AGSUnpacker.UI.Views.Windows
     #endregion
 
     #region SaveRoomCommand
-    private ICommand _saveRoomCommand;
-    public ICommand SaveRoomCommand
+    private BaseCommand _saveRoomCommand;
+    public BaseCommand SaveRoomCommand
     {
       get => _saveRoomCommand;
       set => SetProperty(ref _saveRoomCommand, value);
@@ -126,8 +147,8 @@ namespace AGSUnpacker.UI.Views.Windows
     #endregion
 
     #region CloseRoomCommand
-    private ICommand _closeRoomCommand;
-    public ICommand CloseRoomCommand
+    private BaseCommand _closeRoomCommand;
+    public BaseCommand CloseRoomCommand
     {
       get => _closeRoomCommand;
       set => SetProperty(ref _closeRoomCommand, value);
@@ -157,7 +178,99 @@ namespace AGSUnpacker.UI.Views.Windows
       _windowService.Close(this);
     }
     #endregion
+
+    #region SaveImageCommand
+    private AsyncBaseCommand _saveImageCommand;
+    public AsyncBaseCommand SaveImageCommand
+    {
+      get => _saveImageCommand;
+      set => SetProperty(ref _saveImageCommand, value);
+    }
+
+    private Task OnSaveImageCommandExecuted(object parameter)
+    {
+      SaveFileDialog saveDialog = new SaveFileDialog()
+      {
+        Title = "Save image",
+        Filter = "PNG file|*.png",
+        CreatePrompt = false,
+        OverwritePrompt = true,
+      };
+
+      if (saveDialog.ShowDialog(_windowService.GetWindow(this)) != true)
+        return Task.CompletedTask;
+
+      BitmapSource image = (BitmapSource)SelectedFrame.Source.GetAsFrozen();
+
+      return Task.Run(
+        () =>
+        {
+          using (FileStream stream = new FileStream(saveDialog.FileName, FileMode.Create, FileAccess.Write))
+          {
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
+            encoder.Interlace = PngInterlaceOption.Off;
+            encoder.Frames.Add(BitmapFrame.Create(image));
+            encoder.Save(stream);
+          }
+        }
+      );
+    }
+
+    private bool OnCanSaveImageCommandExecuted(object parameter)
+    {
+      return !SaveImageCommand.IsExecuting && SelectedFrame != null;
+    }
     #endregion
+
+    #region ReplaceImageCommand
+    private BaseCommand _replaceImageCommand;
+    public BaseCommand ReplaceImageCommand
+    {
+      get => _replaceImageCommand;
+      set => SetProperty(ref _replaceImageCommand, value);
+    }
+
+    private async void OnReplaceImageCommandExecuted(object parameter)
+    {
+      OpenFileDialog openDialog = new OpenFileDialog()
+      {
+        Title = "Select image file",
+        Filter = "PNG image|*.png",
+        Multiselect = false,
+        CheckFileExists = true,
+        CheckPathExists = true
+      };
+
+      if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
+        return;
+
+      Status = AppStatus.Loading;
+
+      Graphics.Bitmap image = await Task.Run(
+        () => new Graphics.Bitmap(openDialog.FileName)
+      );
+
+      Room.ChangeFrame(SelectedIndex, image);
+
+      Status = AppStatus.Ready;
+    }
+
+    private bool OnCanReplaceImageCommandExecuted(object parameter)
+    {
+      return (Status == AppStatus.Ready) && SelectedFrame != null;
+    }
+    #endregion
+    #endregion
+
+    private void OnIsExecutingChanged(object sender, bool newValue)
+    {
+      TasksRunning += newValue ? 1 : -1;
+
+      if (TasksRunning < 0)
+        TasksRunning = 0;
+
+      Status = TasksRunning > 0 ? AppStatus.Busy : AppStatus.Ready;
+    }
 
     public RoomManagerWindowViewModel(WindowService windowService)
     {
@@ -170,6 +283,11 @@ namespace AGSUnpacker.UI.Views.Windows
       SaveRoomCommand = new ExecuteCommand(OnSaveRoomCommandExecuted, OnCanSaveRoomCommandExecuted);
       CloseRoomCommand = new ExecuteCommand(OnCloseRoomCommandExecuted, OnCanCloseRoomCommandExecuted);
       QuitCommand = new ExecuteCommand(OnQuitCommandExecuted);
+
+      SaveImageCommand = new AsyncExecuteCommand(OnSaveImageCommandExecuted, OnCanSaveImageCommandExecuted);
+      SaveImageCommand.IsExecutingChanged += OnIsExecutingChanged;
+
+      ReplaceImageCommand = new ExecuteCommand(OnReplaceImageCommandExecuted, OnCanReplaceImageCommandExecuted);
     }
   }
 }

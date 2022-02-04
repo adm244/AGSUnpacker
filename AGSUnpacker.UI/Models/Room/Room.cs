@@ -1,4 +1,5 @@
-﻿using AGSUnpacker.Lib.Room;
+﻿
+using AGSUnpacker.Lib.Room;
 
 namespace AGSUnpacker.UI.Models.Room
 {
@@ -12,6 +13,12 @@ namespace AGSUnpacker.UI.Models.Room
     {
       BaseRoom = agsRoom;
       Background = new RoomBackground(agsRoom.Background);
+    }
+
+    public void ChangeFrame(int index, Graphics.Bitmap bitmap)
+    {
+      BaseRoom.Background.Frames[index] = bitmap;
+      Background.ChangeFrame(index, bitmap);
     }
   }
 }

@@ -25,6 +25,11 @@ namespace AGSUnpacker.UI.Core.Commands
       CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    public void NotifyCanExecuteChanged()
+    {
+      CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+    }
+
     public virtual bool CanExecute(object parameter)
     {
       return !IsExecuting;
