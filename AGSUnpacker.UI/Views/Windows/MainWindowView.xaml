@@ -4,12 +4,15 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
+        xmlns:conv="clr-namespace:AGSUnpacker.UI.Converters"
         d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel}"
         mc:Ignorable="d"
         Title="{Binding Title, FallbackValue='Title'}"
         Height="480" Width="210" ResizeMode="NoResize"
         Margin="0" Padding="0">
   <Window.Resources>
+    <conv:AppStatusToStringConverter x:Key="StatusConverter"/>
+
     <Style x:Key="SideMenu" TargetType="FrameworkElement">
       <Style.Resources>
         <Style TargetType="GroupBox">
@@ -27,7 +30,8 @@
   <DockPanel>
     <StatusBar DockPanel.Dock="Bottom" Background="#ddd">
       <StatusBarItem>
-        <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
+        <TextBlock Text="{Binding Status, Converter={StaticResource StatusConverter},
+          FallbackValue='Status'}"/>
       </StatusBarItem>
       <StatusBarItem HorizontalAlignment="Right">
         <TextBlock Text="{Binding TasksRunning, StringFormat='\{0} tasks running',

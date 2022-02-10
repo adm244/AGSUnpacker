@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AGSUnpacker.UI.Views.Windows"
+        xmlns:conv="clr-namespace:AGSUnpacker.UI.Converters"
         d:DataContext="{d:DesignInstance Type=local:RoomManagerWindowViewModel}"
         mc:Ignorable="d"
         Title="{Binding Title, StringFormat='Room Manager - {0}', TargetNullValue='Room Manager', FallbackValue='Title'}"
@@ -11,6 +12,8 @@
         d:Width="600" d:Height="400"
         ResizeMode="CanResizeWithGrip">
   <Window.Resources>
+    <conv:AppStatusToStringConverter x:Key="StatusConverter"/>
+    
     <Style x:Key="FramesList" TargetType="ListBox">
       <Setter Property="Width" Value="125"/>
       <Setter Property="MinWidth" Value="125"/>
@@ -38,7 +41,8 @@
 
     <StatusBar DockPanel.Dock="Bottom">
       <StatusBarItem>
-        <TextBlock Text="{Binding StatusText, FallbackValue='Status'}"/>
+        <TextBlock Text="{Binding Status, Converter={StaticResource StatusConverter},
+          FallbackValue='Status'}"/>
       </StatusBarItem>
     </StatusBar>
 

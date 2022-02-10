@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Media.Imaging;
 
@@ -30,15 +29,8 @@ namespace AGSUnpacker.UI.Views.Windows
     public AppStatus Status
     {
       get => _status;
-      private set
-      {
-        SetProperty(ref _status, value);
-        OnPropertyChanged(nameof(StatusText));
-      }
+      private set => SetProperty(ref _status, value);
     }
-
-    // TODO(adm244): just use converters
-    public string StatusText => Status.AsString();
 
     private int _tasksRunning;
     public int TasksRunning
