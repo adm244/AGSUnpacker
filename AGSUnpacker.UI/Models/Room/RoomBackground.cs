@@ -5,6 +5,8 @@ using System.Windows.Media.Imaging;
 
 using AGSUnpacker.Lib.Room;
 
+using Microsoft.Toolkit.Mvvm.ComponentModel;
+
 namespace AGSUnpacker.UI.Models.Room
 {
   internal class RoomBackground
@@ -32,10 +34,16 @@ namespace AGSUnpacker.UI.Models.Room
     }
   }
 
-  internal class RoomFrame
+  internal class RoomFrame : ObservableObject
   {
     public string Name { get; }
-    public BitmapSource Source { get; private set; }
+
+    private BitmapSource _source;
+    public BitmapSource Source
+    {
+      get => _source;
+      private set => SetProperty(ref _source, value);
+    }
 
     public RoomFrame(Graphics.Bitmap bitmap, string name)
     {
