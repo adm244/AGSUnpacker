@@ -4,13 +4,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Translation
 {
   public class AGSTranslation
   {
     private static readonly string TRA_SIGNATURE = "AGSTranslation\x0";
+
+    private static readonly string TRS_TAG_GAMEID = "//#GameId=";
+    private static readonly string TRS_TAG_GAMENAME = "//#GameName=";
 
     // FIXME(adm244): temporary? public
     public List<string> OriginalLines { get; set; }
@@ -171,6 +174,10 @@ namespace AGSUnpacker.Lib.Translation
               //TODO(adm244): read settings
               break;
             }
+            else if (blockType == (int)BlockType.End)
+            {
+              break;
+            }
             else
             {
               Debug.Assert(false, "Unknown block type encountered!");
@@ -195,7 +202,19 @@ namespace AGSUnpacker.Lib.Translation
           {
             string line = reader.ReadLine();
             if (line.StartsWith("//"))
+            {
+              if (line.StartsWith(TRS_TAG_GAMEID))
+              {
+                string gameIDString = line.Substring(TRS_TAG_GAMEID.Length);
+                translation.GameID = uint.Parse(gameIDString);
+              }
+              else if (line.StartsWith(TRS_TAG_GAMENAME))
+              {
+                translation.GameName = line.Substring(TRS_TAG_GAMENAME.Length);
+              }
+
               continue;
+            }
 
             //TODO(adm244): read settings
 
@@ -233,14 +252,16 @@ namespace AGSUnpacker.Lib.Translation
         {
           Debug.Assert(OriginalLines.Count == TranslatedLines.Count);
 
+          // TODO(adm244): assert GameID and GameName are valid
+
+          writer.WriteLine("//#GameId={0}", GameID);
+          writer.WriteLine("//#GameName={0}", GameName);
+
           for (int i = 0; i < OriginalLines.Count; ++i)
           {
             writer.WriteLine(OriginalLines[i]);
             writer.WriteLine(TranslatedLines[i]);
           }
-
-          // NOTE(adm244): write an empty line
-          writer.WriteLine();
         }
       }
     }

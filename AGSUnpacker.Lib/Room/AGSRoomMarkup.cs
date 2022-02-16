@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 
-using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Room
 {

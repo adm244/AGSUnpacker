@@ -3,7 +3,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Extensions;
+using AGSUnpacker.Shared.Utils.Encryption;
 
 namespace AGSUnpacker.Lib.Utils
 {

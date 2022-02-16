@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Extensions;
+using AGSUnpacker.Shared.Utils.Encryption;
 
 namespace AGSUnpacker.Lib.Assets
 {
@@ -14,12 +15,11 @@ namespace AGSUnpacker.Lib.Assets
 
     private static readonly Int32 EncryptionSeedSalt = 9338638;
 
-    //private Encoding FileEncoding = CodePagesEncodingProvider.Instance.GetEncoding(1252);
     private Encoding FileEncoding = Encoding.Latin1;
 
     private string RootFilename;
     private string RootFolder;
-    private CLibFile[] Files;
+    public CLibFile[] Files { get; private set; }
 
     private string RootFile
     {
@@ -107,6 +107,8 @@ namespace AGSUnpacker.Lib.Assets
     {
       RootFilename = Path.GetFileName(filePath);
       Files = null;
+
+      // FIXME(adm244): check if file exists (!)
 
       using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
       {
@@ -281,6 +283,8 @@ namespace AGSUnpacker.Lib.Assets
 
       for (int i = 0; i < assets.Length; ++i)
       {
+        assets[i] = new AGSCLibAsset();
+
         if (version == 20)
         {
           Int16 length = reader.ReadInt16();
@@ -327,6 +331,8 @@ namespace AGSUnpacker.Lib.Assets
 
       for (int i = 0; i < assets.Length; ++i)
       {
+        assets[i] = new AGSCLibAsset();
+
         string filename = reader.ReadFixedCString(13);
         assets[i].Filename = AGSEncryption.DecryptSalt(filename, salt);
       }
@@ -415,7 +421,7 @@ namespace AGSUnpacker.Lib.Assets
       }
     }
 
-    private class CLibAsset
+    public class CLibAsset
     {
       public string Filename;
       public long Offset;
@@ -429,7 +435,7 @@ namespace AGSUnpacker.Lib.Assets
       }
     }
 
-    private class CLibFile
+    public class CLibFile
     {
       public string Filename;
       public long Offset;

@@ -2,8 +2,11 @@
 {
   internal static class ColorPaletteExtension
   {
-    internal static Palette ToAGSPalette(this System.Drawing.Imaging.ColorPalette palette)
+    internal static Palette? ToAGSPalette(this System.Drawing.Imaging.ColorPalette palette)
     {
+      if (palette.Entries.Length == 0)
+        return null;
+
       Color[] entries = new Color[palette.Entries.Length];
 
       for (int i = 0; i < entries.Length; ++i)

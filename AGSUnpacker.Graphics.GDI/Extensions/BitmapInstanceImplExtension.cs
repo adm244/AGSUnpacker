@@ -7,9 +7,11 @@ namespace AGSUnpacker.Graphics.GDI.Extensions
 {
   internal static class BitmapInstanceImplExtension
   {
-    internal static System.Drawing.Imaging.PixelFormat ReadBitmapPixelFormat(string filepath)
+    //private static readonly string PngSignature = "\x89PNG\x0D\x0A\x1F\x0A";
+
+    internal static PixelFormat ReadBitmapPixelFormat(string filepath)
     {
-      System.Drawing.Imaging.PixelFormat format = System.Drawing.Imaging.PixelFormat.Undefined;
+      PixelFormat format = PixelFormat.Undefined;
 
       using (FileStream file = new FileStream(filepath, FileMode.Open))
       {
@@ -26,17 +28,86 @@ namespace AGSUnpacker.Graphics.GDI.Extensions
       return format;
     }
 
-    internal static ImageCodecInfo GetEncoderInfo(System.Drawing.Imaging.ImageFormat format)
+    //internal static PixelFormat ReadPngPixelFormat(string filepath)
+    //{
+    //  using (FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
+    //  {
+    //    using (BinaryReader reader = new BinaryReader(stream))
+    //    {
+    //      string signature = reader.ReadFixedString(PngSignature.Length);
+    //      if (signature != PngSignature)
+    //        throw new InvalidDataException($"Invalid png signature: {signature}");
+    //
+    //      byte[] buffer = PngFindBlock(reader, "IHDR");
+    //      if (buffer == null)
+    //        return PixelFormat.Undefined;
+    //
+    //      byte bpp = buffer[8];
+    //      byte colorType = buffer[9];
+    //
+    //      Debug.Assert(bpp == 8);
+    //
+    //      switch (colorType)
+    //      {
+    //        // FIXME(adm244): png doesn't support 16-bit bitmaps...
+    //        // well... pull the lever, stop the train
+    //        // BAD times to be a programmer; a plumber has to deal with less shit
+    //        //
+    //        // Three options:
+    //        //  1) Respect users experience and support 'png' and 'bmp mess' file formats
+    //        //  2) Respect yourself and use 'tga'
+    //        //  3) Blame everyone and cry
+    //        // as you can see below there's no option 1, only 2 and 3
+    //
+    //        case 2:
+    //          return PixelFormat.Format24bppRgb;
+    //        case 3:
+    //          return PixelFormat.Format8bppIndexed;
+    //        case 6:
+    //          return PixelFormat.Format32bppArgb;
+    //
+    //        default:
+    //          throw new InvalidDataException();
+    //      }
+    //    }
+    //  }
+    //}
+    //
+    //private static byte[] PngFindBlock(BinaryReader reader, string blockType)
+    //{
+    //  while (!reader.EOF())
+    //  {
+    //    int length = reader.ReadInt32BE();
+    //    string type = reader.ReadFixedString(sizeof(UInt32));
+    //
+    //    if (type == "IEND")
+    //      break;
+    //
+    //    if (type == blockType)
+    //      return reader.ReadBytes(length);
+    //
+    //    reader.BaseStream.Seek(length + sizeof(UInt32), SeekOrigin.Current);
+    //  }
+    //
+    //  return null;
+    //}
+
+    //internal static ImageCodecInfo GetEncoderInfo(System.Drawing.Imaging.ImageFormat format)
+    //{
+    //  ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
+    //
+    //  for (int i = 0; i < encoders.Length; ++i)
+    //  {
+    //    if (encoders[i].FormatID == format.Guid)
+    //      return encoders[i];
+    //  }
+    //
+    //  throw new NotSupportedException();
+    //}
+
+    internal static void SaveAsBmp(this BitmapInstanceImpl bitmap, string filepath)
     {
-      ImageCodecInfo[] encoders = ImageCodecInfo.GetImageEncoders();
-
-      for (int i = 0; i < encoders.Length; ++i)
-      {
-        if (encoders[i].FormatID == format.Guid)
-          return encoders[i];
-      }
-
-      throw new NotSupportedException();
+      bitmap.Instance.Save(filepath, ImageFormat.Bmp);
     }
 
     internal static void SaveAsPng(this BitmapInstanceImpl bitmap, string filepath)
@@ -73,7 +144,7 @@ namespace AGSUnpacker.Graphics.GDI.Extensions
       // a MUCH better solution is to just give up on GDI and implement our custom png reader\writer
       // don't care if it'll be slow, full control is a top priority
 
-      bitmap.Instance.Save(filepath, System.Drawing.Imaging.ImageFormat.Png);
+      bitmap.Instance.Save(filepath, ImageFormat.Png);
     }
   }
 }

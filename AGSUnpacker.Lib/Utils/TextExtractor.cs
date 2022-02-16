@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Game;
 using AGSUnpacker.Lib.Room;
 
@@ -14,7 +16,71 @@ namespace AGSUnpacker.Lib.Utils
     private static List<AGSRoom> rooms = new List<AGSRoom>();
     private static List<string> lines = new List<string>();
 
-    public static bool Extract(string sourceFolder, string targetFile)
+    public static bool Extract(string filepath, string targetFilepath)
+    {
+      AssetsManager assetsManager = AssetsManager.Create(filepath);
+      if (assetsManager == null)
+        return false;
+
+      using (FileStream fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
+      {
+        for (int i = 0; i < assetsManager.Files.Length; ++i)
+        {
+          for (int k = 0; k < assetsManager.Files[i].Assets.Count; ++k)
+          {
+            string extension = Path.GetExtension(assetsManager.Files[i].Assets[k].Filename);
+            if (extension == ".dta" || extension == ".crm")
+            {
+              long baseOffset = assetsManager.Files[i].Offset;
+              long assetOffset = assetsManager.Files[i].Assets[k].Offset;
+
+              fileStream.Seek(baseOffset + assetOffset, SeekOrigin.Begin);
+
+              // TODO(adm244): create a substream instead; that way it's easy to handle large data
+              byte[] buffer = new byte[assetsManager.Files[i].Assets[k].Size];
+              int bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+              Trace.Assert(bytesRead == buffer.Length);
+
+              // HACK(adm244): our API needs some serious attention; too much object allocation
+              using (MemoryStream memoryStream = new MemoryStream(buffer))
+              {
+                using (BinaryReader binaryReader = new BinaryReader(memoryStream, Encoding.Latin1))
+                {
+                  if (extension == ".dta")
+                  {
+                    gameData = new AGSGameData();
+                    gameData.LoadFromStream(binaryReader);
+                  }
+                  else
+                  {
+                    string name = Path.GetFileNameWithoutExtension(assetsManager.Files[i].Assets[k].Filename);
+                    AGSRoom room = new AGSRoom(name);
+                    room.ReadFromStream(binaryReader);
+
+                    rooms.Add(room);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      //gameData = assetsManager.GameData;
+      //rooms.AddRange(assetsManager.Rooms);
+    
+      Console.Write("Extracting text lines...");
+      PrepareTranslationLines();
+      Console.WriteLine(" Done!");
+    
+      Console.Write("Writing translation source file...");
+      WriteTranslationFile(targetFilepath, lines);
+      Console.WriteLine(" Done!");
+    
+      return true;
+    }
+
+    public static bool ExtractFromFolder(string sourceFolder, string targetFile)
     {
       if (Directory.Exists(sourceFolder))
       {
@@ -250,7 +316,7 @@ namespace AGSUnpacker.Lib.Utils
     {
       string filepath = Path.Combine(Environment.CurrentDirectory, filename);
       FileStream f = new FileStream(filepath, FileMode.Create);
-      StreamWriter w = new StreamWriter(f, Encoding.GetEncoding(1252));
+      StreamWriter w = new StreamWriter(f, Encoding.Latin1);
 
       for (int i = 0; i < lines.Count; ++i)
       {

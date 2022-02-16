@@ -10,12 +10,44 @@ namespace AGSUnpacker.Lib.Graphics
 {
   public static class AGSGraphics
   {
+    // NOTE(adm244): assumes there's at least one bright color in a palette
+    private static PixelFormat GetPaletteFormat(byte[] buffer)
+    {
+      for (int i = 0; i < buffer.Length; ++i)
+      {
+        if (buffer[i] >= 64)
+          return PixelFormat.Rgb24;
+      }
+
+      return PixelFormat.Rgb666;
+    }
+
+    public static Palette ReadPalette(BinaryReader reader)
+    {
+      int size = 256 * 3;
+      byte[] buffer = reader.ReadBytes(size);
+
+      // NOTE(adm244): 2.72 (and newer?) stores palette in rgb888 format
+      // and there's no way to know for sure which format is used unless we know engine version
+      // which we don't, it's not stored in sprite set file
+      PixelFormat format = GetPaletteFormat(buffer);
+
+      return Palette.FromBuffer(buffer, format);
+    }
+
     public static Palette ReadPalette(BinaryReader reader, PixelFormat format)
     {
-      //TODO(adm244): investigate if a palette can have a different colors count in it
-      int size = (256 * format.GetBytesPerPixel());
+      int size = 256 * 3;
       byte[] buffer = reader.ReadBytes(size);
       return Palette.FromBuffer(buffer, format);
+    }
+
+    public static void WritePalette(BinaryWriter writer, Palette palette)
+    {
+      if (!palette.SourceFormat.HasValue)
+        throw new ArgumentNullException(nameof(palette.SourceFormat));
+
+      WritePalette(writer, palette, palette.SourceFormat.Value);
     }
 
     public static void WritePalette(BinaryWriter writer, Palette palette, PixelFormat format)
@@ -34,7 +66,10 @@ namespace AGSUnpacker.Lib.Graphics
       Debug.Assert(buffer.Length == (width * height * bytesPerPixel));
 
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
+
+      // NOTE(adm244): in this case palette is always(?) rgb666
       Palette palette = ReadPalette(reader, PixelFormat.Rgb666);
+
       return new Bitmap(width, height, buffer, format, palette);
     }
 
@@ -47,7 +82,11 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] pixels = image.GetPixels();
       AGSCompression.WriteAllegro(writer, pixels, image.Width, image.Height);
 
-      byte[] palette = image.Palette.ToBuffer(PixelFormat.Rgb666);
+      if (image.Palette == null)
+        throw new ArgumentException();
+
+      // NOTE(adm244): in this case palette is always(?) rgb666
+      byte[] palette = image.Palette?.ToBuffer(PixelFormat.Rgb666);
       writer.Write((byte[])palette);
     }
 
@@ -56,12 +95,13 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] bufferPalette = reader.ReadBytes(256 * sizeof(UInt32));
       Int32 sizeUncompressed = reader.ReadInt32();
 
-      // TODO(adm244): check compressed size
+      // TODO(adm244): check compressed size; or read buffer first and then decode
       Int32 sizeCompressed = reader.ReadInt32();
 
       byte[] bufferPixels = AGSCompression.ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
 
+      // CHECK(adm244): palette format in room files
       PixelFormat paletteFormat = PixelFormat.Argb32;
       if (format == PixelFormat.Indexed)
         paletteFormat = PixelFormat.Argb6666;
@@ -76,11 +116,14 @@ namespace AGSUnpacker.Lib.Graphics
 
     public static void WriteLZ77Image(BinaryWriter writer, Bitmap image, int bytesPerPixel)
     {
-      //FIX(adm244): 24-bit bitmaps are all messed up !!!
-      //TODO(adm244): check if that's still true or I just forgot to remove this scary FIX
+      // CHECK(adm244): palette format in room files
+      PixelFormat paletteFormat = PixelFormat.Argb32;
+      if (image.Format == PixelFormat.Indexed)
+        paletteFormat = PixelFormat.Argb6666;
 
-      byte[] palette = image.Palette.ToBuffer(PixelFormat.Rgb666);
-      writer.Write((byte[])palette);
+      Palette palette = image.Palette.HasValue ? image.Palette.Value : AGSSpriteSet.DefaultPalette;
+      byte[] paletteBuffer = palette.ToBuffer(paletteFormat);
+      writer.Write((byte[])paletteBuffer);
 
       //NOTE(adm244): convert bitmap to match requested bytesPerPixel
       PixelFormat targetFormat = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);

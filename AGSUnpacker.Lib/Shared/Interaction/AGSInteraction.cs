@@ -2,6 +2,8 @@
 using System.Diagnostics;
 using System.IO;
 
+using AGSUnpacker.Shared.Extensions;
+
 namespace AGSUnpacker.Lib.Shared.Interaction
 {
   public class AGSInteraction

@@ -6,10 +6,12 @@ namespace AGSUnpacker.Graphics
 {
   public struct Palette
   {
-    public Palette(Color[] entries)
+    public Palette(Color[] entries, PixelFormat? sourceFormat = null)
     {
       Entries = new Color[entries.Length];
       entries.CopyTo(Entries, 0);
+
+      SourceFormat = sourceFormat;
 
       // FIX(adm244): just use tRNS chunk in png
       //
@@ -18,10 +20,19 @@ namespace AGSUnpacker.Graphics
       //Entries[0] = new Color(Entries[0].R, Entries[0].G, Entries[0].B, 0);
     }
 
+    public PixelFormat? SourceFormat { get; }
     public Color[] Entries { get; }
     public int Length => Entries.Length;
 
     public Color this[int index] => Entries[index];
+
+    public byte[] ToBuffer()
+    {
+      if (!SourceFormat.HasValue)
+        throw new ArgumentNullException(nameof(SourceFormat));
+
+      return ToBuffer(SourceFormat.Value);
+    }
 
     public byte[] ToBuffer(PixelFormat format)
     {
@@ -143,7 +154,7 @@ namespace AGSUnpacker.Graphics
         colors[i] = new Color(red, green, blue);
       }
 
-      return new Palette(colors);
+      return new Palette(colors, format);
     }
 
     private static Palette FromRgba(byte[] buffer, PixelFormat format)
@@ -161,7 +172,7 @@ namespace AGSUnpacker.Graphics
         byte blue  = buffer[bytesPerPixel * i + 2];
         byte alpha = buffer[bytesPerPixel * i + 3];
 
-        if (format == PixelFormat.Rgb666)
+        if (format == PixelFormat.Argb6666)
         {
           red   = (byte)((red   / 64f) * 256f);
           green = (byte)((green / 64f) * 256f);
@@ -172,7 +183,7 @@ namespace AGSUnpacker.Graphics
         colors[i] = new Color(red, green, blue, alpha);
       }
 
-      return new Palette(colors);
+      return new Palette(colors, format);
     }
   }
 }

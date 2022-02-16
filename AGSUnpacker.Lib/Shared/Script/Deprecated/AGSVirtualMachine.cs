@@ -2,6 +2,7 @@
 using System.Diagnostics;
 
 using AGSUnpacker.Lib.Utils;
+using AGSUnpacker.Shared.Utils;
 
 namespace AGSUnpacker.Lib.Shared.Script.Deprecated
 {

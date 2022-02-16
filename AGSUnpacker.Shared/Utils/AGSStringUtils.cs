@@ -1,15 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace AGSUnpacker.Lib
+namespace AGSUnpacker.Shared.Utils
 {
-  public static class AGSStringUtils
+  internal static class AGSStringUtils
   {
     //RANT(adm244): 50.000.000 sounds like a non-sense, but so is AGS being a good engine
     public static readonly int MaxCStringLength = 5000000;
 
-    //public static readonly Encoding Encoding = Encoding.GetEncoding(1252);
     public static readonly Encoding Encoding = Encoding.Latin1;
 
     public static int GetCStringLength(byte[] buffer, int index)
@@ -22,6 +23,9 @@ namespace AGSUnpacker.Lib
           break;
 
         ++i;
+
+        if (i >= buffer.Length)
+          throw new ArgumentException("Buffer does not contain a c-string");
       }
 
       return i;
@@ -45,6 +49,14 @@ namespace AGSUnpacker.Lib
         return new string(p);
     }
 
+    public static string ConvertToString(byte[] buffer)
+    {
+      Debug.Assert(buffer != null);
+
+      return Encoding.GetString(buffer);
+    }
+
+    // REDO(adm244): use Encoding to convert string to byte[] instead
     public static byte[] GetASCIIBytes(string text)
     {
       byte[] buffer = new byte[text.Length];

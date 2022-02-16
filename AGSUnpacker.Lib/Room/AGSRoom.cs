@@ -3,11 +3,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Extensions;
 using AGSUnpacker.Lib.Graphics;
 using AGSUnpacker.Lib.Shared;
 using AGSUnpacker.Lib.Shared.Interaction;
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Extensions;
+using AGSUnpacker.Shared.Utils.Encryption;
 
 namespace AGSUnpacker.Lib.Room
 {
@@ -20,7 +20,6 @@ namespace AGSUnpacker.Lib.Room
     public int ResolutionType;
     public uint GameID;
     public byte[] Password;
-    public byte[] PaletteShareFlags;
 
     public AGSRoomState State;
     public AGSRoomBackground Background;
@@ -61,23 +60,28 @@ namespace AGSUnpacker.Lib.Room
     {
       using (FileStream stream = new FileStream(filepath, FileMode.Open))
       {
-        using (BinaryReader reader = new BinaryReader(stream, Encoding.GetEncoding(1252)))
+        using (BinaryReader reader = new BinaryReader(stream, Encoding.Latin1))
         {
-          Version = reader.ReadInt16();
-
-          while (true)
-          {
-            byte blockTypeRead = reader.ReadByte();
-            if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
-              throw new InvalidDataException("Unknown room block type!");
-
-            BlockType blockType = (BlockType)blockTypeRead;
-            if (blockType == BlockType.EndOfFile)
-              break;
-
-            ReadRoomBlock(reader, Version, blockType);
-          }
+          ReadFromStream(reader);
         }
+      }
+    }
+
+    public void ReadFromStream(BinaryReader reader)
+    {
+      Version = reader.ReadInt16();
+
+      while (true)
+      {
+        byte blockTypeRead = reader.ReadByte();
+        if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
+          throw new InvalidDataException("Unknown room block type!");
+
+        BlockType blockType = (BlockType)blockTypeRead;
+        if (blockType == BlockType.EndOfFile)
+          break;
+
+        ReadRoomBlock(reader, Version, blockType);
       }
     }
 
@@ -86,7 +90,7 @@ namespace AGSUnpacker.Lib.Room
     {
       using (FileStream stream = new FileStream(filePath, FileMode.Create))
       {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.GetEncoding(1252)))
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           writer.Write((UInt16)roomVersion);
 
@@ -98,7 +102,7 @@ namespace AGSUnpacker.Lib.Room
 
           WriteRoomBlock(writer, roomVersion, BlockType.ObjectNames);
 
-          if (Background.Frames.Length > 0)
+          if (Background.Frames.Count > 1)
             WriteRoomBlock(writer, roomVersion, BlockType.BackgroundFrames);
 
           WriteRoomBlock(writer, roomVersion, BlockType.ScriptSCOM3);
@@ -442,7 +446,7 @@ namespace AGSUnpacker.Lib.Room
       for (int i = 0; i < Markup.Hotspots.Length; ++i)
         Markup.Hotspots[i].Interactions.Interaction.WriteToStream(writer);
 
-      for (int i = 0; i < Markup.Hotspots.Length; ++i)
+      for (int i = 0; i < Markup.Objects.Length; ++i)
         Markup.Hotspots[i].Interactions.Interaction.WriteToStream(writer);
 
       Interactions.Interaction.WriteToStream(writer);
@@ -864,9 +868,9 @@ namespace AGSUnpacker.Lib.Room
     private void ReadRoomBitmaps(BinaryReader reader, int roomVersion)
     {
       if (roomVersion >= 5) // ???
-        Background.MainBackground = AGSGraphics.ReadLZ77Image(reader, Background.BytesPerPixel);
+        Background.Frames.Add(AGSGraphics.ReadLZ77Image(reader, Background.BytesPerPixel));
       else
-        Background.MainBackground = AGSGraphics.ReadAllegroImage(reader);
+        Background.Frames.Add(AGSGraphics.ReadAllegroImage(reader));
 
       Background.RegionsMask = AGSGraphics.ReadAllegroImage(reader);
       Background.WalkableAreasMask = AGSGraphics.ReadAllegroImage(reader);

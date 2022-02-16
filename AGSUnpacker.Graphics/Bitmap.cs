@@ -7,7 +7,7 @@ namespace AGSUnpacker.Graphics
   public class Bitmap
   {
     public PixelFormat Format => Instance.Format;
-    public Palette Palette => Instance.Palette;
+    public Palette? Palette => Instance.Palette;
 
     public int Width => Instance.Width;
     public int Height => Instance.Height;
@@ -30,9 +30,9 @@ namespace AGSUnpacker.Graphics
       Instance = instance;
     }
 
-    public Bitmap Convert(PixelFormat format)
+    public Bitmap Convert(PixelFormat format, bool discardAlpha = false)
     {
-      BitmapInstance instance = Instance.Convert(format);
+      BitmapInstance instance = Instance.Convert(format, discardAlpha);
       return new Bitmap(instance);
     }
 

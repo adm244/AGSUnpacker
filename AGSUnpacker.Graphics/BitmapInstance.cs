@@ -9,7 +9,7 @@ namespace AGSUnpacker.Graphics
     protected byte[] _buffer;
 
     public PixelFormat Format { get; private set; }
-    public Palette Palette { get; private set; }
+    public Palette? Palette { get; private set; }
     public int Width { get; private set; }
     public int Height { get; private set; }
 
@@ -38,7 +38,7 @@ namespace AGSUnpacker.Graphics
       Initialize(width, height, buffer, format, palette);
     }
 
-    public abstract BitmapInstance Convert(PixelFormat format);
+    public abstract BitmapInstance Convert(PixelFormat format, bool discardAlpha);
     public abstract byte[] GetPixels();
     public abstract void Save(string filepath, ImageFormat format);
 
@@ -70,7 +70,7 @@ namespace AGSUnpacker.Graphics
       public int Width;
       public int Height;
 
-      public Palette Palette;
+      public Palette? Palette;
 
       // TODO(adm244): make a PixelBuffer struct?
       public PixelFormat Format;

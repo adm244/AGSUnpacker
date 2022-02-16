@@ -38,15 +38,31 @@ namespace AGSUnpacker.Graphics
         Palette = bitmap.Palette.ToAGSPalette()
       };
 
+      Instance = bitmap;
+
       Initialize(bitmapInfo);
     }
 
     internal System.Drawing.Bitmap Instance { get; private set; }
 
-    public override BitmapInstance Convert(PixelFormat format)
+    public override BitmapInstance Convert(PixelFormat format, bool discardAlpha)
     {
+      if (discardAlpha && format != PixelFormat.Argb32)
+        throw new InvalidOperationException();
+
       System.Drawing.Imaging.PixelFormat gdiFormat = format.ToGDIFormat();
       System.Drawing.Bitmap bitmap = Instance.Convert(gdiFormat);
+
+      if (discardAlpha)
+      {
+        byte[] buffer = bitmap.GetPixels();
+
+        int length = buffer.Length / 4;
+        for (int i = 0; i < length; ++i)
+          buffer[i * 4 + 3] = 0;
+
+        bitmap.SetPixels(buffer);
+      }
 
       return new BitmapInstanceImpl(bitmap);
     }
@@ -60,6 +76,10 @@ namespace AGSUnpacker.Graphics
     {
       switch (format)
       {
+        case ImageFormat.Bmp:
+          this.SaveAsBmp(filepath);
+          break;
+
         case ImageFormat.Png:
           this.SaveAsPng(filepath);
           break;
@@ -79,14 +99,27 @@ namespace AGSUnpacker.Graphics
       if (Instance == null)
         throw new InvalidDataException();
 
-      //NOTE(adm244): GDI+ decides for some reason that 16-bits is 32-bits when loading bmp (a bug?),
+      System.Drawing.Imaging.PixelFormat format = System.Drawing.Imaging.PixelFormat.Undefined;
+
+      // NOTE(adm244): GDI+ decides for some reason that 16-bits is 32-bits when loading images (a bug?),
       // so we have to parse bits count field manually...
-      //TODO(adm244): double check that
-      if (Path.GetExtension(filepath) == ".bmp")
+      // FIXME(adm244): it's a naive way of handling this, file extension doesn't guarantee a file format
+      switch (Path.GetExtension(filepath))
       {
-        System.Drawing.Imaging.PixelFormat format = BitmapInstanceImplExtension.ReadBitmapPixelFormat(filepath);
-        Instance = Instance.Convert(format);
+        case ".bmp":
+          format = BitmapInstanceImplExtension.ReadBitmapPixelFormat(filepath);
+          break;
+
+        //case ".png":
+        //  format = BitmapInstanceImplExtension.ReadPngPixelFormat(filepath);
+        //  break;
+
+        default:
+          break;
       }
+
+      if (format != System.Drawing.Imaging.PixelFormat.Undefined)
+        Instance = Instance.Convert(format);
 
       return new BitmapInstanceInfo
       {

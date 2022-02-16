@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 
+using AGSUnpacker.Shared.Extensions;
+
 namespace AGSUnpacker.Lib.Game
 {
   public struct AGSDictionaryWord
