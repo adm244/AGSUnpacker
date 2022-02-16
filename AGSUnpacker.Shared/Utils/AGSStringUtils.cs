@@ -4,9 +4,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-namespace AGSUnpacker.Lib
+namespace AGSUnpacker.Shared.Utils
 {
-  public static class AGSStringUtils
+  internal static class AGSStringUtils
   {
     //RANT(adm244): 50.000.000 sounds like a non-sense, but so is AGS being a good engine
     public static readonly int MaxCStringLength = 5000000;

@@ -17,16 +17,16 @@ namespace AGSUnpacker.Lib.Graphics
   {
     public static readonly string FileName = "header.bin";
 
-    public static readonly Int16 DefaultVersion = 6;
+    public static readonly int DefaultVersion = 6;
     public static readonly CompressionType DefaultCompression = CompressionType.Uncompressed;
-    public static readonly UInt32 DefaultFileID = 0xDEADBEEF;
-    public static readonly UInt16 DefaultSpritesCount = 0;
+    public static readonly uint DefaultFileID = 0xDEADBEEF;
+    public static readonly int DefaultSpritesCount = 0;
     public static readonly Palette DefaultPalette = AGSSpriteSet.DefaultPalette;
 
-    public Int16 Version { get; private set; }
+    public int Version { get; private set; }
     public CompressionType Compression { get; private set; }
-    public UInt32 FileID { get; private set; }
-    public UInt16 SpritesCount { get; private set; }
+    public uint FileID { get; private set; }
+    public int SpritesCount { get; private set; }
     public Palette Palette { get; private set; }
 
     private SpriteSetHeader()
@@ -34,7 +34,7 @@ namespace AGSUnpacker.Lib.Graphics
     {
     }
 
-    public SpriteSetHeader(Int16 version, CompressionType compression, UInt32 fileID, UInt16 spritesCount, Palette palette)
+    public SpriteSetHeader(int version, CompressionType compression, uint fileID, int spritesCount, Palette palette)
     {
       Version = version;
       Compression = compression;
@@ -62,7 +62,7 @@ namespace AGSUnpacker.Lib.Graphics
           header.SpritesCount = reader.ReadUInt16();
 
           if (header.Version < 5)
-            header.Palette = ReadPalette(reader);
+            header.Palette = AGSGraphics.ReadPalette(reader);
         }
       }
 
@@ -83,30 +83,8 @@ namespace AGSUnpacker.Lib.Graphics
           writer.Write((UInt16)SpritesCount);
 
           if (Version < 5)
-            WritePalette(writer);
+            AGSGraphics.WritePalette(writer, Palette);
         }
-      }
-    }
-
-    private static Palette ReadPalette(BinaryReader reader)
-    {
-      Color[] colors = new Color[256];
-
-      for (int i = 0; i < colors.Length; ++i)
-      {
-        int rgba32 = reader.ReadInt32();
-        colors[i] = Color.FromRgba32(rgba32);
-      }
-
-      return new Palette(colors);
-    }
-
-    private void WritePalette(BinaryWriter writer)
-    {
-      for (int i = 0; i < Palette.Length; ++i)
-      {
-        int rgba32 = Palette[i].ToRgba32();
-        writer.Write((UInt32)rgba32);
       }
     }
   }

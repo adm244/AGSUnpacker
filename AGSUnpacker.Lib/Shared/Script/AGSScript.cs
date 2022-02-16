@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Shared.Extensions;
 //using AGSUnpackerSharp.Shared.Script.Deprecated;
 
 namespace AGSUnpacker.Lib.Shared.Script

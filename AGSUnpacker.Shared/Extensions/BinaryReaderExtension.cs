@@ -2,11 +2,12 @@
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Utils;
+using AGSUnpacker.Shared.Utils.Encryption;
 
-namespace AGSUnpacker.Lib
+namespace AGSUnpacker.Shared.Extensions
 {
-  public static class BinaryReaderExtension
+  internal static class BinaryReaderExtension
   {
     public static bool EOF(this BinaryReader reader)
     {

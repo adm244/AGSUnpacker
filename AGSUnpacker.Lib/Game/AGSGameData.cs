@@ -7,7 +7,8 @@ using System.Text;
 using AGSUnpacker.Lib.Game.View;
 using AGSUnpacker.Lib.Shared;
 using AGSUnpacker.Lib.Shared.Interaction;
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Extensions;
+using AGSUnpacker.Shared.Utils.Encryption;
 
 namespace AGSUnpacker.Lib.Game
 {
@@ -291,7 +292,7 @@ namespace AGSUnpacker.Lib.Game
         r.BaseStream.Seek(20 * 50, SeekOrigin.Current);
       }
 
-      ParseGlobalMessages(r);
+      ParseGlobalMessages(r, dta_version);
 
       ParseDialogs(r);
 
@@ -308,7 +309,17 @@ namespace AGSUnpacker.Lib.Game
 
         if (dta_version <= 25) // 2.60 and older
         {
-          throw new NotImplementedException("DTA 2.60: Dialog text blob parser not implemented.");
+          while (true)
+          {
+            uint mark = r.ReadUInt32();
+            r.BaseStream.Seek(-sizeof(UInt32), SeekOrigin.Current);
+
+            if (mark == GUI_SIGNATURE)
+              break;
+
+            string dialogString = r.ReadCString();
+            oldDialogStrings.Add(dialogString);
+          }
         }
         else
         {
@@ -522,7 +533,7 @@ namespace AGSUnpacker.Lib.Game
       }
     }
 
-    private void ParseGlobalMessages(BinaryReader r)
+    private void ParseGlobalMessages(BinaryReader r, int dta_version)
     {
       globalMessages = new string[LIMIT_MAX_GLOBAL_MESSAGES];
       for (int i = 0; i < LIMIT_MAX_GLOBAL_MESSAGES; ++i)
@@ -530,7 +541,10 @@ namespace AGSUnpacker.Lib.Game
         if (setup.global_messages[i] == 0)
           continue;
 
-        globalMessages[i] = r.ReadEncryptedCString();
+        if (dta_version < 26) // 2.61
+          globalMessages[i] = r.ReadCString();
+        else
+          globalMessages[i] = r.ReadEncryptedCString();
       }
     }
   }

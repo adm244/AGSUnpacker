@@ -1,11 +1,12 @@
 ﻿using System;
 using System.IO;
 
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Utils;
+using AGSUnpacker.Shared.Utils.Encryption;
 
-namespace AGSUnpacker.Lib.Extensions
+namespace AGSUnpacker.Shared.Extensions
 {
-  public static class BinaryWriterExtension
+  internal static class BinaryWriterExtension
   {
     public static void WriteCString(this BinaryWriter writer, string text)
     {

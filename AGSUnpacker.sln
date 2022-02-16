@@ -21,13 +21,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.editorconfig = .editorconfig
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AGSUnpacker.UI", "AGSUnpacker.UI\AGSUnpacker.UI.csproj", "{7C2610F0-EB62-47FA-B56C-E2DA71B78D11}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AGSUnpacker.UI", "AGSUnpacker.UI\AGSUnpacker.UI.csproj", "{7C2610F0-EB62-47FA-B56C-E2DA71B78D11}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "AGSUnpacker.Shared", "AGSUnpacker.Shared\AGSUnpacker.Shared.shproj", "{DCF0C944-957E-473B-99EA-7212E2829846}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
 		AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems*{144b897c-c3c8-4f0c-b982-0b039aa3a030}*SharedItemsImports = 13
 		AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems*{a200f908-dbbb-4ebe-a10c-7d9f1c462724}*SharedItemsImports = 5
 		AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems*{d25e197f-f6e1-48b8-8734-d41e51d5c3f7}*SharedItemsImports = 5
+		AGSUnpacker.Shared\AGSUnpacker.Shared.projitems*{d25e197f-f6e1-48b8-8734-d41e51d5c3f7}*SharedItemsImports = 5
+		AGSUnpacker.Shared\AGSUnpacker.Shared.projitems*{dcf0c944-957e-473b-99ea-7212e2829846}*SharedItemsImports = 13
+		AGSUnpacker.Shared\AGSUnpacker.Shared.projitems*{ef222ed2-dc7f-482a-b718-dcd844c6ab8e}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

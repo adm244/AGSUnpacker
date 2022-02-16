@@ -10,12 +10,44 @@ namespace AGSUnpacker.Lib.Graphics
 {
   public static class AGSGraphics
   {
+    // NOTE(adm244): assumes there's at least one bright color in a palette
+    private static PixelFormat GetPaletteFormat(byte[] buffer)
+    {
+      for (int i = 0; i < buffer.Length; ++i)
+      {
+        if (buffer[i] >= 64)
+          return PixelFormat.Rgb24;
+      }
+
+      return PixelFormat.Rgb666;
+    }
+
+    public static Palette ReadPalette(BinaryReader reader)
+    {
+      int size = 256 * 3;
+      byte[] buffer = reader.ReadBytes(size);
+
+      // NOTE(adm244): 2.72 (and newer?) stores palette in rgb888 format
+      // and there's no way to know for sure which format is used unless we know engine version
+      // which we don't, it's not stored in sprite set file
+      PixelFormat format = GetPaletteFormat(buffer);
+
+      return Palette.FromBuffer(buffer, format);
+    }
+
     public static Palette ReadPalette(BinaryReader reader, PixelFormat format)
     {
-      //TODO(adm244): investigate if a palette can have a different colors count in it
-      int size = (256 * format.GetBytesPerPixel());
+      int size = 256 * 3;
       byte[] buffer = reader.ReadBytes(size);
       return Palette.FromBuffer(buffer, format);
+    }
+
+    public static void WritePalette(BinaryWriter writer, Palette palette)
+    {
+      if (!palette.SourceFormat.HasValue)
+        throw new ArgumentNullException(nameof(palette.SourceFormat));
+
+      WritePalette(writer, palette, palette.SourceFormat.Value);
     }
 
     public static void WritePalette(BinaryWriter writer, Palette palette, PixelFormat format)
@@ -34,7 +66,10 @@ namespace AGSUnpacker.Lib.Graphics
       Debug.Assert(buffer.Length == (width * height * bytesPerPixel));
 
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
+
+      // NOTE(adm244): in this case palette is always(?) rgb666
       Palette palette = ReadPalette(reader, PixelFormat.Rgb666);
+
       return new Bitmap(width, height, buffer, format, palette);
     }
 
@@ -50,6 +85,7 @@ namespace AGSUnpacker.Lib.Graphics
       if (image.Palette == null)
         throw new ArgumentException();
 
+      // NOTE(adm244): in this case palette is always(?) rgb666
       byte[] palette = image.Palette?.ToBuffer(PixelFormat.Rgb666);
       writer.Write((byte[])palette);
     }
@@ -65,6 +101,7 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] bufferPixels = AGSCompression.ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
 
+      // CHECK(adm244): palette format in room files
       PixelFormat paletteFormat = PixelFormat.Argb32;
       if (format == PixelFormat.Indexed)
         paletteFormat = PixelFormat.Argb6666;

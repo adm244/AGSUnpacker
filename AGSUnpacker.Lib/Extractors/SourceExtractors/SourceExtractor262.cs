@@ -2,6 +2,8 @@
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Shared.Extensions;
+
 namespace AGSUnpacker.Lib.Extractors.SourceExtractors
 {
   public class SourceExtractor262 : SourceExtractor

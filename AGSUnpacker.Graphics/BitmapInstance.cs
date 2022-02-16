@@ -38,7 +38,7 @@ namespace AGSUnpacker.Graphics
       Initialize(width, height, buffer, format, palette);
     }
 
-    public abstract BitmapInstance Convert(PixelFormat format);
+    public abstract BitmapInstance Convert(PixelFormat format, bool discardAlpha);
     public abstract byte[] GetPixels();
     public abstract void Save(string filepath, ImageFormat format);
 

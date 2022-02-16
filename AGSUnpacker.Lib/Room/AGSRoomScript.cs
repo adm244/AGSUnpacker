@@ -2,7 +2,8 @@
 using System.IO;
 
 using AGSUnpacker.Lib.Shared;
-using AGSUnpacker.Lib.Utils.Encryption;
+using AGSUnpacker.Shared.Utils;
+using AGSUnpacker.Shared.Utils.Encryption;
 
 namespace AGSUnpacker.Lib.Room
 {

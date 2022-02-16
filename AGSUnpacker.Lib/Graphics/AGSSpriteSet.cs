@@ -7,6 +7,7 @@ using System.Text;
 using AGSUnpacker.Graphics;
 using AGSUnpacker.Graphics.Formats;
 using AGSUnpacker.Lib.Utils;
+using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Graphics
 {
@@ -205,6 +206,29 @@ namespace AGSUnpacker.Lib.Graphics
       }
     }
 
+    private static int GetSpriteIndexVersion(SpriteSetHeader header)
+    {
+      switch (header.Version)
+      {
+        // NOTE(adm244): version 5 is between 3.1.0 and 3.1.2
+        // 3.1.0 has version 4; 3.1.2 has version 6
+        // guess it was never released? why bump it then?
+        case 4:
+        case 5:
+          return 1;
+
+        case 6:
+          return 2;
+
+        case 10:
+        case 11:
+          return header.Version;
+
+        default:
+          throw new NotSupportedException();
+      }
+    }
+
     private static void PackSpritesInternal(string outputFilepath, string headerFilepath, params string[] filepaths)
     {
       SpriteSetHeader header = SpriteSetHeader.ReadFromFile(headerFilepath);
@@ -220,7 +244,9 @@ namespace AGSUnpacker.Lib.Graphics
 
           // HACK(adm244): temp solution
           string indexFilepath = Path.GetDirectoryName(outputFilepath);
-          WriteSpriteIndexFile(indexFilepath, header, spritesWritten);
+
+          int version = GetSpriteIndexVersion(header);
+          WriteSpriteIndexFile(indexFilepath, header, spritesWritten, version);
         }
       }
     }
@@ -354,18 +380,16 @@ namespace AGSUnpacker.Lib.Graphics
       spriteIndexData.Height = sprite.Height;
       spriteIndexData.Offset = writer.BaseStream.Position;
 
-      if (header.Compression == CompressionType.RLE)
-      {
-        //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp
-        if (sprite.Format == PixelFormat.Rgb24)
-          sprite = sprite.Convert(PixelFormat.Argb32);
-      }
+      //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp (null alpha)
+      // ALSO, AGS seems to treat 24bpp images as RGB while all overs as BGR (!)
+      // so let's just NOT use 24bpp and convert them to 32bpp
+      if (sprite.Format == PixelFormat.Rgb24)
+        sprite = sprite.Convert(PixelFormat.Argb32, discardAlpha: true);
 
       writer.Write((UInt16)sprite.BytesPerPixel);
       writer.Write((UInt16)sprite.Width);
       writer.Write((UInt16)sprite.Height);
 
-      //byte[] buffer = sprite.InternalImage.GetPixels();
       byte[] buffer = sprite.GetPixels();
 
       if (header.Compression == CompressionType.RLE)
@@ -386,7 +410,8 @@ namespace AGSUnpacker.Lib.Graphics
 
     private static SpriteSetHeader ReadSpriteSetHeader(BinaryReader reader)
     {
-      Int16 version = reader.ReadInt16();
+      int version = reader.ReadInt16();
+      // FIXME(adm244): should probably use ReadFixedString instead; there are many cases like this
       string signature = reader.ReadFixedCString(SpriteSetSignature.Length);
       Debug.Assert(signature == SpriteSetSignature);
 
@@ -407,14 +432,24 @@ namespace AGSUnpacker.Lib.Graphics
         fileID = reader.ReadUInt32();
       }
 
-      //TODO(adm244): we should probably get palette from a DTA file instead
-      //TODO(adm244): it seems like we should take paluses into consideration here
-      //TODO(adm244): double check that palette color format is RGB6bits
+      // TODO(adm244): for correct results we should get palette from a DTA file instead
       Palette palette = SpriteSetHeader.DefaultPalette;
       if (version < 5)
-        palette = AGSGraphics.ReadPalette(reader, PixelFormat.Rgb666);
+      {
+        palette = AGSGraphics.ReadPalette(reader);
+        // NOTE(adm244): first 17 colors are locked and cannot be changed in pre 6
+        // but for some reason palette in sprite set file differs from game data
+        // Here we try to restore what we can, but it's not enought to be fully correct
+        // AGS. When everything's a stress.
+        for (int i = 0; i < 17; ++i)
+          palette.Entries[i] = SpriteSetHeader.DefaultPalette[i];
+      }
 
-      UInt16 spritesCount = reader.ReadUInt16();
+      int spritesCount;
+      if (version < 11)
+        spritesCount = reader.ReadUInt16();
+      else
+        spritesCount = reader.ReadInt32();
 
       return new SpriteSetHeader(version, compression, fileID, spritesCount, palette);
     }
@@ -431,14 +466,14 @@ namespace AGSUnpacker.Lib.Graphics
       }
 
       if (header.Version < 5)
-        AGSGraphics.WritePalette(writer, header.Palette, PixelFormat.Rgb666);
+        AGSGraphics.WritePalette(writer, header.Palette);
 
       writer.Write((UInt16)spritesCount);
     }
 
     //TODO(adm244): ReadSpriteIndexFile
 
-    private static void WriteSpriteIndexFile(string outputFolder, SpriteSetHeader header, SpriteIndexInfo[] spriteIndexInfo)
+    private static void WriteSpriteIndexFile(string outputFolder, SpriteSetHeader header, SpriteIndexInfo[] spriteIndexInfo, int version)
     {
       // FIXME(adm244): check all filepaths so that they ALL are either RELATIVE or ABSOLUTE
       // because for now some files are saved in a working directory (relative paths)
@@ -451,10 +486,11 @@ namespace AGSUnpacker.Lib.Graphics
         {
           writer.Write((char[])SpriteSetIndexSignature.ToCharArray());
 
-          //NOTE(adm244): is this a file version?
-          writer.Write((UInt32)2);
+          writer.Write((UInt32)version);
 
-          writer.Write((UInt32)(header.FileID));
+          if (version >= 2)
+            writer.Write((UInt32)(header.FileID));
+
           writer.Write((UInt32)(spriteIndexInfo.Length - 1));
           writer.Write((UInt32)(spriteIndexInfo.Length));
 
@@ -464,10 +500,30 @@ namespace AGSUnpacker.Lib.Graphics
           for (int i = 0; i < spriteIndexInfo.Length; ++i)
             writer.Write((UInt16)spriteIndexInfo[i].Height);
 
-          for (int i = 0; i < spriteIndexInfo.Length; ++i)
-            writer.Write((UInt32)spriteIndexInfo[i].Offset);
+          if (version <= 2)
+          {
+            for (int i = 0; i < spriteIndexInfo.Length; ++i)
+              writer.Write((UInt32)spriteIndexInfo[i].Offset);
+          }
+          else
+          {
+            for (int i = 0; i < spriteIndexInfo.Length; ++i)
+              writer.Write((UInt64)spriteIndexInfo[i].Offset);
+          }
         }
       }
+    }
+
+    private static bool IsAlphaChannelUsed(byte[] buffer)
+    {
+      Debug.Assert(buffer.Length % 4 == 0);
+
+      int length = buffer.Length / 4;
+      for (int i = 0; i < length; ++i)
+        if (buffer[i * 4 + 3] > 0)
+          return true;
+
+      return false;
     }
 
     private static Bitmap ReadSprite(BinaryReader reader, SpriteSetHeader header)
@@ -481,7 +537,18 @@ namespace AGSUnpacker.Lib.Graphics
       if (format == PixelFormat.Indexed)
         return new Bitmap(width, height, buffer, format, header.Palette);
 
-      return new Bitmap(width, height, buffer, format);
+      Bitmap bitmap = new Bitmap(width, height, buffer, format);
+
+      // NOTE(adm244): since AGS doesn't support 24bpp RLE images it converts them to 32bpp
+      // (even if it won't be compressed, you know, 'just in case' case...)
+      // in the process alpha channel gets set to 0 (transparent) instead of 255 (opaque)
+      // which leads to a problem of fully transparent images (and "features" in GDI decoders)
+      //
+      // to resolve this issue, we check if alpha channel is used and if not discard it
+      if (format == PixelFormat.Argb32 && !IsAlphaChannelUsed(buffer))
+        bitmap = bitmap.Convert(PixelFormat.Rgb24);
+
+      return bitmap;
     }
 
     private static byte[] ReadSprite(BinaryReader reader, SpriteSetHeader header, out int width, out int height, out int bytesPerPixel)
@@ -518,7 +585,11 @@ namespace AGSUnpacker.Lib.Graphics
       string fileName = string.Format("spr{0:D5}", index);
       string filePath = Path.Combine(folderPath, fileName);
 
-      image.Save(filePath, ImageFormat.Png);
+      ImageFormat format = ImageFormat.Png;
+      if (image.Format == PixelFormat.Rgb565)
+        format = ImageFormat.Bmp;
+
+      image.Save(filePath, format);
     }
 
     private class SpriteEntry : IComparable<SpriteEntry>

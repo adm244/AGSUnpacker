@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 
-using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Shared.Interaction
 {

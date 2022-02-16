@@ -1,7 +1,6 @@
-﻿
-namespace AGSUnpacker.Lib.Utils.Encryption
+﻿namespace AGSUnpacker.Shared.Utils.Encryption
 {
-  public static class AGSEncryption
+  internal static class AGSEncryption
   {
     private const string hisFriend = "Avis Durgan";
     private const string hisJibzle = "My\x1\xde\x4Jibzle";

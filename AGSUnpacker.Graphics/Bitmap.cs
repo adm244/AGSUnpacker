@@ -30,9 +30,9 @@ namespace AGSUnpacker.Graphics
       Instance = instance;
     }
 
-    public Bitmap Convert(PixelFormat format)
+    public Bitmap Convert(PixelFormat format, bool discardAlpha = false)
     {
-      BitmapInstance instance = Instance.Convert(format);
+      BitmapInstance instance = Instance.Convert(format, discardAlpha);
       return new Bitmap(instance);
     }
 

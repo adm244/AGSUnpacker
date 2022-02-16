@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Translation
 {

@@ -4,7 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Extensions;
+using AGSUnpacker.Shared.Extensions;
+using AGSUnpacker.Shared.Utils;
 
 namespace AGSUnpacker.Lib.Shared
 {

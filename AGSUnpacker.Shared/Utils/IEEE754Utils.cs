@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace AGSUnpacker.Lib.Utils
+namespace AGSUnpacker.Shared.Utils
 {
-  public static class IEEE754Utils
+  internal static class IEEE754Utils
   {
     public static float Int32BitsToFloat(int value)
     {
