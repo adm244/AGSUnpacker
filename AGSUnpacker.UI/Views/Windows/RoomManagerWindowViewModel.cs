@@ -1,7 +1,9 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Media.Imaging;
 
 using AGSUnpacker.UI.Core;
@@ -275,9 +277,22 @@ namespace AGSUnpacker.UI.Views.Windows
           command.NotifyCanExecuteChanged();
           break;
 
+        case nameof(IAsyncRelayCommand.ExecutionTask):
+          if (command.ExecutionTask is Task task && task.Exception is AggregateException)
+            OnUncaughtException(task.Exception);
+          break;
+
         default:
           break;
       }
+    }
+
+    private void OnUncaughtException(AggregateException ex)
+    {
+      MessageBox.Show(_windowService.GetWindow(this),
+        $"A critical error occurred during operation:\n\n{ex.Message}\n\nPlease, report this issue.",
+        "Critical error",
+        MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     private void OnReplaceImagePropertyChanged(object sender, PropertyChangedEventArgs e)

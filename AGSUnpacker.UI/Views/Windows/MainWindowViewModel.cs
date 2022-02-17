@@ -362,6 +362,7 @@ namespace AGSUnpacker.UI.Views.Windows
       );
     }
 
+    // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
     private void OnIsRunningChanged(bool newValue)
     {
       TasksRunning += newValue ? 1 : -1;
@@ -372,6 +373,7 @@ namespace AGSUnpacker.UI.Views.Windows
       Status = TasksRunning > 0 ? AppStatus.Busy : AppStatus.Ready;
     }
 
+    // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
     private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
     {
       IAsyncRelayCommand command = sender as IAsyncRelayCommand;
@@ -384,9 +386,23 @@ namespace AGSUnpacker.UI.Views.Windows
           command.NotifyCanExecuteChanged();
           break;
 
+        case nameof(IAsyncRelayCommand.ExecutionTask):
+          if (command.ExecutionTask is Task task && task.Exception is AggregateException)
+            OnUncaughtException(task.Exception);
+          break;
+
         default:
           break;
       }
+    }
+
+    // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
+    private void OnUncaughtException(AggregateException ex)
+    {
+      MessageBox.Show(_windowService.GetWindow(this),
+        $"A critical error occurred during operation:\n\n{ex.Message}\n\nPlease, report this issue.",
+        "Critical error",
+        MessageBoxButton.OK, MessageBoxImage.Error);
     }
 
     public MainWindowViewModel(WindowService windowService)
