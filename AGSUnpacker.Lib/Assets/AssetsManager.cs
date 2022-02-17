@@ -108,7 +108,8 @@ namespace AGSUnpacker.Lib.Assets
       RootFilename = Path.GetFileName(filePath);
       Files = null;
 
-      // FIXME(adm244): check if file exists (!)
+      if (!File.Exists(filePath))
+        return false;
 
       using (FileStream stream = new FileStream(filePath, FileMode.Open, FileAccess.Read))
       {

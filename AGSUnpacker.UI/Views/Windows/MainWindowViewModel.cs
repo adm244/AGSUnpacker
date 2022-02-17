@@ -56,15 +56,29 @@ namespace AGSUnpacker.UI.Views.Windows
       set => SetProperty(ref _unpackAssetsCommand, value);
     }
 
-    private Task OnUnpackAssetsExecute()
+    private async Task OnUnpackAssetsExecute()
     {
-      return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
+      try
+      {
+        await UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
         (filepath, targetFolder) =>
         {
           AssetsManager assetsManager = AssetsManager.Create(filepath);
+
+          if (assetsManager == null)
+            throw new InvalidDataException(
+              $"Could not find assets at \"{filepath}\"\n\nMake sure you've selected a valid AGS game file.");
+
           assetsManager.Extract(targetFolder);
-        }
-      );
+        });
+      }
+      catch (InvalidDataException ex)
+      {
+        MessageBox.Show(_windowService.GetWindow(this),
+          ex.Message,
+          "Assets not found",
+          MessageBoxButton.OK, MessageBoxImage.Error);
+      }
     }
 
     private bool OnCanUnpackAssetsExecute()
