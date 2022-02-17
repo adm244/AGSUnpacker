@@ -4,7 +4,7 @@ using System.Windows;
 
 using AGSUnpacker.UI.Core;
 
-namespace AGSUnpacker.UI.Service
+namespace AGSUnpacker.UI.Services
 {
   internal class WindowService
   {

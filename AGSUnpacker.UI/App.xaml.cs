@@ -1,6 +1,6 @@
 ﻿using System.Windows;
 
-using AGSUnpacker.UI.Service;
+using AGSUnpacker.UI.Services;
 using AGSUnpacker.UI.Views.Windows;
 
 namespace AGSUnpacker.UI
@@ -14,15 +14,11 @@ namespace AGSUnpacker.UI
     {
       WindowService windowService = new WindowService();
 
+      windowService.Register<MainWindowViewModel, MainWindowView>();
       windowService.Register<RoomManagerWindowViewModel, RoomManagerWindowView>();
 
       MainWindowViewModel mainViewModel = new MainWindowViewModel(windowService);
-      MainWindowView mainView = new MainWindowView
-      {
-        DataContext = mainViewModel
-      };
-
-      mainView.Show();
+      windowService.Show(mainViewModel);
     }
   }
 }

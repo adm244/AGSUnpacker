@@ -12,8 +12,8 @@ namespace AGSUnpacker.Lib.Translation
   {
     private static readonly string TRA_SIGNATURE = "AGSTranslation\x0";
 
-    private static readonly string TRS_TAG_GAMEID = "//#GameId=";
-    private static readonly string TRS_TAG_GAMENAME = "//#GameName=";
+    public static readonly string TRS_TAG_GAMEID = "//#GameId=";
+    public static readonly string TRS_TAG_GAMENAME = "//#GameName=";
 
     // FIXME(adm244): temporary? public
     public List<string> OriginalLines { get; set; }
@@ -254,8 +254,8 @@ namespace AGSUnpacker.Lib.Translation
 
           // TODO(adm244): assert GameID and GameName are valid
 
-          writer.WriteLine("//#GameId={0}", GameID);
-          writer.WriteLine("//#GameName={0}", GameName);
+          writer.WriteLine("{0}{1}", TRS_TAG_GAMEID, GameID);
+          writer.WriteLine("{0}{1}", TRS_TAG_GAMENAME, GameName);
 
           for (int i = 0; i < OriginalLines.Count; ++i)
           {

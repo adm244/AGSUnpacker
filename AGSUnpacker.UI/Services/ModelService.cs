@@ -3,7 +3,7 @@
 using AGSUnpacker.Lib.Room;
 using AGSUnpacker.UI.Models.Room;
 
-namespace AGSUnpacker.UI.Service
+namespace AGSUnpacker.UI.Services
 {
   internal static class ModelService
   {

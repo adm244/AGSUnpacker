@@ -6,7 +6,7 @@ using System.Windows.Media.Imaging;
 
 using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Models.Room;
-using AGSUnpacker.UI.Service;
+using AGSUnpacker.UI.Services;
 
 using Microsoft.Toolkit.Mvvm.Input;
 using Microsoft.Win32;

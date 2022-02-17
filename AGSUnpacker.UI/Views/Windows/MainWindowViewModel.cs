@@ -3,13 +3,14 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using System.Windows;
 
 using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Graphics;
 using AGSUnpacker.Lib.Translation;
 using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.UI.Core;
-using AGSUnpacker.UI.Service;
+using AGSUnpacker.UI.Services;
 
 using Microsoft.Toolkit.Mvvm.Input;
 using Microsoft.Win32;
@@ -149,11 +150,12 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnExtractTranslationExecute()
     {
-      return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
+      return ExtractAsync("Select AGS game executable", "AGS game executable|*.exe",
         (filepath, targetFolder) =>
         {
           string targetFilepath = Path.Combine(targetFolder, "Extracted.trs");
-          TextExtractor.Extract(filepath, targetFilepath);
+          //TextExtractor.Extract(filepath, targetFilepath);
+          TextExtractor.ExtractFromFolder(targetFolder, targetFilepath);
         }
       );
     }
@@ -255,7 +257,7 @@ namespace AGSUnpacker.UI.Views.Windows
     #endregion
 
     // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
-    private static Task SelectFileAsync(string title, string filter, Action<string> action)
+    private Task SelectFileAsync(string title, string filter, Action<string> action)
     {
       OpenFileDialog openDialog = new OpenFileDialog()
       {
@@ -266,7 +268,7 @@ namespace AGSUnpacker.UI.Views.Windows
         CheckPathExists = true
       };
 
-      if (openDialog.ShowDialog(App.Current.MainWindow) != true)
+      if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return Task.CompletedTask;
 
       return Task.Run(
@@ -274,7 +276,60 @@ namespace AGSUnpacker.UI.Views.Windows
       );
     }
 
-    private static Task UnpackAsync(string title, string filter, Action<string, string> action)
+    private Task UnpackAsync(string title, string filter, Action<string, string> action)
+    {
+      OpenFileDialog openDialog = new OpenFileDialog()
+      {
+        Title = title,
+        Filter = filter,
+        Multiselect = false,
+        CheckFileExists = true,
+        CheckPathExists = true
+      };
+
+      if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
+        return Task.CompletedTask;
+
+      string filepath = openDialog.FileName;
+      string filename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
+      string folder = Path.GetDirectoryName(openDialog.FileName);
+      string targetFolder = Path.Combine(folder, filename);
+
+      if (!Directory.Exists(targetFolder))
+        Directory.CreateDirectory(targetFolder);
+
+      return Task.Run(
+        () => action(filepath, targetFolder)
+      );
+    }
+
+    private Task RepackAsync(string title, string filter, Action<string, string> action)
+    {
+      OpenFileDialog openDialog = new OpenFileDialog()
+      {
+        Title = title,
+        Filter = filter,
+        Multiselect = false,
+        CheckFileExists = true,
+        CheckPathExists = true
+      };
+
+      if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
+        return Task.CompletedTask;
+
+      string filepath = openDialog.FileName;
+      string folder = Path.GetDirectoryName(openDialog.FileName);
+      string targetFolder = Path.Combine(folder, "packed");
+
+      if (!Directory.Exists(targetFolder))
+        Directory.CreateDirectory(targetFolder);
+
+      return Task.Run(
+        () => action(filepath, targetFolder)
+      );
+    }
+
+    private Task ExtractAsync(string title, string filter, Action<string, string> action)
     {
       OpenFileDialog openDialog = new OpenFileDialog()
       {
@@ -294,33 +349,13 @@ namespace AGSUnpacker.UI.Views.Windows
       string targetFolder = Path.Combine(folder, filename);
 
       if (!Directory.Exists(targetFolder))
-        Directory.CreateDirectory(targetFolder);
-
-      return Task.Run(
-        () => action(filepath, targetFolder)
-      );
-    }
-
-    private static Task RepackAsync(string title, string filter, Action<string, string> action)
-    {
-      OpenFileDialog openDialog = new OpenFileDialog()
       {
-        Title = title,
-        Filter = filter,
-        Multiselect = false,
-        CheckFileExists = true,
-        CheckPathExists = true
-      };
-
-      if (openDialog.ShowDialog(App.Current.MainWindow) != true)
+        MessageBox.Show(_windowService.GetWindow(this),
+          $"Could not found unpacked assets at \"{targetFolder}\"\n\nMake sure to unpack assets first.",
+          "Assets folder not found",
+          MessageBoxButton.OK, MessageBoxImage.Error);
         return Task.CompletedTask;
-
-      string filepath = openDialog.FileName;
-      string folder = Path.GetDirectoryName(openDialog.FileName);
-      string targetFolder = Path.Combine(folder, "packed");
-
-      if (!Directory.Exists(targetFolder))
-        Directory.CreateDirectory(targetFolder);
+      }
 
       return Task.Run(
         () => action(filepath, targetFolder)

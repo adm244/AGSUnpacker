@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 
-using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Game;
 using AGSUnpacker.Lib.Room;
+using AGSUnpacker.Lib.Translation;
 
 namespace AGSUnpacker.Lib.Utils
 {
@@ -16,69 +15,70 @@ namespace AGSUnpacker.Lib.Utils
     private static List<AGSRoom> rooms = new List<AGSRoom>();
     private static List<string> lines = new List<string>();
 
-    public static bool Extract(string filepath, string targetFilepath)
-    {
-      AssetsManager assetsManager = AssetsManager.Create(filepath);
-      if (assetsManager == null)
-        return false;
-
-      using (FileStream fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
-      {
-        for (int i = 0; i < assetsManager.Files.Length; ++i)
-        {
-          for (int k = 0; k < assetsManager.Files[i].Assets.Count; ++k)
-          {
-            string extension = Path.GetExtension(assetsManager.Files[i].Assets[k].Filename);
-            if (extension == ".dta" || extension == ".crm")
-            {
-              long baseOffset = assetsManager.Files[i].Offset;
-              long assetOffset = assetsManager.Files[i].Assets[k].Offset;
-
-              fileStream.Seek(baseOffset + assetOffset, SeekOrigin.Begin);
-
-              // TODO(adm244): create a substream instead; that way it's easy to handle large data
-              byte[] buffer = new byte[assetsManager.Files[i].Assets[k].Size];
-              int bytesRead = fileStream.Read(buffer, 0, buffer.Length);
-              Trace.Assert(bytesRead == buffer.Length);
-
-              // HACK(adm244): our API needs some serious attention; too much object allocation
-              using (MemoryStream memoryStream = new MemoryStream(buffer))
-              {
-                using (BinaryReader binaryReader = new BinaryReader(memoryStream, Encoding.Latin1))
-                {
-                  if (extension == ".dta")
-                  {
-                    gameData = new AGSGameData();
-                    gameData.LoadFromStream(binaryReader);
-                  }
-                  else
-                  {
-                    string name = Path.GetFileNameWithoutExtension(assetsManager.Files[i].Assets[k].Filename);
-                    AGSRoom room = new AGSRoom(name);
-                    room.ReadFromStream(binaryReader);
-
-                    rooms.Add(room);
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-
-      //gameData = assetsManager.GameData;
-      //rooms.AddRange(assetsManager.Rooms);
-    
-      Console.Write("Extracting text lines...");
-      PrepareTranslationLines();
-      Console.WriteLine(" Done!");
-    
-      Console.Write("Writing translation source file...");
-      WriteTranslationFile(targetFilepath, lines);
-      Console.WriteLine(" Done!");
-    
-      return true;
-    }
+    // FIXME(adm244): doesn't support multilib files
+    //public static bool Extract(string filepath, string targetFilepath)
+    //{
+    //  AssetsManager assetsManager = AssetsManager.Create(filepath);
+    //  if (assetsManager == null)
+    //    return false;
+    //
+    //  using (FileStream fileStream = new FileStream(filepath, FileMode.Open, FileAccess.Read))
+    //  {
+    //    for (int i = 0; i < assetsManager.Files.Length; ++i)
+    //    {
+    //      for (int k = 0; k < assetsManager.Files[i].Assets.Count; ++k)
+    //      {
+    //        string extension = Path.GetExtension(assetsManager.Files[i].Assets[k].Filename);
+    //        if (extension == ".dta" || extension == ".crm")
+    //        {
+    //          long baseOffset = assetsManager.Files[i].Offset;
+    //          long assetOffset = assetsManager.Files[i].Assets[k].Offset;
+    //
+    //          fileStream.Seek(baseOffset + assetOffset, SeekOrigin.Begin);
+    //
+    //          // TODO(adm244): create a substream instead; that way it's easy to handle large data
+    //          byte[] buffer = new byte[assetsManager.Files[i].Assets[k].Size];
+    //          int bytesRead = fileStream.Read(buffer, 0, buffer.Length);
+    //          Trace.Assert(bytesRead == buffer.Length);
+    //
+    //          // HACK(adm244): our API needs some serious attention; too much object allocation
+    //          using (MemoryStream memoryStream = new MemoryStream(buffer))
+    //          {
+    //            using (BinaryReader binaryReader = new BinaryReader(memoryStream, Encoding.Latin1))
+    //            {
+    //              if (extension == ".dta")
+    //              {
+    //                gameData = new AGSGameData();
+    //                gameData.LoadFromStream(binaryReader);
+    //              }
+    //              else
+    //              {
+    //                string name = Path.GetFileNameWithoutExtension(assetsManager.Files[i].Assets[k].Filename);
+    //                AGSRoom room = new AGSRoom(name);
+    //                room.ReadFromStream(binaryReader);
+    //
+    //                rooms.Add(room);
+    //              }
+    //            }
+    //          }
+    //        }
+    //      }
+    //    }
+    //  }
+    //
+    //  //gameData = assetsManager.GameData;
+    //  //rooms.AddRange(assetsManager.Rooms);
+    //
+    //  Console.Write("Extracting text lines...");
+    //  PrepareTranslationLines();
+    //  Console.WriteLine(" Done!");
+    //
+    //  Console.Write("Writing translation source file...");
+    //  WriteTranslationFile(targetFilepath, lines);
+    //  Console.WriteLine(" Done!");
+    //
+    //  return true;
+    //}
 
     public static bool ExtractFromFolder(string sourceFolder, string targetFile)
     {
@@ -132,6 +132,10 @@ namespace AGSUnpacker.Lib.Utils
 
     private static void PrepareTranslationLines()
     {
+      // embed game id and name
+      lines.Add($"{AGSTranslation.TRS_TAG_GAMEID}{gameData.setup.unique_id}");
+      lines.Add($"{AGSTranslation.TRS_TAG_GAMENAME}{gameData.setup.name}");
+
       // extract translation lines from game data
       lines.Add("// [game28.dta]");
       ExtractTranslationLines(gameData);
@@ -286,19 +290,20 @@ namespace AGSUnpacker.Lib.Utils
     {
       if (line == null) return false;
 
-      //FIX(adm244): disassemble script to find all string references
-      // for now we just parse sequentially which reads garbage inbetween strings
-      // so we use a hack here to try and remove this garbage...
-
-      // cut non printable characters at the beginning
-      int trim_index = 0;
-      for (int i = 0; i < line.Length; ++i)
-      {
-        if (line[i] < 0x20) trim_index = i;
-        else break;
-      }
-      if ((trim_index + 1) >= line.Length) return false;
-      if (trim_index > 0) line = line.Substring(trim_index + 1);
+      // NOTE(adm244): should be fixed
+      ////FIX(adm244): disassemble script to find all string references
+      //// for now we just parse sequentially which reads garbage inbetween strings
+      //// so we use a hack here to try and remove this garbage...
+      //
+      //// cut non printable characters at the beginning
+      //int trim_index = 0;
+      //for (int i = 0; i < line.Length; ++i)
+      //{
+      //  if (line[i] < 0x20) trim_index = i;
+      //  else break;
+      //}
+      //if ((trim_index + 1) >= line.Length) return false;
+      //if (trim_index > 0) line = line.Substring(trim_index + 1);
 
       // check if string is valid
       if (string.IsNullOrWhiteSpace(line)) return false;
@@ -315,21 +320,23 @@ namespace AGSUnpacker.Lib.Utils
     public static void WriteTranslationFile(string filename, List<string> lines)
     {
       string filepath = Path.Combine(Environment.CurrentDirectory, filename);
-      FileStream f = new FileStream(filepath, FileMode.Create);
-      StreamWriter w = new StreamWriter(f, Encoding.Latin1);
-
-      for (int i = 0; i < lines.Count; ++i)
+      using (FileStream stream = new FileStream(filepath, FileMode.Create))
       {
-        if (lines[i].StartsWith("__")) continue;
-
-        w.WriteLine(lines[i]);
-        if (!lines[i].StartsWith("//"))
+        using (StreamWriter writer = new StreamWriter(stream, Encoding.Latin1))
         {
-          w.WriteLine();
+          for (int i = 0; i < lines.Count; ++i)
+          {
+            // NOTE(adm244): we already extract only referenced strings, why do we skip these?
+            //if (lines[i].StartsWith("__")) continue;
+
+            writer.WriteLine(lines[i]);
+            if (!lines[i].StartsWith("//"))
+            {
+              writer.WriteLine();
+            }
+          }
         }
       }
-
-      w.Close();
     }
   }
 }
