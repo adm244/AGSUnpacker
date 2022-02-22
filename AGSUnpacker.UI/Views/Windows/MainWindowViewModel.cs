@@ -95,11 +95,21 @@ namespace AGSUnpacker.UI.Views.Windows
       set => SetProperty(ref _unpackSpritesCommand, value);
     }
 
-    private Task OnUnpackSpritesExecute()
+    private async Task OnUnpackSpritesExecute()
     {
-      return UnpackAsync("Select acsprset.spr file", "AGS sprite set|*.spr",
-        (filepath, targetFolder) => AGSSpriteSet.UnpackSprites(filepath, targetFolder)
-      );
+      try
+      {
+        await UnpackAsync("Select acsprset.spr file", "AGS sprite set|*.spr",
+          (filepath, targetFolder) => AGSSpriteSet.UnpackSprites(filepath, targetFolder)
+        );
+      }
+      catch (NotSupportedException ex)
+      {
+        MessageBox.Show(_windowService.GetWindow(this),
+          ex.Message,
+          "Not supported",
+          MessageBoxButton.OK, MessageBoxImage.Error);
+      }
     }
 
     private bool OnCanUnpackSpritesExecute()

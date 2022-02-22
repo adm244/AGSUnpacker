@@ -170,17 +170,17 @@ namespace AGSUnpacker.Graphics
         byte red   = buffer[bytesPerPixel * i + 0];
         byte green = buffer[bytesPerPixel * i + 1];
         byte blue  = buffer[bytesPerPixel * i + 2];
-        byte alpha = buffer[bytesPerPixel * i + 3];
+        //byte alpha = buffer[bytesPerPixel * i + 3];
 
         if (format == PixelFormat.Argb6666)
         {
           red   = (byte)((red   / 64f) * 256f);
           green = (byte)((green / 64f) * 256f);
           blue  = (byte)((blue  / 64f) * 256f);
-          alpha = (byte)((alpha / 64f) * 256f);
+          //alpha = (byte)((alpha / 64f) * 256f);
         }
 
-        colors[i] = new Color(red, green, blue, alpha);
+        colors[i] = new Color(red, green, blue, 255);
       }
 
       return new Palette(colors, format);

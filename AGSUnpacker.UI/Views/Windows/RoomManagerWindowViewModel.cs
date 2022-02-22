@@ -188,7 +188,7 @@ namespace AGSUnpacker.UI.Views.Windows
       SaveFileDialog saveDialog = new SaveFileDialog()
       {
         Title = "Save image",
-        Filter = "PNG file|*.png",
+        Filter = "Image file|*.png;*.bmp",
         CreatePrompt = false,
         OverwritePrompt = true,
       };
@@ -196,18 +196,19 @@ namespace AGSUnpacker.UI.Views.Windows
       if (saveDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return Task.CompletedTask;
 
-      BitmapSource image = (BitmapSource)SelectedFrame.Source.GetAsFrozen();
-
       return Task.Run(
         () =>
         {
-          using (FileStream stream = new FileStream(saveDialog.FileName, FileMode.Create, FileAccess.Write))
-          {
-            PngBitmapEncoder encoder = new PngBitmapEncoder();
-            encoder.Interlace = PngInterlaceOption.Off;
-            encoder.Frames.Add(BitmapFrame.Create(image));
-            encoder.Save(stream);
-          }
+          Graphics.Bitmap bitmap = Room.BaseRoom.Background.Frames[SelectedIndex];
+
+          Graphics.Formats.ImageFormat format = Graphics.Formats.ImageFormat.Png;
+          if (bitmap.Format == Graphics.Formats.PixelFormat.Rgb565)
+            format = Graphics.Formats.ImageFormat.Bmp;
+
+          string filename = Path.GetFileNameWithoutExtension(saveDialog.FileName);
+          string targetFolder = Path.GetDirectoryName(saveDialog.FileName);
+          string targetFilepath = Path.Combine(targetFolder, filename);
+          bitmap.Save(targetFilepath, format);
         }
       );
     }
@@ -231,7 +232,7 @@ namespace AGSUnpacker.UI.Views.Windows
       OpenFileDialog openDialog = new OpenFileDialog()
       {
         Title = "Select image file",
-        Filter = "PNG image|*.png",
+        Filter = "Image file|*.png;*.bmp",
         Multiselect = false,
         CheckFileExists = true,
         CheckPathExists = true

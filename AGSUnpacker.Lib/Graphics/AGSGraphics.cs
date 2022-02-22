@@ -102,24 +102,32 @@ namespace AGSUnpacker.Lib.Graphics
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
 
       // CHECK(adm244): palette format in room files
-      PixelFormat paletteFormat = PixelFormat.Argb32;
-      if (format == PixelFormat.Indexed)
-        paletteFormat = PixelFormat.Argb6666;
+      //PixelFormat paletteFormat = PixelFormat.Argb32;
+      //if (format == PixelFormat.Indexed)
+      PixelFormat paletteFormat = PixelFormat.Argb6666;
 
       Palette palette = Palette.FromBuffer(bufferPalette, paletteFormat);
 
       if (format == PixelFormat.Indexed)
         return new Bitmap(width, height, bufferPixels, format, palette);
 
-      return new Bitmap(width, height, bufferPixels, format);
+      Bitmap bitmap = new Bitmap(width, height, bufferPixels, format);
+      
+      // NOTE(adm244): removes null-alpha; see AGSGraphics.ReadSprite
+      if (bitmap.Format == PixelFormat.Argb32)
+        bitmap = bitmap.Convert(PixelFormat.Rgb24);
+
+      return bitmap;
     }
 
     public static void WriteLZ77Image(BinaryWriter writer, Bitmap image, int bytesPerPixel)
     {
       // CHECK(adm244): palette format in room files
-      PixelFormat paletteFormat = PixelFormat.Argb32;
-      if (image.Format == PixelFormat.Indexed)
-        paletteFormat = PixelFormat.Argb6666;
+      //PixelFormat paletteFormat = PixelFormat.Argb32;
+      // CHECK(adm244): 2.54 crashes if palette is not 6-bits in some cases (if some >0x3F values are present)
+      // maybe we don't care for 8-bits palette then? double check that
+      //if (image.Format == PixelFormat.Indexed)
+      PixelFormat paletteFormat = PixelFormat.Argb6666;
 
       Palette palette = image.Palette.HasValue ? image.Palette.Value : AGSSpriteSet.DefaultPalette;
       byte[] paletteBuffer = palette.ToBuffer(paletteFormat);
@@ -128,7 +136,7 @@ namespace AGSUnpacker.Lib.Graphics
       //NOTE(adm244): convert bitmap to match requested bytesPerPixel
       PixelFormat targetFormat = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
       if (image.Format != targetFormat)
-        image = image.Convert(targetFormat);
+        image = image.Convert(targetFormat, discardAlpha: true);
 
       byte[] pixels = image.GetPixels();
       Debug.Assert(pixels.Length == (image.Width * image.Height * bytesPerPixel));

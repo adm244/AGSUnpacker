@@ -62,8 +62,8 @@ namespace AGSUnpacker.UI.Models.Room
     public static BitmapSource ToWpf(this Graphics.Bitmap bitmap)
     {
       // HACK(adm244): get rid of transparent alpha channel
-      if (bitmap.Format == Graphics.Formats.PixelFormat.Argb32)
-        bitmap = bitmap.Convert(Graphics.Formats.PixelFormat.Rgb24);
+      //if (bitmap.Format == Graphics.Formats.PixelFormat.Argb32)
+      //  bitmap = bitmap.Convert(Graphics.Formats.PixelFormat.Rgb24);
 
       byte[] buffer = bitmap.GetPixels();
       int stride = bitmap.Width * bitmap.BytesPerPixel;
@@ -104,7 +104,7 @@ namespace AGSUnpacker.UI.Models.Room
       
       for (int i = 0; i < palette.Length; ++i)
       {
-        Color color = Color.FromArgb(255, palette[i].R, palette[i].G, palette[i].B);
+        Color color = Color.FromArgb(palette[i].A, palette[i].R, palette[i].G, palette[i].B);
         colors.Add(color);
       }
 

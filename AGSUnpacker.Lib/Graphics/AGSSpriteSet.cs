@@ -225,7 +225,8 @@ namespace AGSUnpacker.Lib.Graphics
           return header.Version;
 
         default:
-          throw new NotSupportedException();
+          throw new NotSupportedException(
+            $"Cannot determine sprite index file version.\n\nUnknown sprite set version: {header.Version}");
       }
     }
 
@@ -413,7 +414,14 @@ namespace AGSUnpacker.Lib.Graphics
       int version = reader.ReadInt16();
       // FIXME(adm244): should probably use ReadFixedString instead; there are many cases like this
       string signature = reader.ReadFixedCString(SpriteSetSignature.Length);
-      Debug.Assert(signature == SpriteSetSignature);
+      //Debug.Assert(signature == SpriteSetSignature);
+
+      if (signature != SpriteSetSignature)
+        throw new InvalidDataException("Sprite set file signature mismatch!");
+
+      if (version < 4 || version > 11)
+        throw new NotSupportedException(
+          $"Sprite set version is not supported.\n\nGot: {version}\nMin supported: {4}\nMax supported: {11}");
 
       CompressionType compression = SpriteSetHeader.DefaultCompression;
       UInt32 fileID = SpriteSetHeader.DefaultFileID;

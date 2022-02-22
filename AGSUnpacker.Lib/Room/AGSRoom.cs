@@ -13,6 +13,45 @@ namespace AGSUnpacker.Lib.Room
 {
   public class AGSRoom
   {
+    /*
+    (1.00,  1) BLOCKTYPE_MAIN        1
+    ( ????, 6) BLOCKTYPE_SCRIPT      2
+    ( ?????? ) BLOCKTYPE_COMPSCRIPT  3
+    ( ?????? ) BLOCKTYPE_COMPSCRIPT2 4
+    ( ?????? ) BLOCKTYPE_OBJECTNAMES 5
+    ( ?????? ) BLOCKTYPE_ANIMBKGRND  6
+    ( ?????? ) BLOCKTYPE_COMPSCRIPT3 7     // new CSCOMP script instead of SeeR
+    (2.56, 22) BLOCKTYPE_PROPERTIES  8
+    (2.70, 24) BLOCKTYPE_OBJECTSCRIPTNAMES 9
+    ( ?????? ) BLOCKTYPE_EOF         0xff
+    */
+
+    /* room file versions history
+     6:  new file layout using blocks
+     7:  ???
+     8:  final v1.14 release
+     9:  intermediate v2 alpha releases
+    10:  v2 alpha-7 release
+    11:  final v2.00 release
+    12:  v2.08, to add colour depth byte
+    13:  v2.14, add walkarea light levels
+    14:  v2.4, fixed so it saves walkable area 15
+    15:  v2.41, supports NewInteraction
+    16:  v2.5
+    17:  v2.5 - just version change to force room re-compile for new charctr struct
+    18:  v2.51 - vector scaling
+    19:  v2.53 - interaction variables
+    20:  v2.55 - shared palette backgrounds
+    21:  v2.55 - regions
+    22:  v2.61 - encrypt room messages (first seen in v2.56d) + added properties block
+    23:  v2.62 - object flags
+    24:  v2.7  - hotspot script names + added object script names block
+    25:  v2.72 - game id embedded
+    26:  v3.0 - new interaction format, and no script source
+    27:  v3.0 - store Y of bottom of object, not top
+    28:  v3.0.3 - remove hotspot name length limit
+    29:  v3.0.3 - high-res coords for object x/y, edges and hotspot walk-to point
+    */
     public int Version;
     public string Name;
     public int Width;
@@ -71,11 +110,14 @@ namespace AGSUnpacker.Lib.Room
     {
       Version = reader.ReadInt16();
 
+      if (Version < 6)
+        throw new NotSupportedException($"This room version is not supported, it's too old!\n\nVersion: {Version}");
+
       while (true)
       {
         byte blockTypeRead = reader.ReadByte();
         if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
-          throw new InvalidDataException("Unknown room block type!");
+          throw new InvalidDataException($"Unknown room block encountered: {blockTypeRead}");
 
         BlockType blockType = (BlockType)blockTypeRead;
         if (blockType == BlockType.EndOfFile)
@@ -106,7 +148,9 @@ namespace AGSUnpacker.Lib.Room
             WriteRoomBlock(writer, roomVersion, BlockType.BackgroundFrames);
 
           WriteRoomBlock(writer, roomVersion, BlockType.ScriptSCOM3);
-          WriteRoomBlock(writer, roomVersion, BlockType.Properties);
+
+          if (roomVersion >= 22)
+            WriteRoomBlock(writer, roomVersion, BlockType.Properties);
 
           if (roomVersion >= 24)
             WriteRoomBlock(writer, roomVersion, BlockType.ObjectScriptNames);
@@ -127,7 +171,7 @@ namespace AGSUnpacker.Lib.Room
     private void WriteRoomBlockLength(BinaryWriter writer, int roomVersion, long length)
     {
       if (roomVersion < 32)
-        writer.Write((Int32)length);
+        writer.Write((UInt32)length);
       else
         writer.Write((Int64)length);
     }
@@ -172,8 +216,10 @@ namespace AGSUnpacker.Lib.Room
       if (type == BlockType.EndOfFile)
         return;
 
+      long blockStartPreSize = writer.BaseStream.Position;
+
       //NOTE(adm244): a placeholder for an actual value
-      WriteRoomBlockLength(writer, roomVersion, 0xDEADBEEF);
+      WriteRoomBlockLength(writer, roomVersion, unchecked((long)0xDEADBEEF_DEADBEEF));
 
       long blockStart = writer.BaseStream.Position;
 
@@ -207,9 +253,9 @@ namespace AGSUnpacker.Lib.Room
 
       long blockEnd = writer.BaseStream.Position;
       long blockLength = blockEnd - blockStart;
-      Debug.Assert(blockLength < Int32.MaxValue);
+      Debug.Assert(blockLength < Int64.MaxValue);
 
-      writer.BaseStream.Seek(blockStart - sizeof(Int32), SeekOrigin.Begin);
+      writer.BaseStream.Seek(blockStartPreSize, SeekOrigin.Begin);
       WriteRoomBlockLength(writer, roomVersion, blockLength);
       writer.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
     }
@@ -447,7 +493,7 @@ namespace AGSUnpacker.Lib.Room
         Markup.Hotspots[i].Interactions.Interaction.WriteToStream(writer);
 
       for (int i = 0; i < Markup.Objects.Length; ++i)
-        Markup.Hotspots[i].Interactions.Interaction.WriteToStream(writer);
+        Markup.Objects[i].Interactions.Interaction.WriteToStream(writer);
 
       Interactions.Interaction.WriteToStream(writer);
     }

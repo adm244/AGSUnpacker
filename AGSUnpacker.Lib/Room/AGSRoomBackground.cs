@@ -53,13 +53,14 @@ namespace AGSUnpacker.Lib.Room
 
     public void WriteBlock(BinaryWriter writer, int roomVersion)
     {
-      Debug.Assert(PaletteShareFlags.Length == Frames.Count);
-
       writer.Write((byte)Frames.Count);
       writer.Write((byte)AnimationSpeed);
 
       if (roomVersion >= 20) // ???
+      {
+        Debug.Assert(PaletteShareFlags.Length == Frames.Count);
         writer.Write((byte[])PaletteShareFlags);
+      }
 
       for (int i = 1; i < Frames.Count; ++i)
         AGSGraphics.WriteLZ77Image(writer, Frames[i], BytesPerPixel);

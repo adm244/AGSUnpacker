@@ -140,7 +140,7 @@ namespace AGSUnpacker.Lib.Game
       }
 
       // parse font info
-      if (dta_version < 50)
+      if (dta_version < 50) // 3.5
       {
         font_flags = r.ReadBytes(setup.fonts_count);
         font_outlines = r.ReadBytes(setup.fonts_count);
