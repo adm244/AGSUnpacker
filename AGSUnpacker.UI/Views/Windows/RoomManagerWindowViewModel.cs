@@ -123,6 +123,8 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = "AGS room file|*.crm",
         CreatePrompt = false,
         OverwritePrompt = true,
+        // FIXME(adm244): room filename stored in Title, really?
+        FileName = Title
       };
 
       if (saveDialog.ShowDialog(_windowService.GetWindow(this)) != true)
@@ -191,6 +193,8 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = "Image file|*.png;*.bmp",
         CreatePrompt = false,
         OverwritePrompt = true,
+        // FIXME(adm244): room filename stored in Title, really?
+        FileName = Path.GetFileNameWithoutExtension(Title)
       };
 
       if (saveDialog.ShowDialog(_windowService.GetWindow(this)) != true)

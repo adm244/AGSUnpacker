@@ -13,7 +13,8 @@
         ResizeMode="CanResizeWithGrip">
   <Window.Resources>
     <conv:AppStatusToStringConverter x:Key="StatusConverter"/>
-    
+    <conv:RoomFrameToImageFormatStringConverter x:Key="RoomImageFormatConverter"/>
+
     <Style x:Key="FramesList" TargetType="ListBox">
       <Setter Property="Width" Value="125"/>
       <Setter Property="MinWidth" Value="125"/>
@@ -72,6 +73,9 @@
                     Padding="20,3" Margin="0,0,5,0"/>
             <Button Content="Replace image" Command="{Binding ReplaceImageCommand}"
                     Padding="20,3"/>
+            <TextBlock Text="{Binding SelectedFrame, Converter={StaticResource RoomImageFormatConverter}}"
+                       VerticalAlignment="Center"
+                       Margin="10,0"/>
           </UniformGrid>
         </Border>
 
