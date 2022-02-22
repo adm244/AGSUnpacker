@@ -178,7 +178,6 @@ namespace AGSUnpacker.UI.Views.Windows
         (filepath, targetFolder) =>
         {
           string targetFilepath = Path.Combine(targetFolder, "Extracted.trs");
-          //TextExtractor.Extract(filepath, targetFilepath);
           TextExtractor.ExtractFromFolder(targetFolder, targetFilepath);
         }
       );

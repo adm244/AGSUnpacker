@@ -40,7 +40,12 @@ namespace AGSUnpacker.Lib.Utils
       r.BaseStream.Seek(-SignatureTail.Length, SeekOrigin.End);
       char[] tail_sig = r.ReadChars(SignatureTail.Length);
       string tail_sig_string = new string(tail_sig);
-      Debug.Assert(SignatureTail == tail_sig_string);
+
+      if (SignatureTail != tail_sig_string)
+        throw new InvalidDataException(
+          "Could not find CLIB signature at the end of exe file.\n" +
+          "Multilib files are not supported for this operation.\n\n" +
+          "Make sure game assets are in a single file");
 
       // get clib offset
       r.BaseStream.Seek(-(SignatureTail.Length + sizeof(UInt32)), SeekOrigin.End);

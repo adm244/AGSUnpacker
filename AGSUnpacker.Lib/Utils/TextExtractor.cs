@@ -11,9 +11,9 @@ namespace AGSUnpacker.Lib.Utils
 {
   public static class TextExtractor
   {
-    private static AGSGameData gameData = new AGSGameData();
-    private static List<AGSRoom> rooms = new List<AGSRoom>();
-    private static List<string> lines = new List<string>();
+    private static AGSGameData gameData;
+    private static List<AGSRoom> rooms;
+    private static List<string> lines;
 
     // FIXME(adm244): doesn't support multilib files
     //public static bool Extract(string filepath, string targetFilepath)
@@ -82,6 +82,11 @@ namespace AGSUnpacker.Lib.Utils
 
     public static bool ExtractFromFolder(string sourceFolder, string targetFile)
     {
+      // FIXME(adm244): exactly the reason to not make it static
+      gameData = new AGSGameData();
+      rooms = new List<AGSRoom>();
+      lines = new List<string>();
+
       if (Directory.Exists(sourceFolder))
       {
         string[] filenames = Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories);
@@ -96,9 +101,9 @@ namespace AGSUnpacker.Lib.Utils
           if (fileExtension == "dta")
           {
             Console.Write("\tParsing {0} data file...", Path.GetFileName(filenames[i]));
-            
+
             gameData.LoadFromFile(filenames[i]);
-            
+
             Console.WriteLine(" Done!");
           }
           else if (fileExtension == "crm")

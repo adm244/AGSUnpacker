@@ -12,6 +12,8 @@ namespace AGSUnpacker.Lib.Utils
     private static readonly string DTA_VERSION_2 = "ac2game.dta";
     private static readonly string AGS_IDENTITY_FILENAME = "game_id.txt";
 
+    // TODO(adm244): rewrite using AssetsManager to support multilib files
+
     public static bool ExtractIdentity(string filePath, string targetFolder)
     {
       Encoding encoding = Encoding.Latin1;
