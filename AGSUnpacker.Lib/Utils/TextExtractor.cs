@@ -293,31 +293,16 @@ namespace AGSUnpacker.Lib.Utils
 
     private static bool PushIntoLines(string line)
     {
-      if (line == null) return false;
-
-      // NOTE(adm244): should be fixed
-      ////FIX(adm244): disassemble script to find all string references
-      //// for now we just parse sequentially which reads garbage inbetween strings
-      //// so we use a hack here to try and remove this garbage...
-      //
-      //// cut non printable characters at the beginning
-      //int trim_index = 0;
-      //for (int i = 0; i < line.Length; ++i)
-      //{
-      //  if (line[i] < 0x20) trim_index = i;
-      //  else break;
-      //}
-      //if ((trim_index + 1) >= line.Length) return false;
-      //if (trim_index > 0) line = line.Substring(trim_index + 1);
+      if (line == null)
+        return false;
 
       // check if string is valid
-      if (string.IsNullOrWhiteSpace(line)) return false;
+      if (string.IsNullOrWhiteSpace(line))
+        return false;
 
       // check if a duplicate
       if (lines.IndexOf(line) < 0)
-      {
         lines.Add(line);
-      }
 
       return true;
     }
@@ -331,9 +316,6 @@ namespace AGSUnpacker.Lib.Utils
         {
           for (int i = 0; i < lines.Count; ++i)
           {
-            // NOTE(adm244): we already extract only referenced strings, why do we skip these?
-            //if (lines[i].StartsWith("__")) continue;
-
             writer.WriteLine(lines[i]);
             if (!lines[i].StartsWith("//"))
             {

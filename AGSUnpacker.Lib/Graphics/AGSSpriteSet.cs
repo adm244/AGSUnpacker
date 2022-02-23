@@ -382,7 +382,7 @@ namespace AGSUnpacker.Lib.Graphics
       spriteIndexData.Offset = writer.BaseStream.Position;
 
       //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp (null alpha)
-      // ALSO, AGS seems to treat 24bpp images as RGB while all overs as BGR (!)
+      // ALSO, AGS seems to treat 24bpp images as RGB while all others as BGR (!)
       // so let's just NOT use 24bpp and convert them to 32bpp
       if (sprite.Format == PixelFormat.Rgb24)
         sprite = sprite.Convert(PixelFormat.Argb32, discardAlpha: true);
