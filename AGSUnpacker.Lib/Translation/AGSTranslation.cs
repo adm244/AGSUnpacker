@@ -19,7 +19,7 @@ namespace AGSUnpacker.Lib.Translation
     public List<string> OriginalLines { get; set; }
     public List<string> TranslatedLines { get; set; }
 
-    public uint GameID { get; private set; }
+    public int GameID { get; private set; }
     public string GameName { get; private set; }
 
     public AGSTranslation()
@@ -50,7 +50,7 @@ namespace AGSUnpacker.Lib.Translation
       Compile(filepath, GameID, GameName);
     }
 
-    public void Compile(string filepath, uint gameID, string gameName)
+    public void Compile(string filepath, int gameID, string gameName)
     {
       if (OriginalLines.Count != TranslatedLines.Count)
       {
@@ -166,7 +166,7 @@ namespace AGSUnpacker.Lib.Translation
             }
             else if (blockType == (int)BlockType.Header)
             {
-              GameID = reader.ReadUInt32();
+              GameID = reader.ReadInt32();
               GameName = reader.ReadEncryptedCString();
             }
             else if (blockType == (int)BlockType.Settings)
@@ -206,7 +206,7 @@ namespace AGSUnpacker.Lib.Translation
               if (line.StartsWith(TRS_TAG_GAMEID))
               {
                 string gameIDString = line.Substring(TRS_TAG_GAMEID.Length);
-                translation.GameID = uint.Parse(gameIDString);
+                translation.GameID = int.Parse(gameIDString);
               }
               else if (line.StartsWith(TRS_TAG_GAMENAME))
               {

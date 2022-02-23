@@ -446,7 +446,7 @@ namespace AGSUnpacker.Lib.Graphics
       {
         palette = AGSGraphics.ReadPalette(reader);
         // NOTE(adm244): first 17 colors are locked and cannot be changed in pre 6
-        // but for some reason palette in sprite set file differs from game data
+        // but for some reason palette in sprite set file differs from game data (2.72)
         // Here we try to restore what we can, but it's not enought to be fully correct
         // AGS. When everything's a stress.
         for (int i = 0; i < 17; ++i)
@@ -476,7 +476,10 @@ namespace AGSUnpacker.Lib.Graphics
       if (header.Version < 5)
         AGSGraphics.WritePalette(writer, header.Palette);
 
-      writer.Write((UInt16)spritesCount);
+      if (header.Version < 11)
+        writer.Write((UInt16)spritesCount);
+      else
+        writer.Write((Int32)spritesCount);
     }
 
     //TODO(adm244): ReadSpriteIndexFile

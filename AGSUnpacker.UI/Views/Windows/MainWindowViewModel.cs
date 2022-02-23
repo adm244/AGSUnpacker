@@ -253,8 +253,12 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnExtractGameIdExecute()
     {
-      return UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
-        (filepath, targetFolder) => AGSIdentityExtractor.ExtractIdentity(filepath, targetFolder)
+      return ExtractAsync("Select AGS game executable", "AGS game executable|*.exe",
+        (filepath, targetFolder) =>
+        {
+          string targetFilepath = Path.Combine(targetFolder, "game_id.txt");
+          AGSIdentityExtractor.ExtractFromFolder(targetFolder, targetFilepath);
+        }
       );
     }
 
