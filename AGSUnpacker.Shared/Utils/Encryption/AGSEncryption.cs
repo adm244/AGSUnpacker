@@ -81,7 +81,8 @@
         //NOTE(adm244): convert char to byte before subtracting, so we underflow properly
         bufferDecrypted[i] = (byte)((byte)textEncrypted[i] - salt);
 
-      return AGSStringUtils.ConvertCString(bufferDecrypted);
+      //return AGSStringUtils.ConvertCString(bufferDecrypted);
+      return AGSStringUtils.ConvertToString(bufferDecrypted);
     }
   }
 }
