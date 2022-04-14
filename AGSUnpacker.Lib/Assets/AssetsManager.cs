@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Shared;
 using AGSUnpacker.Shared.Extensions;
 using AGSUnpacker.Shared.Utils.Encryption;
 
@@ -53,60 +54,61 @@ namespace AGSUnpacker.Lib.Assets
 
     //TODO(adm244): implement packing
 
-    public void Extract(string folderPath)
+    public void Extract(string outputFolder)
     {
       for (int i = 0; i < Archives.Length; ++i)
       {
-        string archiveFolder = Path.Combine(folderPath, Archives[i].Filename);
-        string archiveFile = Path.Combine(RootFolder, Archives[i].Filename);
+        string archiveOutputFolder = Path.Combine(outputFolder, Archives[i].Filename);
+        Directory.CreateDirectory(archiveOutputFolder);
 
-        //NOTE(adm244): if doesn't exist try the root file
-        if (!File.Exists(archiveFile))
-          archiveFile = RootFile;
+        ExtractFilesFromArchive(Archives[i], archiveOutputFolder);
+      }
+    }
 
-        //NOTE(adm244): if STILL doesn't exist -- throw up
-        if (!File.Exists(archiveFile))
-          throw new InvalidDataException("Could not find CLib archive!");
+    private void ExtractFilesFromArchive(CLibArchive archive, string archiveOutputFolder)
+    {
+      string archiveFile = GetArchiveFilepath(archive);
 
-        Directory.CreateDirectory(archiveFolder);
-
-        using (FileStream stream = new FileStream(archiveFile, FileMode.Open, FileAccess.Read))
+      using (FileStream stream = new FileStream(archiveFile, FileMode.Open, FileAccess.Read))
+      {
+        for (int i = 0; i < archive.Assets.Count; ++i)
         {
-          using (BinaryReader reader = new BinaryReader(stream, FileEncoding))
-          {
-            //TODO(adm244): verify signature?
+          string fileFolder = Path.GetDirectoryName(archive.Assets[i].Filepath);
+          string fileName = Path.GetFileName(archive.Assets[i].Filepath);
 
-            for (int j = 0; j < Archives[i].Assets.Count; ++j)
-            {
-              reader.BaseStream.Seek(Archives[i].Assets[j].Offset + Archives[i].Offset, SeekOrigin.Begin);
+          string outputFolder = Path.Combine(archiveOutputFolder, fileFolder);
+          Directory.CreateDirectory(outputFolder);
 
-              string fileFolder = Path.GetDirectoryName(Archives[i].Assets[j].Filepath);
-              string fileName = Path.GetFileName(Archives[i].Assets[j].Filepath);
+          string outputFilepath = Path.Combine(outputFolder, fileName);
+          long offset = archive.Offset + archive.Assets[i].Offset;
+          long length = archive.Assets[i].Size;
+          ExtractFileFromStream(outputFilepath, stream, offset, length);
+        }
+      }
+    }
 
-              string outputFolder = Path.Combine(archiveFolder, fileFolder);
-              Directory.CreateDirectory(outputFolder);
+    private string GetArchiveFilepath(CLibArchive archive)
+    {
+      string archiveFile = Path.Combine(RootFolder, archive.Filename);
 
-              string outputFilepath = Path.Combine(outputFolder, fileName);
+      //NOTE(adm244): if doesn't exist try the root file
+      if (!File.Exists(archiveFile))
+        archiveFile = RootFile;
 
-              // TODO(adm244): rewrite as stream.CopyTo
-              using (FileStream outputStream = new FileStream(outputFilepath, FileMode.Create, FileAccess.Write))
-              {
-                using (BinaryWriter outputWriter = new BinaryWriter(outputStream, FileEncoding))
-                {
-                  long bytesToRead = Archives[i].Assets[j].Size;
-                  while (bytesToRead > 0)
-                  {
-                    //NOTE(adm244): maybe try a bigger I/O buffer size
-                    long bytesRead = Math.Min(bytesToRead, 65536);
-                    byte[] buffer = reader.ReadBytes((int)bytesRead);
-                    bytesToRead -= bytesRead;
+      //NOTE(adm244): if STILL doesn't exist -- throw up
+      if (!File.Exists(archiveFile))
+        throw new InvalidDataException("Could not find CLib archive!");
 
-                    outputWriter.Write(buffer);
-                  }
-                }
-              }
-            }
-          }
+      return archiveFile;
+    }
+
+    private void ExtractFileFromStream(string filepath, Stream stream, long offset, long length)
+    {
+      using (ReadOnlySubStream subStream = new ReadOnlySubStream(stream, offset, length))
+      {
+        using (FileStream outputStream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+        {
+          subStream.CopyTo(outputStream);
         }
       }
     }

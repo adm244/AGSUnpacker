@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\BinaryReaderExtension.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\BinaryWriterExtension.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ReadOnlySubStream.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\AGSStringUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Encryption\AGSEncryption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\IEEE754Utils.cs" />
