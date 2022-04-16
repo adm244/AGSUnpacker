@@ -336,7 +336,7 @@ namespace AGSUnpacker.Lib.Utils
       }
     }
 
-    internal static byte[] ReadLZ77(BinaryReader reader, long sizeUncompressed, int bytesPerPixel, out int width, out int height)
+    internal static byte[] ReadLZ77(BinaryReader reader, long sizeUncompressed)
     {
       /*
        * AGS background image decompression algorithm:
@@ -414,16 +414,7 @@ namespace AGSUnpacker.Lib.Utils
         }
       }
 
-      //TODO(adm244): get from DTA info
-      //TODO(adm244): try to remember what this TODO means...
-      //TODO(adm244): consider using a utils function to convert from a byte buffer to int32
-      width = ((output[3] << 24) | (output[2] << 16) | (output[1] << 8) | output[0]) / bytesPerPixel;
-      height = ((output[7] << 24) | (output[6] << 16) | (output[5] << 8) | output[4]);
-
-      byte[] pixels = new byte[output.Length - 8];
-      Array.Copy(output, 8, pixels, 0, pixels.Length);
-
-      return pixels;
+      return output;
     }
 
     internal static byte[] ReadAllegro(BinaryReader reader, int width, int height)

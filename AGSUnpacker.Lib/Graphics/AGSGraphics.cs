@@ -98,7 +98,7 @@ namespace AGSUnpacker.Lib.Graphics
       // TODO(adm244): check compressed size; or read buffer first and then decode
       Int32 sizeCompressed = reader.ReadInt32();
 
-      byte[] bufferPixels = AGSCompression.ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
+      byte[] bufferPixels = ReadLZ77Image(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
 
       // CHECK(adm244): palette format in room files
@@ -118,6 +118,24 @@ namespace AGSUnpacker.Lib.Graphics
         bitmap = bitmap.Convert(PixelFormat.Rgb24);
 
       return bitmap;
+    }
+
+    private static byte[] ReadLZ77Image(BinaryReader reader, long sizeUncompressed, int bytesPerPixel, out int width, out int height)
+    {
+      byte[] buffer = AGSCompression.ReadLZ77(reader, sizeUncompressed);
+
+      width = BitConverter.ToInt32(buffer, 0) / bytesPerPixel;
+      height = BitConverter.ToInt32(buffer, 4);
+
+      //TODO(adm244): consider using a utils function to convert from a byte buffer to int32
+      //width = ((buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0]) / bytesPerPixel;
+      //height = ((buffer[7] << 24) | (buffer[6] << 16) | (buffer[5] << 8) | buffer[4]);
+
+      // TODO(adm244): consider switching to Spans
+      byte[] pixels = new byte[buffer.Length - 8];
+      Array.Copy(buffer, 8, pixels, 0, pixels.Length);
+
+      return pixels;
     }
 
     public static void WriteLZ77Image(BinaryWriter writer, Bitmap image, int bytesPerPixel)
@@ -141,6 +159,7 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] pixels = image.GetPixels();
       Debug.Assert(pixels.Length == (image.Width * image.Height * bytesPerPixel));
 
+      // TODO(adm244): use stream write to directly write size and pixel data
       byte[] buffer = PreAppendImageSize(image.Width, image.Height, bytesPerPixel, pixels);
       byte[] bufferCompressed = AGSCompression.LZ77Compress(buffer);
 
@@ -149,7 +168,7 @@ namespace AGSUnpacker.Lib.Graphics
       writer.Write((byte[])bufferCompressed);
     }
 
-    //TODO(adm244): this method looks suspicious, investigate
+    // TODO(adm244): remove this method
     private static byte[] PreAppendImageSize(int width, int height, int bytesPerPixel, byte[] pixels)
     {
       byte[] rawData = new byte[pixels.Length + 8];

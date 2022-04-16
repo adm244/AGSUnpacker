@@ -6,6 +6,7 @@ using System.Text;
 
 using AGSUnpacker.Graphics;
 using AGSUnpacker.Graphics.Formats;
+using AGSUnpacker.Lib.Graphics.Extensions;
 using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.Shared.Extensions;
 
@@ -206,6 +207,17 @@ namespace AGSUnpacker.Lib.Graphics
       }
     }
 
+    private static byte[] DecompressLZW(BinaryReader reader, long sizeUncompressed)
+    {
+      // NOTE(adm244): you might think they'd set "uncompressed" as compression type when it's useless to compress
+      // (since they've added this piece of data into each sprite header anyway)
+      // so that you never have to check this, but they suuuure know better...
+      if (sizeUncompressed < 16)
+        return reader.ReadBytes((int)sizeUncompressed);
+
+      return AGSCompression.ReadLZ77(reader, sizeUncompressed);
+    }
+
     private static int GetSpriteIndexVersion(SpriteSetHeader header)
     {
       switch (header.Version)
@@ -276,7 +288,7 @@ namespace AGSUnpacker.Lib.Graphics
           {
             Console.Write(string.Format("\tExtracting spr{0:D5}...", index));
 
-            Bitmap sprite = ReadSprite(reader, header);
+            Bitmap sprite = ReadSprite(reader, header, index);
             if (sprite == null)
             {
               Console.WriteLine(" Skipping (empty).");
@@ -419,9 +431,9 @@ namespace AGSUnpacker.Lib.Graphics
       if (signature != SpriteSetSignature)
         throw new InvalidDataException("Sprite set file signature mismatch!");
 
-      if (version < 4 || version > 11)
+      if (version < 4 || version > 12)
         throw new NotSupportedException(
-          $"Sprite set version is not supported.\n\nGot: {version}\nMin supported: {4}\nMax supported: {11}");
+          $"Sprite set version is not supported.\n\nGot: {version}\nMin supported: {4}\nMax supported: {12}");
 
       CompressionType compression = SpriteSetHeader.DefaultCompression;
       UInt32 fileID = SpriteSetHeader.DefaultFileID;
@@ -459,7 +471,14 @@ namespace AGSUnpacker.Lib.Graphics
       else
         spritesCount = reader.ReadInt32();
 
-      return new SpriteSetHeader(version, compression, fileID, spritesCount, palette);
+      int storeFlags = 0;
+      if (version >= 12)
+      {
+        storeFlags = reader.ReadByte();
+        _ = reader.ReadBytes(3); // reserved
+      }
+
+      return new SpriteSetHeader(version, compression, fileID, spritesCount, palette, storeFlags);
     }
 
     private static void WriteSpriteSetHeader(BinaryWriter writer, SpriteSetHeader header, int spritesCount)
@@ -480,6 +499,14 @@ namespace AGSUnpacker.Lib.Graphics
         writer.Write((UInt16)spritesCount);
       else
         writer.Write((Int32)spritesCount);
+
+      if (header.Version >= 12)
+      {
+        writer.Write((byte)header.StoreFlags);
+        writer.Write((byte)0);
+        writer.Write((byte)0);
+        writer.Write((byte)0);
+      }
     }
 
     //TODO(adm244): ReadSpriteIndexFile
@@ -537,10 +564,10 @@ namespace AGSUnpacker.Lib.Graphics
       return false;
     }
 
-    private static Bitmap ReadSprite(BinaryReader reader, SpriteSetHeader header)
+    private static Bitmap ReadSprite(BinaryReader reader, SpriteSetHeader header, int index)
     {
       // TODO(adm244): maybe return PixelFormat instead of bytesPerPixel?
-      byte[] buffer = ReadSprite(reader, header, out int width, out int height, out int bytesPerPixel);
+      byte[] buffer = ReadSprite(reader, header, index, out int width, out int height, out int bytesPerPixel);
       if (buffer == null)
         return null;
 
@@ -562,33 +589,115 @@ namespace AGSUnpacker.Lib.Graphics
       return bitmap;
     }
 
-    private static byte[] ReadSprite(BinaryReader reader, SpriteSetHeader header, out int width, out int height, out int bytesPerPixel)
+    private static byte[] ReadSprite(BinaryReader reader, SpriteSetHeader header, int index,
+      out int width, out int height, out int bytesPerPixel)
     {
       width = 0;
       height = 0;
 
-      bytesPerPixel = reader.ReadUInt16();
+      bytesPerPixel = reader.ReadByte();
+      SpriteFormat format = (SpriteFormat)reader.ReadByte();
+      if (!Enum.IsDefined(format))
+        throw new NotSupportedException($"Unknown sprite format encountered: {format}");
+
       if (bytesPerPixel == 0)
         return null;
+
+      int paletteColours = 0;
+      CompressionType compression = header.Compression;
+
+      if (header.Version >= 12)
+      {
+        paletteColours = reader.ReadByte() + 1;
+        compression = (CompressionType)reader.ReadByte();
+
+        if (!Enum.IsDefined(compression))
+          throw new NotSupportedException(
+            $"Unknown compression type {compression} for sprite {index:D5} encountered");
+      }
 
       width = reader.ReadUInt16();
       height = reader.ReadUInt16();
 
+      Palette? palette = ReadSpritePalette(reader, format, paletteColours, index);
+
       long size = (long)width * height * bytesPerPixel;
       long sizeUncompressed = size;
 
+      if (palette.HasValue)
+        sizeUncompressed = (long)width * height;
+
       if (header.Version >= 6)
       {
-        if (header.Compression == CompressionType.RLE)
+        if (header.Version >= 12 || header.Compression == CompressionType.RLE)
           size = reader.ReadUInt32();
       }
       else if (header.Version == 5)
         size = reader.ReadUInt32();
 
-      if (header.Compression == CompressionType.RLE)
-        return DecompressRLE(reader, size, sizeUncompressed, bytesPerPixel);
+      byte[] pixels;
+      if (compression == CompressionType.RLE)
+        pixels = DecompressRLE(reader, size, sizeUncompressed, bytesPerPixel);
+      else if (compression == CompressionType.LZW)
+        pixels = DecompressLZW(reader, sizeUncompressed);
+      else if (compression == CompressionType.Uncompressed)
+        pixels = reader.ReadBytes((int)size);
+      else
+        throw new NotSupportedException($"Unknown compression type {compression} encountered");
 
-      return reader.ReadBytes((int)size);
+      if (palette.HasValue)
+        return UnpackIndexedSprite(pixels, format, palette.Value);
+
+      return pixels;
+    }
+
+    private static byte[] UnpackIndexedSprite(byte[] input, SpriteFormat format, Palette palette)
+    {
+      if (palette.Empty)
+        return input;
+
+      PixelFormat? spritePixelFormat = format.ToPixelFormat();
+      if (!spritePixelFormat.HasValue)
+        throw new InvalidDataException($"Cannot unpack indexed sprite. Sprite pixel format is unknown.");
+
+      //PixelFormat? palettePixelFormat = palette.SourceFormat;
+      //if (!palettePixelFormat.HasValue)
+      //  throw new InvalidDataException($"Cannot unpack indexed sprite. Palette pixel format is unknown.");
+      //
+      //if (spritePixelFormat != palettePixelFormat)
+      //  throw new InvalidDataException($"Cannot unpack indexed sprite." +
+      //    $"Sprite and palette pixel formats must be the same.");
+
+      Color[] colors = new Color[input.Length];
+      for (int i = 0; i < input.Length; ++i)
+      {
+        int index = input[i];
+        Debug.Assert(index < palette.Length,
+          $"Palette index '{index}' is out of bounds '0..{palette.Length}'. " +
+          $"Defaulting to color 0.");
+
+        if (index >= palette.Length)
+          index = 0;
+
+        colors[i] = palette.Entries[index];
+      }
+
+      return colors.ToBuffer(spritePixelFormat.Value);
+    }
+
+    private static Palette? ReadSpritePalette(BinaryReader reader, SpriteFormat format, int colors, int index)
+    {
+      if (colors > 0)
+      {
+        PixelFormat? paletteFormat = format.ToPixelFormat();
+        if (!paletteFormat.HasValue)
+          throw new InvalidDataException($"Sprite {index} has palette colors, but palette format {format} is unknown");
+
+        byte[] buffer = reader.ReadBytes(colors * paletteFormat.Value.GetBytesPerPixel());
+        return Palette.FromBuffer(buffer, paletteFormat.Value);
+      }
+
+      return null;
     }
 
     private static void SaveSprite(Bitmap image, string folderPath, int index)
