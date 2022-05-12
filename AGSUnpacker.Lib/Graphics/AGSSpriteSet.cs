@@ -191,6 +191,15 @@ namespace AGSUnpacker.Lib.Graphics
       }
     }
 
+    private static byte[] CompressLZW(byte[] buffer)
+    {
+      if (buffer.Length < 16)
+        return buffer;
+
+      //TODO(adm244): is it LZ77 or LZW? dig into that...
+      return AGSCompression.WriteLZ77(buffer);
+    }
+
     private static byte[] DecompressRLE(BinaryReader reader, long sizeCompressed, long sizeUncompressed, int bytesPerPixel)
     {
       switch (bytesPerPixel)
@@ -235,6 +244,10 @@ namespace AGSUnpacker.Lib.Graphics
         case 10:
         case 11:
           return header.Version;
+
+        //NOTE(adm244): yep...
+        case 12:
+          return 11;
 
         default:
           throw new NotSupportedException(
@@ -393,24 +406,33 @@ namespace AGSUnpacker.Lib.Graphics
       spriteIndexData.Height = sprite.Height;
       spriteIndexData.Offset = writer.BaseStream.Position;
 
-      //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp (null alpha)
-      // ALSO, AGS seems to treat 24bpp images as RGB while all others as BGR (!)
-      // so let's just NOT use 24bpp and convert them to 32bpp
-      if (sprite.Format == PixelFormat.Rgb24)
-        sprite = sprite.Convert(PixelFormat.Argb32, discardAlpha: true);
+      sprite = PrepareSpriteForWritting(sprite, header, out SpriteFormat format);
 
-      writer.Write((UInt16)sprite.BytesPerPixel);
+      writer.Write((byte)sprite.BytesPerPixel);
+      writer.Write((byte)format);
+
+      if (header.Version >= 12)
+      {
+        writer.Write((byte)(sprite.Palette?.Length - 1 ?? 0));
+        writer.Write((byte)header.Compression);
+      }
+
       writer.Write((UInt16)sprite.Width);
       writer.Write((UInt16)sprite.Height);
 
-      byte[] buffer = sprite.GetPixels();
+      if (header.Version >= 12)
+      {
+        if (format != SpriteFormat.Default)
+          WriteSpritePalette(writer, sprite, format);
+      }
 
-      if (header.Compression == CompressionType.RLE)
-        buffer = CompressRLE(buffer, sprite.Width, sprite.Height, sprite.BytesPerPixel);
+      byte[] buffer = sprite.GetPixels();
+      if (header.Compression != CompressionType.Uncompressed)
+        buffer = CompressSprite(buffer, sprite, header.Compression);
 
       if (header.Version >= 6)
       {
-        if (header.Compression == CompressionType.RLE)
+        if (header.Version >= 12 || header.Compression == CompressionType.RLE)
           writer.Write((UInt32)buffer.Length);
       }
       else if (header.Version == 5)
@@ -419,6 +441,48 @@ namespace AGSUnpacker.Lib.Graphics
       writer.Write((byte[])buffer);
 
       return spriteIndexData;
+    }
+
+    private static byte[] CompressSprite(byte[] buffer, Bitmap sprite, CompressionType compressionType)
+    {
+      switch (compressionType)
+      {
+        case CompressionType.RLE:
+          return CompressRLE(buffer, sprite.Width, sprite.Height, sprite.BytesPerPixel);
+
+        case CompressionType.LZW:
+          return CompressLZW(buffer);
+
+        default:
+          throw new NotSupportedException(
+            $"Sprite compression type '{compressionType}' is not supported.");
+      }
+    }
+
+    private static void WriteSpritePalette(BinaryWriter writer, Bitmap sprite, SpriteFormat format)
+    {
+      PixelFormat? pixelFormat = format.ToPixelFormat() ?? sprite.Palette?.SourceFormat;
+      byte[] buffer = sprite.Palette?.ToBuffer(pixelFormat.Value);
+      writer.Write((byte[])buffer);
+    }
+
+    private static Bitmap PrepareSpriteForWritting(Bitmap sprite, SpriteSetHeader header, out SpriteFormat format)
+    {
+      format = SpriteFormat.Default;
+
+      //TODO(adm244): add support for creating indexed sprites
+      //if ((header.StoreFlags & 1) != 0)
+      //{
+      //  // create indexed sprite...
+      //}
+
+      //NOTE(adm244): AGS doesn't support 24bpp RLE compressed images, so we convert them to 32bpp (null alpha)
+      // ALSO, AGS seems to treat 24bpp images as RGB while all others as BGR (!)
+      // so let's just NOT use 24bpp and convert them to 32bpp
+      if (sprite.Format == PixelFormat.Rgb24)
+        return sprite.Convert(PixelFormat.Argb32, discardAlpha: true);
+
+      return sprite;
     }
 
     private static SpriteSetHeader ReadSpriteSetHeader(BinaryReader reader)
@@ -624,6 +688,7 @@ namespace AGSUnpacker.Lib.Graphics
       long size = (long)width * height * bytesPerPixel;
       long sizeUncompressed = size;
 
+      //FIXME(adm244): I assume this is wrong... care to investigate? sure... someday
       if (palette.HasValue)
         sizeUncompressed = (long)width * height;
 
@@ -637,6 +702,7 @@ namespace AGSUnpacker.Lib.Graphics
 
       byte[] pixels;
       if (compression == CompressionType.RLE)
+        //NOTE(adm244): double check 'bytesPerPixel' value if sprite is indexed
         pixels = DecompressRLE(reader, size, sizeUncompressed, bytesPerPixel);
       else if (compression == CompressionType.LZW)
         pixels = DecompressLZW(reader, sizeUncompressed);
@@ -687,6 +753,9 @@ namespace AGSUnpacker.Lib.Graphics
 
     private static Palette? ReadSpritePalette(BinaryReader reader, SpriteFormat format, int colors, int index)
     {
+      if (format == SpriteFormat.Default)
+        return null;
+
       if (colors > 0)
       {
         PixelFormat? paletteFormat = format.ToPixelFormat();

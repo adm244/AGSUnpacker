@@ -186,6 +186,7 @@ namespace AGSUnpacker.Graphics
           //alpha = (byte)((alpha / 64f) * 256f);
         }
 
+        //FIXME(adm244): add alpha-channel support back
         colors[i] = new Color(red, green, blue, 255);
       }
 

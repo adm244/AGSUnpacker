@@ -161,7 +161,7 @@ namespace AGSUnpacker.Lib.Graphics
 
       // TODO(adm244): use stream write to directly write size and pixel data
       byte[] buffer = PreAppendImageSize(image.Width, image.Height, bytesPerPixel, pixels);
-      byte[] bufferCompressed = AGSCompression.LZ77Compress(buffer);
+      byte[] bufferCompressed = AGSCompression.WriteLZ77(buffer);
 
       writer.Write((UInt32)buffer.Length);
       writer.Write((UInt32)bufferCompressed.Length);

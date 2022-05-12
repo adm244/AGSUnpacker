@@ -468,7 +468,7 @@ namespace AGSUnpacker.Lib.Utils
     //NOTE(adm244): it performs worse than the original (i.e. low speed) but
     // the file size is actually smaller since we don't interrupt the sequence
     //TODO(adm244): write a faster implementation
-    internal static byte[] LZ77Compress(byte[] buffer)
+    internal static byte[] WriteLZ77(byte[] buffer)
     {
       using (MemoryStream stream = new MemoryStream(buffer.Length))
       {
