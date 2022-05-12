@@ -27,9 +27,6 @@ namespace AGSUnpacker.Lib.Graphics
   {
     public static readonly string FileName = "header.bin";
 
-    public static readonly int MetaVersion = 2;
-    public static readonly int MetaSignature = 0x4402;
-
     public static readonly int DefaultVersion = 6;
     public static readonly CompressionType DefaultCompression = CompressionType.Uncompressed;
     public static readonly uint DefaultFileID = 0xDEADBEEF;
@@ -67,15 +64,7 @@ namespace AGSUnpacker.Lib.Graphics
       {
         using (BinaryReader reader = new BinaryReader(stream, Encoding.Latin1))
         {
-          int versionMeta = 1;
-          
-          int version = reader.ReadInt16();
-          if (version == MetaSignature)
-          {
-            versionMeta = reader.ReadByte();
-            version = reader.ReadInt16();
-          }
-          header.Version = version;
+          header.Version = reader.ReadInt16();
 
           header.Compression = CompressionType.Unknown;
           byte compressionType = reader.ReadByte();
@@ -83,10 +72,14 @@ namespace AGSUnpacker.Lib.Graphics
             header.Compression = (CompressionType)compressionType;
 
           header.FileID = reader.ReadUInt32();
-          header.SpritesCount = reader.ReadUInt16();
+
+          if (header.Version < 11)
+            header.SpritesCount = reader.ReadUInt16();
+          else
+            header.SpritesCount = reader.ReadInt32();
 
           header.StoreFlags = 0;
-          if (versionMeta >= 2)
+          if (header.Version >= 12)
             header.StoreFlags = reader.ReadByte();
 
           if (header.Version < 5)
@@ -105,14 +98,17 @@ namespace AGSUnpacker.Lib.Graphics
       {
         using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
-          writer.Write((Int16)MetaSignature);
-          writer.Write((byte)MetaVersion);
-
           writer.Write((UInt16)Version);
           writer.Write((byte)Compression);
           writer.Write((UInt32)FileID);
-          writer.Write((UInt16)SpritesCount);
-          writer.Write((byte)StoreFlags);
+
+          if (Version < 11)
+            writer.Write((UInt16)SpritesCount);
+          else
+            writer.Write((Int32)SpritesCount);
+
+          if (Version >= 12)
+            writer.Write((byte)StoreFlags);
 
           if (Version < 5)
             AGSGraphics.WritePalette(writer, Palette);
