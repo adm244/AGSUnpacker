@@ -119,7 +119,7 @@ namespace AGSUnpacker.Graphics
     //  return buffer;
     //}
 
-    public static Palette FromBuffer(byte[] buffer, PixelFormat format)
+    public static Palette FromBuffer(byte[] buffer, PixelFormat format, bool discardAlpha = true)
     {
       switch (format)
       {
@@ -129,7 +129,7 @@ namespace AGSUnpacker.Graphics
 
         case PixelFormat.Argb6666:
         case PixelFormat.Argb32:
-          return FromRgba(buffer, format);
+          return FromRgba(buffer, format, discardAlpha);
 
         default:
           throw new NotSupportedException("Not supported palette format!");
@@ -163,7 +163,7 @@ namespace AGSUnpacker.Graphics
       return new Palette(colors, format);
     }
 
-    private static Palette FromRgba(byte[] buffer, PixelFormat format)
+    private static Palette FromRgba(byte[] buffer, PixelFormat format, bool discardAlpha = true)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 4)
@@ -176,18 +176,20 @@ namespace AGSUnpacker.Graphics
         byte red   = buffer[bytesPerPixel * i + 0];
         byte green = buffer[bytesPerPixel * i + 1];
         byte blue  = buffer[bytesPerPixel * i + 2];
-        //byte alpha = buffer[bytesPerPixel * i + 3];
+        byte alpha = buffer[bytesPerPixel * i + 3];
 
         if (format == PixelFormat.Argb6666)
         {
           red   = (byte)((red   / 64f) * 256f);
           green = (byte)((green / 64f) * 256f);
           blue  = (byte)((blue  / 64f) * 256f);
-          //alpha = (byte)((alpha / 64f) * 256f);
+          alpha = (byte)((alpha / 64f) * 256f);
         }
 
-        //FIXME(adm244): add alpha-channel support back
-        colors[i] = new Color(red, green, blue, 255);
+        if (discardAlpha)
+          alpha = 255;
+
+        colors[i] = new Color(red, green, blue, alpha);
       }
 
       return new Palette(colors, format);

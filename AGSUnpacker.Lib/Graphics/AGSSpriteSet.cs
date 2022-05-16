@@ -763,7 +763,7 @@ namespace AGSUnpacker.Lib.Graphics
           throw new InvalidDataException($"Sprite {index} has palette colors, but palette format {format} is unknown");
 
         byte[] buffer = reader.ReadBytes(colors * paletteFormat.Value.GetBytesPerPixel());
-        return Palette.FromBuffer(buffer, paletteFormat.Value);
+        return Palette.FromBuffer(buffer, paletteFormat.Value, discardAlpha: false);
       }
 
       return null;
