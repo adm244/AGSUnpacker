@@ -6,13 +6,12 @@ namespace AGSUnpacker.Lib.Utils
 {
   internal static class AGSCompression
   {
-    internal static byte[] ReadRLE8(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    internal static byte[] ReadRLE8(BinaryReader reader, long sizeUncompressed)
     {
       byte[] buffer = new byte[sizeUncompressed];
       int positionImage = 0;
 
-      long positionBase = reader.BaseStream.Position;
-      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      while (positionImage < sizeUncompressed)
       {
         sbyte control = (sbyte)reader.ReadByte();
         if (control == -128)
@@ -44,13 +43,12 @@ namespace AGSUnpacker.Lib.Utils
       return buffer;
     }
 
-    internal static byte[] ReadRLE16(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    internal static byte[] ReadRLE16(BinaryReader reader, long sizeUncompressed)
     {
       byte[] buffer = new byte[sizeUncompressed];
       int positionImage = 0;
 
-      long positionBase = reader.BaseStream.Position;
-      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      while (positionImage < sizeUncompressed)
       {
         sbyte control = (sbyte)reader.ReadByte();
         if (control == -128)
@@ -85,13 +83,12 @@ namespace AGSUnpacker.Lib.Utils
       return buffer;
     }
 
-    internal static byte[] ReadRLE32(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    internal static byte[] ReadRLE32(BinaryReader reader, long sizeUncompressed)
     {
       byte[] buffer = new byte[sizeUncompressed];
       int positionImage = 0;
 
-      long positionBase = reader.BaseStream.Position;
-      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      while (positionImage < sizeUncompressed)
       {
         sbyte control = (sbyte)reader.ReadByte();
         if (control == -128)
@@ -417,42 +414,44 @@ namespace AGSUnpacker.Lib.Utils
       return output;
     }
 
-    internal static byte[] ReadAllegro(BinaryReader reader, int width, int height)
-    {
-      // TODO(adm244): see if we can use ReadRLE8() here
-      using (MemoryStream stream = new MemoryStream())
-      {
-        for (int y = 0; y < height; ++y)
-        {
-          int pixelsRead = 0;
-          while (pixelsRead < width)
-          {
-            sbyte index = (sbyte)reader.ReadByte();
-            if (index == -128) index = 0;
+    // NOTE(adm244): deprecated
+    //internal static byte[] ReadAllegro(BinaryReader reader, int width, int height)
+    //{
+    //  // TODO(adm244): see if we can use ReadRLE8() here
+    //  using (MemoryStream stream = new MemoryStream())
+    //  {
+    //    for (int y = 0; y < height; ++y)
+    //    {
+    //      int pixelsRead = 0;
+    //      while (pixelsRead < width)
+    //      {
+    //        sbyte index = (sbyte)reader.ReadByte();
+    //        if (index == -128) index = 0;
+    //
+    //        if (index < 0)
+    //        {
+    //          int count = (1 - index);
+    //          byte value = reader.ReadByte();
+    //
+    //          while ((count--) > 0)
+    //            stream.WriteByte(value);
+    //
+    //          pixelsRead += (1 - index);
+    //        }
+    //        else
+    //        {
+    //          byte[] buffer = reader.ReadBytes(index + 1);
+    //          stream.Write(buffer, 0, buffer.Length);
+    //          pixelsRead += (index + 1);
+    //        }
+    //      }
+    //    }
+    //
+    //    return stream.ToArray();
+    //  }
+    //}
 
-            if (index < 0)
-            {
-              int count = (1 - index);
-              byte value = reader.ReadByte();
-
-              while ((count--) > 0)
-                stream.WriteByte(value);
-
-              pixelsRead += (1 - index);
-            }
-            else
-            {
-              byte[] buffer = reader.ReadBytes(index + 1);
-              stream.Write(buffer, 0, buffer.Length);
-              pixelsRead += (index + 1);
-            }
-          }
-        }
-
-        return stream.ToArray();
-      }
-    }
-
+    // TODO(adm244): rename to something like "WriteRLE8Chuncked"?
     internal static void WriteAllegro(BinaryWriter writer, byte[] buffer, int width, int height)
     {
       for (int y = 0; y < height; ++y)

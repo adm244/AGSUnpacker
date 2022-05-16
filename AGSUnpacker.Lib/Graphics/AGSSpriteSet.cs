@@ -200,16 +200,16 @@ namespace AGSUnpacker.Lib.Graphics
       return AGSCompression.WriteLZ77(buffer);
     }
 
-    private static byte[] DecompressRLE(BinaryReader reader, long sizeCompressed, long sizeUncompressed, int bytesPerPixel)
+    private static byte[] DecompressRLE(BinaryReader reader, long sizeUncompressed, int bytesPerPixel)
     {
       switch (bytesPerPixel)
       {
         case 1:
-          return AGSCompression.ReadRLE8(reader, sizeCompressed, sizeUncompressed);
+          return AGSCompression.ReadRLE8(reader, sizeUncompressed);
         case 2:
-          return AGSCompression.ReadRLE16(reader, sizeCompressed, sizeUncompressed);
+          return AGSCompression.ReadRLE16(reader, sizeUncompressed);
         case 4:
-          return AGSCompression.ReadRLE32(reader, sizeCompressed, sizeUncompressed);
+          return AGSCompression.ReadRLE32(reader, sizeUncompressed);
 
         default:
           throw new InvalidDataException("Unknown bytesPerPixel value is encountered!");
@@ -703,7 +703,7 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] pixels;
       if (compression == CompressionType.RLE)
         //NOTE(adm244): double check 'bytesPerPixel' value if sprite is indexed
-        pixels = DecompressRLE(reader, size, sizeUncompressed, bytesPerPixel);
+        pixels = DecompressRLE(reader, sizeUncompressed, bytesPerPixel);
       else if (compression == CompressionType.LZW)
         pixels = DecompressLZW(reader, sizeUncompressed);
       else if (compression == CompressionType.Uncompressed)

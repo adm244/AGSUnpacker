@@ -62,7 +62,18 @@ namespace AGSUnpacker.Lib.Graphics
       Int16 width = reader.ReadInt16();
       Int16 height = reader.ReadInt16();
 
-      byte[] buffer = AGSCompression.ReadAllegro(reader, width, height);
+      // NOTE(adm244): since commit 9a6b55bfe78bf0e9f24b2e3c2d1b073f850fae50
+      // "Common: simplified savecompressed_allegro() and renamed for clarity <...>"
+      // they "simplified" out the fact that image was compressed line-by-line
+      // and now it's compressed as a single buffer. Luckilly for them, it didn't break
+      // backwards-compatibility due to decompressors lack of care whether input
+      // was chuncked or not. (3.6.0.13)
+      // 
+      // This means we now can't rely on decompression method that expects input
+      // buffer to be compressed as line-by-line and forced to use a generic version
+      // which what "AGSCompression.ReadRLE8()" is doing...
+      //byte[] buffer = AGSCompression.ReadAllegro(reader, width, height);
+      byte[] buffer = AGSCompression.ReadRLE8(reader, width * height * bytesPerPixel);
       Debug.Assert(buffer.Length == (width * height * bytesPerPixel));
 
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
@@ -80,6 +91,9 @@ namespace AGSUnpacker.Lib.Graphics
 
       //byte[] pixels = image.InternalImage.GetPixels();
       byte[] pixels = image.GetPixels();
+
+      // NOTE(adm244): despite the fact described in "ReadAllegroImage",
+      // we still compress image on line-by-line basis to support pre 3.6.0.13 engine versions
       AGSCompression.WriteAllegro(writer, pixels, image.Width, image.Height);
 
       if (image.Palette == null)
