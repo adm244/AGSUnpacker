@@ -142,8 +142,13 @@ namespace AGSUnpacker.Lib.Room
 
     public void WriteToFile(string filePath, int roomVersion)
     {
+      //TODO(adm244): this entire room reading/writing code is a mess
+      // and not only AGS is to blame here, consider "encapsulating" version specifics
+
       using (FileStream stream = new FileStream(filePath, FileMode.Create))
       {
+        //FIXME(adm244): considering AGS now claims to support unicode, it's no longer valid
+        // to use Latin1 encoding to read "unicode compatable" files
         using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
         {
           writer.Write((UInt16)roomVersion);
@@ -154,6 +159,7 @@ namespace AGSUnpacker.Lib.Room
           if (!string.IsNullOrEmpty(Script.SourceCode))
             WriteRoomBlock(writer, roomVersion, BlockType.ScriptSource);
 
+          //FIXME(adm244): write only if it's not null
           WriteRoomBlock(writer, roomVersion, BlockType.ObjectNames);
 
           if (Background.Frames.Count > 1)
@@ -164,8 +170,13 @@ namespace AGSUnpacker.Lib.Room
           if (roomVersion >= 22)
             WriteRoomBlock(writer, roomVersion, BlockType.Properties);
 
+          //FIXME(adm244): write only if it's not null
           if (roomVersion >= 24)
             WriteRoomBlock(writer, roomVersion, BlockType.ObjectScriptNames);
+
+          //NOTE(adm244): ugly...
+          if (roomVersion >= 33 && Options.Count > 0)
+            WriteRoomExtensionBlock(writer, roomVersion, "ext_sopts");
 
           WriteRoomBlock(writer, roomVersion, BlockType.EndOfFile);
         }
@@ -207,6 +218,37 @@ namespace AGSUnpacker.Lib.Room
       }
     }
 
+    private void WriteRoomExtensionBlock(BinaryWriter writer, int roomVersion, string extensionId)
+    {
+      writer.Write((byte)BlockType.Extension);
+      writer.WriteFixedString(extensionId, 16);
+
+      long blockStartPreSize = writer.BaseStream.Position;
+
+      //NOTE(adm244): a placeholder for an actual value
+      writer.Write((UInt64)0xDEADBEEF_DEADBEEF);
+
+      long blockStart = writer.BaseStream.Position;
+
+      switch (extensionId)
+      {
+        case "ext_sopts":
+          WriteOptionsExtensionBlock(writer, roomVersion);
+          break;
+
+        default:
+          throw new NotImplementedException($"Room extension block '{extensionId}' is not implemented!");
+      }
+
+      long blockEnd = writer.BaseStream.Position;
+      long blockLength = blockEnd - blockStart;
+      Debug.Assert(blockLength < Int64.MaxValue);
+
+      writer.BaseStream.Seek(blockStartPreSize, SeekOrigin.Begin);
+      writer.Write((Int64)blockLength);
+      writer.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
+    }
+
     private void ReadOptionsExtensionBlock(BinaryReader reader, int roomVersion)
     {
       int count = reader.ReadInt32();
@@ -217,6 +259,17 @@ namespace AGSUnpacker.Lib.Room
         string value = reader.ReadPrefixedString32();
 
         Options.Add(key, value);
+      }
+    }
+
+    private void WriteOptionsExtensionBlock(BinaryWriter writer, int roomVersion)
+    {
+      writer.Write((Int32)Options.Count);
+
+      foreach (var option in Options)
+      {
+        writer.WritePrefixedString32(option.Key);
+        writer.WritePrefixedString32(option.Value);
       }
     }
 

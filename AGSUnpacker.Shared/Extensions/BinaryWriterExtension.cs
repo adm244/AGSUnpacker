@@ -51,6 +51,7 @@ namespace AGSUnpacker.Shared.Extensions
       writer.Write((char[])buffer);
     }
 
+    //FIXME(adm244): inconsistency in naming, this shouldn't add extra byte(!)
     public static void WriteFixedCString(this BinaryWriter writer, string text, int length)
     {
       char[] buffer = new char[length + 1];
