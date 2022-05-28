@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Text;
@@ -42,7 +43,7 @@ namespace AGSUnpacker.Lib.Room
     18:  v2.51 - vector scaling
     19:  v2.53 - interaction variables
     20:  v2.55 - shared palette backgrounds
-    21:  v2.55 - regions
+    21:  v2.55 - regions (same realese?)
     22:  v2.61 - encrypt room messages (first seen in v2.56d) + added properties block
     23:  v2.62 - object flags
     24:  v2.7  - hotspot script names + added object script names block
@@ -51,6 +52,11 @@ namespace AGSUnpacker.Lib.Room
     27:  v3.0 - store Y of bottom of object, not top
     28:  v3.0.3 - remove hotspot name length limit
     29:  v3.0.3 - high-res coords for object x/y, edges and hotspot walk-to point
+    30:  v3.4.0.4 - tint luminance for regions
+    31:  v3.4.1.5 - removed room object and hotspot name length limits
+    32:  v3.5.0 - 64-bit file offsets
+    33:  v3.5.0.8 - deprecated room resolution, added mask resolution
+    33:  v3.6.0 - extension blocks (no version bump?)
     */
     public int Version;
     public string Name;
@@ -69,6 +75,8 @@ namespace AGSUnpacker.Lib.Room
     public AGSInteractions Interactions;
     public AGSMessage[] Messages;
 
+    public Dictionary<string, string> Options;
+
     public AGSRoom()
       : this(string.Empty)
     {
@@ -78,7 +86,7 @@ namespace AGSUnpacker.Lib.Room
     public AGSRoom(string name)
     {
       Version = 29;
-      this.Name = name;
+      Name = name;
       Width = 320;
       Height = 200;
       ResolutionType = 1;
@@ -93,6 +101,8 @@ namespace AGSUnpacker.Lib.Room
       Properties = new AGSRoomProperties(Markup);
       Interactions = new AGSInteractions();
       Messages = new AGSMessage[0];
+
+      Options = new Dictionary<string, string>();
     }
 
     public void ReadFromFile(string filepath)
@@ -123,11 +133,13 @@ namespace AGSUnpacker.Lib.Room
         if (blockType == BlockType.EndOfFile)
           break;
 
-        ReadRoomBlock(reader, Version, blockType);
+        if (blockType == BlockType.Extension)
+          ReadRoomExtensionBlock(reader, Version);
+        else
+          ReadRoomBlock(reader, Version, blockType);
       }
     }
 
-    //NOTE(adm244): do we care about passing roomVersion here?
     public void WriteToFile(string filePath, int roomVersion)
     {
       using (FileStream stream = new FileStream(filePath, FileMode.Create))
@@ -176,9 +188,42 @@ namespace AGSUnpacker.Lib.Room
         writer.Write((Int64)length);
     }
 
+    private void ReadRoomExtensionBlock(BinaryReader reader, int roomVersion)
+    {
+      string id = reader.ReadFixedCString(16);
+      long size = reader.ReadInt64();
+
+      switch (id)
+      {
+        case "ext_sopts":
+          ReadOptionsExtensionBlock(reader, roomVersion);
+          break;
+
+        default:
+          Debug.Assert(false, $"Room extension block '{id}' is not supported!");
+          //NOTE(adm244): skip unknown extension block
+          reader.BaseStream.Seek(size, SeekOrigin.Current);
+          break;
+      }
+    }
+
+    private void ReadOptionsExtensionBlock(BinaryReader reader, int roomVersion)
+    {
+      int count = reader.ReadInt32();
+
+      for (int i = 0; i < count; ++i)
+      {
+        string key = reader.ReadPrefixedString32();
+        string value = reader.ReadPrefixedString32();
+
+        Options.Add(key, value);
+      }
+    }
+
     private void ReadRoomBlock(BinaryReader reader, int roomVersion, BlockType type)
     {
       //TODO(adm244): unused for now, maybe we should check it after reading a block
+      // OR redesign reading\writing so blocks are read into memory and then parsed?
       Int64 length = ReadRoomBlockLength(reader, roomVersion);
 
       switch (type)
@@ -939,6 +984,7 @@ namespace AGSUnpacker.Lib.Room
 
     private enum BlockType
     {
+      Extension = 0x00,
       Main = 0x01,
       ScriptSource = 0x02,
       ObjectNames = 0x05,
