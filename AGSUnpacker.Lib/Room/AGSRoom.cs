@@ -6,6 +6,7 @@ using System.Text;
 
 using AGSUnpacker.Lib.Graphics;
 using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Shared.FormatExtensions;
 using AGSUnpacker.Lib.Shared.Interaction;
 using AGSUnpacker.Shared.Extensions;
 using AGSUnpacker.Shared.Utils.Encryption;
@@ -125,18 +126,22 @@ namespace AGSUnpacker.Lib.Room
 
       while (true)
       {
-        byte blockTypeRead = reader.ReadByte();
-        if (!Enum.IsDefined(typeof(BlockType), (int)blockTypeRead))
-          throw new InvalidDataException($"Unknown room block encountered: {blockTypeRead}");
+        ExtensionBlock.BlockType blockType = ExtensionBlock.ReadSingle(reader, ReadRoomExtensionBlock);
+        BlockType roomBlockType = (BlockType)blockType;
 
-        BlockType blockType = (BlockType)blockTypeRead;
-        if (blockType == BlockType.EndOfFile)
+        if (roomBlockType == BlockType.EndOfFile)
           break;
 
-        if (blockType == BlockType.Extension)
-          ReadRoomExtensionBlock(reader, Version);
-        else
-          ReadRoomBlock(reader, Version, blockType);
+        bool isExtensionBlock = Enum.IsDefined(blockType) && blockType >= 0;
+        bool isRoomBlock = Enum.IsDefined(roomBlockType);
+
+        if (isExtensionBlock)
+          continue;
+
+        if (!isRoomBlock)
+          throw new InvalidDataException($"Unknown block type encountered: {blockType}");
+
+        ReadRoomBlock(reader, Version, roomBlockType);
       }
     }
 
@@ -174,9 +179,11 @@ namespace AGSUnpacker.Lib.Room
           if (roomVersion >= 24)
             WriteRoomBlock(writer, roomVersion, BlockType.ObjectScriptNames);
 
-          //NOTE(adm244): ugly...
-          if (roomVersion >= 33 && Options.Count > 0)
-            WriteRoomExtensionBlock(writer, roomVersion, "ext_sopts");
+          if (roomVersion >= 33)
+          {
+            if (Options.Count > 0)
+              ExtensionBlock.WriteSingle(writer, "ext_sopts", WriteRoomExtensionBlock);
+          }
 
           WriteRoomBlock(writer, roomVersion, BlockType.EndOfFile);
         }
@@ -199,57 +206,32 @@ namespace AGSUnpacker.Lib.Room
         writer.Write((Int64)length);
     }
 
-    private void ReadRoomExtensionBlock(BinaryReader reader, int roomVersion)
+    private bool ReadRoomExtensionBlock(BinaryReader reader, string id, long size)
     {
-      string id = reader.ReadFixedCString(16);
-      long size = reader.ReadInt64();
-
       switch (id)
       {
         case "ext_sopts":
-          ReadOptionsExtensionBlock(reader, roomVersion);
-          break;
+          return ReadOptionsExtensionBlock(reader);
 
         default:
           Debug.Assert(false, $"Room extension block '{id}' is not supported!");
-          //NOTE(adm244): skip unknown extension block
-          reader.BaseStream.Seek(size, SeekOrigin.Current);
-          break;
+          return false;
       }
     }
 
-    private void WriteRoomExtensionBlock(BinaryWriter writer, int roomVersion, string extensionId)
+    private bool WriteRoomExtensionBlock(BinaryWriter writer, string id)
     {
-      writer.Write((byte)BlockType.Extension);
-      writer.WriteFixedString(extensionId, 16);
-
-      long blockStartPreSize = writer.BaseStream.Position;
-
-      //NOTE(adm244): a placeholder for an actual value
-      writer.Write((UInt64)0xDEADBEEF_DEADBEEF);
-
-      long blockStart = writer.BaseStream.Position;
-
-      switch (extensionId)
+      switch (id)
       {
         case "ext_sopts":
-          WriteOptionsExtensionBlock(writer, roomVersion);
-          break;
+          return WriteOptionsExtensionBlock(writer);
 
         default:
-          throw new NotImplementedException($"Room extension block '{extensionId}' is not implemented!");
+          throw new NotImplementedException($"Room extension block '{id}' is not implemented!");
       }
-
-      long blockEnd = writer.BaseStream.Position;
-      long blockLength = blockEnd - blockStart;
-      Debug.Assert(blockLength < Int64.MaxValue);
-
-      writer.BaseStream.Seek(blockStartPreSize, SeekOrigin.Begin);
-      writer.Write((Int64)blockLength);
-      writer.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
     }
 
-    private void ReadOptionsExtensionBlock(BinaryReader reader, int roomVersion)
+    private bool ReadOptionsExtensionBlock(BinaryReader reader)
     {
       int count = reader.ReadInt32();
 
@@ -260,9 +242,11 @@ namespace AGSUnpacker.Lib.Room
 
         Options.Add(key, value);
       }
+
+      return true;
     }
 
-    private void WriteOptionsExtensionBlock(BinaryWriter writer, int roomVersion)
+    private bool WriteOptionsExtensionBlock(BinaryWriter writer)
     {
       writer.Write((Int32)Options.Count);
 
@@ -271,6 +255,8 @@ namespace AGSUnpacker.Lib.Room
         writer.WritePrefixedString32(option.Key);
         writer.WritePrefixedString32(option.Value);
       }
+
+      return true;
     }
 
     private void ReadRoomBlock(BinaryReader reader, int roomVersion, BlockType type)
@@ -1037,7 +1023,6 @@ namespace AGSUnpacker.Lib.Room
 
     private enum BlockType
     {
-      Extension = 0x00,
       Main = 0x01,
       ScriptSource = 0x02,
       ObjectNames = 0x05,
