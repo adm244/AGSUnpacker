@@ -57,6 +57,27 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
       writer.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
     }
 
+    public static bool ReadMultiple(BinaryReader reader, Func<BinaryReader, string, long, bool> readData)
+    {
+      bool result = true;
+
+      while (true)
+      {
+        BlockType blockType = ReadSingle(reader, readData);
+
+        if (!Enum.IsDefined(blockType) || blockType < 0)
+          throw new InvalidDataException($"Unknown extension block '{blockType}' encountered in game data!");
+
+        if (blockType == BlockType.InvalidData)
+          result = false;
+
+        if (blockType == BlockType.EndOfFile)
+          break;
+      }
+
+      return result;
+    }
+
     public enum BlockType
     {
       InvalidData = -1,
