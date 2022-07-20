@@ -22,10 +22,17 @@ namespace AGSUnpacker.Lib.Translation
     public int GameID { get; private set; }
     public string GameName { get; private set; }
 
+    public Dictionary<string, string> Options;
+
     public AGSTranslation()
     {
       OriginalLines = new List<string>();
       TranslatedLines = new List<string>();
+
+      GameID = 0;
+      GameName = string.Empty;
+
+      Options = new Dictionary<string, string>();
     }
 
     public AGSTranslation(IEnumerable<string> originalLines, IEnumerable<string> translatedLines)
@@ -148,43 +155,112 @@ namespace AGSUnpacker.Lib.Translation
           for (; ; )
           {
             Int32 blockType = reader.ReadInt32();
-            Int32 blockSize = reader.ReadInt32();
 
-            if (blockType == (int)BlockType.Content)
+            if (blockType == (int)BlockType.End)
+              break;
+
+            if (blockType == (int)BlockType.Extension)
             {
-              for (; ; )
+              string id = reader.ReadFixedCString(16);
+
+              //NOTE(adm244): there are two places in ags source that supposedly
+              // write translation files: cpp code and csharp code;
+              // "cpp" writes size as 32-bit integer and has a bug (yep) in calculation
+              // that makes it 4-bytes short, but luckily is never called from anywhere;
+              // "csharp" writes size as 64-bit integer, hardcodes all values and
+              // actually is being used for writing tra files.
+              //
+              // Thus, we read 64-bit integer here (and are not using ExtensionBlock)
+              long size = reader.ReadInt64();
+
+              long blockEnd = reader.BaseStream.Position + size;
+              if (!ReadExtensionBlock(reader, id, size))
               {
-                string original = reader.ReadEncryptedCString();
-                string translation = reader.ReadEncryptedCString();
-
-                if ((original.Length < 1) && (translation.Length < 1))
-                  break;
-
-                OriginalLines.Add(original);
-                TranslatedLines.Add(translation);
+                //NOTE(adm244): skip extension block if it cannot be parsed
+                Debug.Assert(false, $"Cannot read translation extension block '{blockType}'!");
+                reader.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
               }
-            }
-            else if (blockType == (int)BlockType.Header)
-            {
-              GameID = reader.ReadInt32();
-              GameName = reader.ReadEncryptedCString();
-            }
-            else if (blockType == (int)BlockType.Settings)
-            {
-              //TODO(adm244): read settings
-              break;
-            }
-            else if (blockType == (int)BlockType.End)
-            {
-              break;
             }
             else
             {
-              Debug.Assert(false, "Unknown block type encountered!");
-              break;
+              long size = reader.ReadInt32();
+
+              long blockEnd = reader.BaseStream.Position + size;
+              if (!ReadTranslationBlock(reader, (BlockType)blockType, size))
+              {
+                //NOTE(adm244): skip block if it cannot be parsed
+                Debug.Assert(false, $"Cannot read translation block '{blockType}'!");
+                reader.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
+              }
             }
           }
         }
+      }
+    }
+
+    //FIXME(adm244): duplicate of AGSRoom.ReadOptionsExtensionBlock
+    private bool ReadOptionsExtensionBlock(BinaryReader reader)
+    {
+      int count = reader.ReadInt32();
+
+      for (int i = 0; i < count; ++i)
+      {
+        string key = reader.ReadPrefixedString32();
+        string value = reader.ReadPrefixedString32();
+
+        Options.Add(key, value);
+      }
+
+      return true;
+    }
+
+    private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
+    {
+      switch (id)
+      {
+        case "ext_sopts":
+          return ReadOptionsExtensionBlock(reader);
+
+        default:
+          Debug.Assert(false, $"Unknown extension block '{id}' encountered!");
+          return false;
+      }
+    }
+
+    private bool ReadTranslationBlock(BinaryReader reader, BlockType type, long size)
+    {
+      //TODO(adm244): check size
+
+      switch (type)
+      {
+        case BlockType.Content:
+        {
+          for (; ; )
+          {
+            string original = reader.ReadEncryptedCString();
+            string translation = reader.ReadEncryptedCString();
+
+            if ((original.Length < 1) && (translation.Length < 1))
+              return true;
+
+            OriginalLines.Add(original);
+            TranslatedLines.Add(translation);
+          }
+        }
+
+        case BlockType.Header:
+          GameID = reader.ReadInt32();
+          //FIXME(adm244): unicode support !!!
+          GameName = reader.ReadEncryptedCString();
+          return true;
+
+        case BlockType.Settings:
+          //TODO(adm244): implement settings block
+          return false;
+
+        default:
+          Debug.Assert(false, "Unknown block type encountered!");
+          return false;
       }
     }
 
@@ -268,8 +344,8 @@ namespace AGSUnpacker.Lib.Translation
 
     private enum BlockType
     {
-      Invalid = 0,
       End = -1,
+      Extension = 0,
       Content = 1,
       Header = 2,
       Settings = 3,

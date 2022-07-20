@@ -44,8 +44,11 @@ namespace AGSUnpacker.Shared.Extensions
     public static string ReadEncryptedCString(this BinaryReader reader)
     {
       Int32 length = reader.ReadInt32();
-      if ((length <= 0) || (length > AGSStringUtils.MaxCStringLength))
+      if ((length < 0) || (length > AGSStringUtils.MaxCStringLength))
         throw new IndexOutOfRangeException();
+
+      if (length == 0)
+        return string.Empty;
 
       //NOTE(adm244): ASCII ReadChars is not reliable in this case since it replaces bytes > 0x7F
       // https://referencesource.microsoft.com/#mscorlib/system/text/asciiencoding.cs,879

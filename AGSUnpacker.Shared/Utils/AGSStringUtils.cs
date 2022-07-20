@@ -49,6 +49,13 @@ namespace AGSUnpacker.Shared.Utils
         return new string(p);
     }
 
+    public static unsafe string ConvertCStringMaybe(byte[] buffer)
+    {
+      char[] characters = Encoding.GetChars(buffer);
+      fixed (char* p = &characters[0])
+        return new string(p);
+    }
+
     public static string ConvertToString(byte[] buffer)
     {
       Debug.Assert(buffer != null);
