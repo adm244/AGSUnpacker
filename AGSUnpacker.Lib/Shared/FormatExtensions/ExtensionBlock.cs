@@ -8,9 +8,11 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
 {
   public static class ExtensionBlock
   {
-    public static BlockType ReadSingle(BinaryReader reader, Func<BinaryReader, string, long, bool> readData)
+    public static BlockType ReadSingle(BinaryReader reader,
+      Func<BinaryReader, string, long, bool> readData, Options options)
     {
-      BlockType blockType = (BlockType)reader.ReadByte();
+      BlockType blockType = (BlockType) (options.HasFlag(Options.Id32)
+        ? reader.ReadInt32() : reader.ReadByte());
       if (!Enum.IsDefined(blockType) || blockType < 0)
         return blockType;
 
@@ -18,7 +20,8 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
         return BlockType.EndOfFile;
 
       string id = reader.ReadFixedCString(16);
-      long size = reader.ReadInt64();
+      long size = options.HasFlag(Options.Size64)
+        ? reader.ReadInt64() : reader.ReadInt32();
 
       long blockEnd = reader.BaseStream.Position + size;
 
@@ -33,15 +36,23 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
       return BlockType.Extension;
     }
 
-    public static void WriteSingle(BinaryWriter writer, string id, Func<BinaryWriter, string, bool> writeData)
+    public static void WriteSingle(BinaryWriter writer, string id,
+      Func<BinaryWriter, string, bool> writeData, Options options)
     {
-      writer.Write((byte)BlockType.Extension);
+      if (options.HasFlag(Options.Id32))
+        writer.Write((Int32)BlockType.Extension);
+      else
+        writer.Write((byte)BlockType.Extension);
+
       writer.WriteFixedString(id, 16);
 
       long blockStartPreSize = writer.BaseStream.Position;
 
       //NOTE(adm244): a placeholder for an actual value
-      writer.Write((UInt64)0xDEADBEEF_DEADBEEF);
+      if (options.HasFlag(Options.Size64))
+        writer.Write((UInt64)0xDEADBEEF_DEADBEEF);
+      else
+        writer.Write((UInt32)0xDEADBEEF);
 
       long blockStart = writer.BaseStream.Position;
 
@@ -50,23 +61,29 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
 
       long blockEnd = writer.BaseStream.Position;
       long blockLength = blockEnd - blockStart;
-      Debug.Assert(blockLength < Int64.MaxValue);
 
       writer.BaseStream.Seek(blockStartPreSize, SeekOrigin.Begin);
-      writer.Write((Int64)blockLength);
+
+      if (options.HasFlag(Options.Size64))
+        writer.Write((Int64)blockLength);
+      else
+        writer.Write((Int32)blockLength);
+
       writer.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
     }
 
-    public static bool ReadMultiple(BinaryReader reader, Func<BinaryReader, string, long, bool> readData)
+    public static bool ReadMultiple(BinaryReader reader,
+      Func<BinaryReader, string, long, bool> readData, Options options)
     {
       bool result = true;
 
       while (true)
       {
-        BlockType blockType = ReadSingle(reader, readData);
+        BlockType blockType = ReadSingle(reader, readData, options);
 
         if (!Enum.IsDefined(blockType) || blockType < 0)
-          throw new InvalidDataException($"Unknown extension block '{blockType}' encountered in game data!");
+          throw new InvalidDataException(
+            $"Unknown extension block '{blockType}' encountered in game data!");
 
         if (blockType == BlockType.InvalidData)
           result = false;
@@ -84,6 +101,16 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
 
       Extension = 0x00,
       EndOfFile = 0xFF
+    }
+
+    [Flags]
+    public enum Options
+    {
+      Id8 = 0,
+      Id32 = 1,
+
+      Size32 = 0,
+      Size64 = 2,
     }
   }
 }

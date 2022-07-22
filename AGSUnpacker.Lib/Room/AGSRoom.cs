@@ -126,7 +126,8 @@ namespace AGSUnpacker.Lib.Room
 
       while (true)
       {
-        ExtensionBlock.BlockType blockType = ExtensionBlock.ReadSingle(reader, ReadRoomExtensionBlock);
+        ExtensionBlock.BlockType blockType = ExtensionBlock.ReadSingle(reader, ReadRoomExtensionBlock,
+          ExtensionBlock.Options.Id8 | ExtensionBlock.Options.Size64);
         BlockType roomBlockType = (BlockType)blockType;
 
         if (roomBlockType == BlockType.EndOfFile)
@@ -182,7 +183,8 @@ namespace AGSUnpacker.Lib.Room
           if (roomVersion >= 33)
           {
             if (Options.Count > 0)
-              ExtensionBlock.WriteSingle(writer, "ext_sopts", WriteRoomExtensionBlock);
+              ExtensionBlock.WriteSingle(writer, "ext_sopts", WriteRoomExtensionBlock,
+                ExtensionBlock.Options.Id8 | ExtensionBlock.Options.Size64);
           }
 
           WriteRoomBlock(writer, roomVersion, BlockType.EndOfFile);

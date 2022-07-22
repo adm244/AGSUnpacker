@@ -370,7 +370,8 @@ namespace AGSUnpacker.Lib.Game
         //NOTE(adm244): don't try to read extension blocks if at the eof
         if (r.BaseStream.Position < r.BaseStream.Length)
         {
-          ExtensionBlock.ReadMultiple(r, ReadExtensionBlock);
+          ExtensionBlock.ReadMultiple(r, ReadExtensionBlock,
+            ExtensionBlock.Options.Id8 | ExtensionBlock.Options.Size64);
         }
       }
     }
