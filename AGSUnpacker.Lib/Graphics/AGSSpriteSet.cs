@@ -702,8 +702,8 @@ namespace AGSUnpacker.Lib.Graphics
 
       byte[] pixels;
       if (compression == CompressionType.RLE)
-        //NOTE(adm244): double check 'bytesPerPixel' value if sprite is indexed
-        pixels = DecompressRLE(reader, sizeUncompressed, bytesPerPixel);
+        pixels = DecompressRLE(reader, sizeUncompressed,
+          format != SpriteFormat.Default ? 1 : bytesPerPixel);
       else if (compression == CompressionType.LZW)
         pixels = DecompressLZW(reader, sizeUncompressed);
       else if (compression == CompressionType.Uncompressed)
