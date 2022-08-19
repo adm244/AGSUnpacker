@@ -6,13 +6,12 @@ namespace AGSUnpacker.Lib.Utils
 {
   internal static class AGSCompression
   {
-    internal static byte[] ReadRLE8(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    internal static byte[] ReadRLE8(BinaryReader reader, long sizeUncompressed)
     {
       byte[] buffer = new byte[sizeUncompressed];
       int positionImage = 0;
 
-      long positionBase = reader.BaseStream.Position;
-      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      while (positionImage < sizeUncompressed)
       {
         sbyte control = (sbyte)reader.ReadByte();
         if (control == -128)
@@ -44,13 +43,12 @@ namespace AGSUnpacker.Lib.Utils
       return buffer;
     }
 
-    internal static byte[] ReadRLE16(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    internal static byte[] ReadRLE16(BinaryReader reader, long sizeUncompressed)
     {
       byte[] buffer = new byte[sizeUncompressed];
       int positionImage = 0;
 
-      long positionBase = reader.BaseStream.Position;
-      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      while (positionImage < sizeUncompressed)
       {
         sbyte control = (sbyte)reader.ReadByte();
         if (control == -128)
@@ -85,13 +83,12 @@ namespace AGSUnpacker.Lib.Utils
       return buffer;
     }
 
-    internal static byte[] ReadRLE32(BinaryReader reader, long sizeCompressed, long sizeUncompressed)
+    internal static byte[] ReadRLE32(BinaryReader reader, long sizeUncompressed)
     {
       byte[] buffer = new byte[sizeUncompressed];
       int positionImage = 0;
 
-      long positionBase = reader.BaseStream.Position;
-      for (long n = 0; n < sizeCompressed; n = (reader.BaseStream.Position - positionBase))
+      while (positionImage < sizeUncompressed)
       {
         sbyte control = (sbyte)reader.ReadByte();
         if (control == -128)
@@ -336,7 +333,7 @@ namespace AGSUnpacker.Lib.Utils
       }
     }
 
-    internal static byte[] ReadLZ77(BinaryReader reader, long sizeUncompressed, int bytesPerPixel, out int width, out int height)
+    internal static byte[] ReadLZ77(BinaryReader reader, long sizeUncompressed)
     {
       /*
        * AGS background image decompression algorithm:
@@ -414,54 +411,47 @@ namespace AGSUnpacker.Lib.Utils
         }
       }
 
-      //TODO(adm244): get from DTA info
-      //TODO(adm244): try to remember what this TODO means...
-      //TODO(adm244): consider using a utils function to convert from a byte buffer to int32
-      width = ((output[3] << 24) | (output[2] << 16) | (output[1] << 8) | output[0]) / bytesPerPixel;
-      height = ((output[7] << 24) | (output[6] << 16) | (output[5] << 8) | output[4]);
-
-      byte[] pixels = new byte[output.Length - 8];
-      Array.Copy(output, 8, pixels, 0, pixels.Length);
-
-      return pixels;
+      return output;
     }
 
-    internal static byte[] ReadAllegro(BinaryReader reader, int width, int height)
-    {
-      // TODO(adm244): see if we can use ReadRLE8() here
-      using (MemoryStream stream = new MemoryStream())
-      {
-        for (int y = 0; y < height; ++y)
-        {
-          int pixelsRead = 0;
-          while (pixelsRead < width)
-          {
-            sbyte index = (sbyte)reader.ReadByte();
-            if (index == -128) index = 0;
+    // NOTE(adm244): deprecated
+    //internal static byte[] ReadAllegro(BinaryReader reader, int width, int height)
+    //{
+    //  // TODO(adm244): see if we can use ReadRLE8() here
+    //  using (MemoryStream stream = new MemoryStream())
+    //  {
+    //    for (int y = 0; y < height; ++y)
+    //    {
+    //      int pixelsRead = 0;
+    //      while (pixelsRead < width)
+    //      {
+    //        sbyte index = (sbyte)reader.ReadByte();
+    //        if (index == -128) index = 0;
+    //
+    //        if (index < 0)
+    //        {
+    //          int count = (1 - index);
+    //          byte value = reader.ReadByte();
+    //
+    //          while ((count--) > 0)
+    //            stream.WriteByte(value);
+    //
+    //          pixelsRead += (1 - index);
+    //        }
+    //        else
+    //        {
+    //          byte[] buffer = reader.ReadBytes(index + 1);
+    //          stream.Write(buffer, 0, buffer.Length);
+    //          pixelsRead += (index + 1);
+    //        }
+    //      }
+    //    }
+    //
+    //    return stream.ToArray();
+    //  }
+    //}
 
-            if (index < 0)
-            {
-              int count = (1 - index);
-              byte value = reader.ReadByte();
-
-              while ((count--) > 0)
-                stream.WriteByte(value);
-
-              pixelsRead += (1 - index);
-            }
-            else
-            {
-              byte[] buffer = reader.ReadBytes(index + 1);
-              stream.Write(buffer, 0, buffer.Length);
-              pixelsRead += (index + 1);
-            }
-          }
-        }
-
-        return stream.ToArray();
-      }
-    }
-
+    // TODO(adm244): rename to something like "WriteRLE8Chuncked"?
     internal static void WriteAllegro(BinaryWriter writer, byte[] buffer, int width, int height)
     {
       for (int y = 0; y < height; ++y)
@@ -477,7 +467,7 @@ namespace AGSUnpacker.Lib.Utils
     //NOTE(adm244): it performs worse than the original (i.e. low speed) but
     // the file size is actually smaller since we don't interrupt the sequence
     //TODO(adm244): write a faster implementation
-    internal static byte[] LZ77Compress(byte[] buffer)
+    internal static byte[] WriteLZ77(byte[] buffer)
     {
       using (MemoryStream stream = new MemoryStream(buffer.Length))
       {

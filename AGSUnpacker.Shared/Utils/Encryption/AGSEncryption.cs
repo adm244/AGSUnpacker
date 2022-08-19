@@ -44,7 +44,11 @@
     public static unsafe string DecryptAvis(byte[] bufferEncrypted)
     {
       byte[] bufferDecrypted = DecryptAvisBuffer(bufferEncrypted);
-      return AGSStringUtils.ConvertCString(bufferDecrypted);
+      //NOTE(adm244): since around 3.6.0.6 null-terminator here is gone,
+      // but to support older versions we still expect it (it's just not required);
+      //
+      // that's decryption... whatchagonnado with encryption part? D:
+      return AGSStringUtils.ConvertCStringMaybe(bufferDecrypted);
     }
 
     public static byte[] EncryptAvisBuffer(byte[] bufferDecrypted)
@@ -67,6 +71,7 @@
       for (int i = 0; i < text.Length; ++i)
         buffer[i] = (byte)text[i];
 
+      //NOTE(adm244): oh, really?
       //NOTE(adm244): string must be null-terminated before encryption
       buffer[text.Length] = 0;
 
@@ -81,7 +86,8 @@
         //NOTE(adm244): convert char to byte before subtracting, so we underflow properly
         bufferDecrypted[i] = (byte)((byte)textEncrypted[i] - salt);
 
-      return AGSStringUtils.ConvertCString(bufferDecrypted);
+      //return AGSStringUtils.ConvertCString(bufferDecrypted);
+      return AGSStringUtils.ConvertToString(bufferDecrypted);
     }
   }
 }

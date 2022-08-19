@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Shared;
 using AGSUnpacker.Shared.Extensions;
 using AGSUnpacker.Shared.Utils.Encryption;
 
@@ -19,7 +20,7 @@ namespace AGSUnpacker.Lib.Assets
 
     private string RootFilename;
     private string RootFolder;
-    public CLibFile[] Files { get; private set; }
+    public CLibArchive[] Archives { get; private set; }
 
     private string RootFile
     {
@@ -30,7 +31,7 @@ namespace AGSUnpacker.Lib.Assets
     {
       RootFilename = string.Empty;
       RootFolder = string.Empty;
-      Files = new CLibFile[0];
+      Archives = new CLibArchive[0];
     }
 
     public static AssetsManager Create(string filePath)
@@ -53,52 +54,61 @@ namespace AGSUnpacker.Lib.Assets
 
     //TODO(adm244): implement packing
 
-    public void Extract(string folderPath)
+    public void Extract(string outputFolder)
     {
-      for (int i = 0; i < Files.Length; ++i)
+      for (int i = 0; i < Archives.Length; ++i)
       {
-        string fileFolderPath = Path.Combine(folderPath, Files[i].Filename);
-        Directory.CreateDirectory(fileFolderPath);
+        string archiveOutputFolder = Path.Combine(outputFolder, Archives[i].Filename);
+        Directory.CreateDirectory(archiveOutputFolder);
 
-        string libFilePath = Path.Combine(RootFolder, Files[i].Filename);
+        ExtractFilesFromArchive(Archives[i], archiveOutputFolder);
+      }
+    }
 
-        //NOTE(adm244): if doesn't exist try the root file
-        if (!File.Exists(libFilePath))
-          libFilePath = RootFile;
+    private void ExtractFilesFromArchive(CLibArchive archive, string archiveOutputFolder)
+    {
+      string archiveFile = GetArchiveFilepath(archive);
 
-        //NOTE(adm244): if STILL doesn't exist -- throw up
-        if (!File.Exists(libFilePath))
-          throw new InvalidDataException("CLib file does NOT exist!");
-
-        using (FileStream stream = new FileStream(libFilePath, FileMode.Open, FileAccess.Read))
+      using (FileStream stream = new FileStream(archiveFile, FileMode.Open, FileAccess.Read))
+      {
+        for (int i = 0; i < archive.Assets.Count; ++i)
         {
-          using (BinaryReader reader = new BinaryReader(stream, FileEncoding))
-          {
-            //TODO(adm244): verify signature?
+          string fileFolder = Path.GetDirectoryName(archive.Assets[i].Filepath);
+          string fileName = Path.GetFileName(archive.Assets[i].Filepath);
 
-            for (int j = 0; j < Files[i].Assets.Count; ++j)
-            {
-              reader.BaseStream.Seek(Files[i].Assets[j].Offset + Files[i].Offset, SeekOrigin.Begin);
+          string outputFolder = Path.Combine(archiveOutputFolder, fileFolder);
+          Directory.CreateDirectory(outputFolder);
 
-              string filePath = Path.Combine(fileFolderPath, Files[i].Assets[j].Filename);
-              using (FileStream outputStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-              {
-                using (BinaryWriter outputWriter = new BinaryWriter(outputStream, FileEncoding))
-                {
-                  long bytesToRead = Files[i].Assets[j].Size;
-                  while (bytesToRead > 0)
-                  {
-                    //NOTE(adm244): maybe try a bigger I/O buffer size
-                    long bytesRead = Math.Min(bytesToRead, 65536);
-                    byte[] buffer = reader.ReadBytes((int)bytesRead);
-                    bytesToRead -= bytesRead;
+          string outputFilepath = Path.Combine(outputFolder, fileName);
+          long offset = archive.Offset + archive.Assets[i].Offset;
+          long length = archive.Assets[i].Size;
+          ExtractFileFromStream(outputFilepath, stream, offset, length);
+        }
+      }
+    }
 
-                    outputWriter.Write(buffer);
-                  }
-                }
-              }
-            }
-          }
+    private string GetArchiveFilepath(CLibArchive archive)
+    {
+      string archiveFile = Path.Combine(RootFolder, archive.Filename);
+
+      //NOTE(adm244): if doesn't exist try the root file
+      if (!File.Exists(archiveFile))
+        archiveFile = RootFile;
+
+      //NOTE(adm244): if STILL doesn't exist -- throw up
+      if (!File.Exists(archiveFile))
+        throw new InvalidDataException("Could not find CLib archive!");
+
+      return archiveFile;
+    }
+
+    private void ExtractFileFromStream(string filepath, Stream stream, long offset, long length)
+    {
+      using (ReadOnlySubStream subStream = new ReadOnlySubStream(stream, offset, length))
+      {
+        using (FileStream outputStream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+        {
+          subStream.CopyTo(outputStream);
         }
       }
     }
@@ -106,7 +116,7 @@ namespace AGSUnpacker.Lib.Assets
     private bool TryReadMainCLibFile(string filePath)
     {
       RootFilename = Path.GetFileName(filePath);
-      Files = null;
+      Archives = null;
 
       if (!File.Exists(filePath))
         return false;
@@ -124,20 +134,20 @@ namespace AGSUnpacker.Lib.Assets
               return false;
           }
 
-          Files = ReadCLib(reader);
+          Archives = ReadCLib(reader);
 
           //HACK(adm244): quick 'n dirty appended clib support
           // assumes that the first entry is the appended clib
-          Files[0].Offset = offset;
+          Archives[0].Offset = offset;
         }
       }
 
-      return (Files != null);
+      return (Archives != null);
     }
 
-    private CLibFile[] ReadCLib(BinaryReader reader)
+    private CLibArchive[] ReadCLib(BinaryReader reader)
     {
-      CLibFile[] files = new CLibFile[0];
+      CLibArchive[] files = new CLibArchive[0];
 
       byte version = reader.ReadByte();
 
@@ -167,16 +177,16 @@ namespace AGSUnpacker.Lib.Assets
       return files;
     }
 
-    private CLibFile[] ReadCLib30(BinaryReader reader)
+    private CLibArchive[] ReadCLib30(BinaryReader reader)
     {
       Int32 seed = reader.ReadInt32();
 
       //NOTE(adm244): assuming asset files are stored sequentially
       Int32 filesCount = reader.ReadInt32();
-      CLibFile[] files = new CLibFile[filesCount];
+      CLibArchive[] files = new CLibArchive[filesCount];
       for (int i = 0; i < files.Length; ++i)
       {
-        files[i] = new CLibFile();
+        files[i] = new CLibArchive();
         files[i].Filename = reader.ReadCString();
       }
 
@@ -185,7 +195,7 @@ namespace AGSUnpacker.Lib.Assets
       {
         CLibAsset asset = new CLibAsset();
 
-        asset.Filename = reader.ReadCString();
+        asset.Filepath = reader.ReadCString();
         byte index = reader.ReadByte();
         asset.Offset = reader.ReadInt64();
         asset.Size = reader.ReadInt64();
@@ -199,7 +209,7 @@ namespace AGSUnpacker.Lib.Assets
       return files;
     }
 
-    private CLibFile[] ReadCLib21(BinaryReader reader)
+    private CLibArchive[] ReadCLib21(BinaryReader reader)
     {
       Int32 seed = reader.ReadInt32() + EncryptionSeedSalt;
       AGSEncoder encoder = new AGSEncoder(seed);
@@ -207,9 +217,9 @@ namespace AGSUnpacker.Lib.Assets
       //NOTE(adm244): assuming asset files are stored sequentially
       Int32 filesCount = encoder.ReadInt32(reader);
       
-      CLibFile[] files = new CLibFile[filesCount];
+      CLibArchive[] files = new CLibArchive[filesCount];
       for (int i = 0; i < files.Length; ++i)
-        files[i] = new CLibFile();
+        files[i] = new CLibArchive();
 
       for (int i = 0; i < files.Length; ++i)
         files[i].Filename = encoder.ReadString(reader);
@@ -220,7 +230,7 @@ namespace AGSUnpacker.Lib.Assets
         assets[i] = new AGSCLibAsset();
 
       for (int i = 0; i < assetsCount; ++i)
-        assets[i].Filename = encoder.ReadString(reader);
+        assets[i].Filepath = encoder.ReadString(reader);
 
       for (int i = 0; i < assetsCount; ++i)
         assets[i].Offset = encoder.ReadInt32(reader);
@@ -266,13 +276,13 @@ namespace AGSUnpacker.Lib.Assets
     //  return BuildAssetsLists(assets, ref files);
     //}
 
-    private CLibFile[] ReadCLibPre21(BinaryReader reader, int version)
+    private CLibArchive[] ReadCLibPre21(BinaryReader reader, int version)
     {
       Int32 filesCount = reader.ReadInt32();
-      CLibFile[] files = new CLibFile[filesCount];
+      CLibArchive[] files = new CLibArchive[filesCount];
       for (int i = 0; i < files.Length; ++i)
       {
-        files[i] = new CLibFile();
+        files[i] = new CLibArchive();
         if (version == 20)
           files[i].Filename = reader.ReadCString(50);
         else
@@ -292,15 +302,15 @@ namespace AGSUnpacker.Lib.Assets
           length /= 5;
 
           byte[] jibzler = reader.ReadBytes(length);
-          assets[i].Filename = AGSEncryption.DecryptJibzle(jibzler);
+          assets[i].Filepath = AGSEncryption.DecryptJibzle(jibzler);
         }
         else if (version >= 11)
         {
           byte[] jibzler = reader.ReadBytes(25);
-          assets[i].Filename = AGSEncryption.DecryptJibzle(jibzler);
+          assets[i].Filepath = AGSEncryption.DecryptJibzle(jibzler);
         }
         else
-          assets[i].Filename = reader.ReadFixedCString(25);
+          assets[i].Filepath = reader.ReadFixedCString(25);
       }
 
       for (int i = 0; i < assets.Length; ++i)
@@ -315,10 +325,10 @@ namespace AGSUnpacker.Lib.Assets
       return BuildAssetsLists(assets, ref files);
     }
 
-    private CLibFile[] ReadCLibPre10(BinaryReader reader, int version)
+    private CLibArchive[] ReadCLibPre10(BinaryReader reader, int version)
     {
-      CLibFile[] files = new CLibFile[1];
-      files[0] = new CLibFile();
+      CLibArchive[] files = new CLibArchive[1];
+      files[0] = new CLibArchive();
       files[0].Filename = RootFilename;
 
       byte salt = reader.ReadByte();
@@ -335,7 +345,7 @@ namespace AGSUnpacker.Lib.Assets
         assets[i] = new AGSCLibAsset();
 
         string filename = reader.ReadFixedCString(13);
-        assets[i].Filename = AGSEncryption.DecryptSalt(filename, salt);
+        assets[i].Filepath = AGSEncryption.DecryptSalt(filename, salt);
       }
 
       for (int i = 0; i < assetsCount; ++i)
@@ -351,7 +361,7 @@ namespace AGSUnpacker.Lib.Assets
       return BuildAssetsLists(assets, ref files);
     }
 
-    private CLibFile[] BuildAssetsLists(AGSCLibAsset[] assets, ref CLibFile[] files)
+    private CLibArchive[] BuildAssetsLists(AGSCLibAsset[] assets, ref CLibArchive[] files)
     {
       for (int i = 0; i < assets.Length; ++i)
       {
@@ -361,7 +371,7 @@ namespace AGSUnpacker.Lib.Assets
           return null;
 
         CLibAsset asset = new CLibAsset();
-        asset.Filename = assets[i].Filename;
+        asset.Filepath = assets[i].Filepath;
         asset.Offset = assets[i].Offset;
         asset.Size = assets[i].Size;
 
@@ -408,14 +418,14 @@ namespace AGSUnpacker.Lib.Assets
 
     private class AGSCLibAsset
     {
-      public string Filename;
+      public string Filepath;
       public Int64 Offset;
       public Int64 Size;
       public byte AssetFileIndex;
 
       public AGSCLibAsset()
       {
-        Filename = string.Empty;
+        Filepath = string.Empty;
         Offset = 0;
         Size = 0;
         AssetFileIndex = 0;
@@ -424,25 +434,25 @@ namespace AGSUnpacker.Lib.Assets
 
     public class CLibAsset
     {
-      public string Filename;
+      public string Filepath;
       public long Offset;
       public long Size;
 
       public CLibAsset()
       {
-        Filename = string.Empty;
+        Filepath = string.Empty;
         Offset = 0;
         Size = 0;
       }
     }
 
-    public class CLibFile
+    public class CLibArchive
     {
       public string Filename;
       public long Offset;
       public List<CLibAsset> Assets;
 
-      public CLibFile()
+      public CLibArchive()
       {
         Filename = string.Empty;
         Offset = 0;

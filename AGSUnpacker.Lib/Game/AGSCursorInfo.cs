@@ -11,6 +11,9 @@ namespace AGSUnpacker.Lib
     public string name;
     public byte flags;
 
+    // extension data
+    public int animdelay;
+
     public AGSCursorInfo()
     {
       picture = 0;
@@ -19,6 +22,8 @@ namespace AGSUnpacker.Lib
       view = 0;
       name = string.Empty;
       flags = 0;
+
+      animdelay = 5;
     }
 
     public void LoadFromStream(AGSAlignedStream ar)

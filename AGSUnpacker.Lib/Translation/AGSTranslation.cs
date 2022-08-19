@@ -4,16 +4,18 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Lib.Shared.FormatExtensions;
 using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Translation
 {
   public class AGSTranslation
   {
-    private static readonly string TRA_SIGNATURE = "AGSTranslation\x0";
+    private const string TRA_SIGNATURE = "AGSTranslation\x0";
 
-    public static readonly string TRS_TAG_GAMEID = "//#GameId=";
-    public static readonly string TRS_TAG_GAMENAME = "//#GameName=";
+    public const string TRS_TAG_GAMEID = "//#GameId=";
+    public const string TRS_TAG_GAMENAME = "//#GameName=";
+    public const string TRS_TAG_ENCODING = "//#Encoding=";
 
     // FIXME(adm244): temporary? public
     public List<string> OriginalLines { get; set; }
@@ -22,10 +24,30 @@ namespace AGSUnpacker.Lib.Translation
     public int GameID { get; private set; }
     public string GameName { get; private set; }
 
+    public Dictionary<string, string> Options;
+    
+    public string TextEncoding
+    {
+      get
+      {
+        if (Options.ContainsKey("encoding"))
+          return Options["encoding"];
+
+        return "ASCII";
+      }
+
+      set => Options["encoding"] = value;
+    }
+
     public AGSTranslation()
     {
       OriginalLines = new List<string>();
       TranslatedLines = new List<string>();
+
+      GameID = 0;
+      GameName = string.Empty;
+
+      Options = new Dictionary<string, string>();
     }
 
     public AGSTranslation(IEnumerable<string> originalLines, IEnumerable<string> translatedLines)
@@ -73,6 +95,10 @@ namespace AGSUnpacker.Lib.Translation
           //TODO(adm244): implement settings block
           //WriteBlock(writer, BlockType.Settings);
 
+          if (Options.Count > 0)
+            ExtensionBlock.WriteSingle(writer, "ext_sopts", WriteExtensionBlock,
+              ExtensionBlock.Options.Id32 | ExtensionBlock.Options.Size64);
+
           WriteBlock(writer, BlockType.End);
         }
       }
@@ -105,8 +131,8 @@ namespace AGSUnpacker.Lib.Translation
               writer.WriteEncryptedCString(TranslatedLines[i]);
             }
 
-            //NOTE(adm244): write empty strings so parser knows this block has ended
-            // no idea why they just didn't use a block size value...
+            //NOTE(adm244): write empty strings so parser knows this block has ended;
+            // no idea why they just don't use a block size value...
             writer.WriteEncryptedCString("");
             writer.WriteEncryptedCString("");
           } break;
@@ -147,44 +173,128 @@ namespace AGSUnpacker.Lib.Translation
 
           for (; ; )
           {
-            Int32 blockType = reader.ReadInt32();
-            Int32 blockSize = reader.ReadInt32();
+            //NOTE(adm244): there are two places in ags source that supposedly
+            // write translation files: cpp code and csharp code;
+            // "cpp" writes size as 32-bit integer and has a bug (yep) in calculation
+            // that makes it 4-bytes short, but luckily is never called from anywhere;
+            // "csharp" writes size as 64-bit integer, hardcodes all values and
+            // is actually being used for writing tra files.
+            //
+            // Thus, we read block size as 64-bit integer here
+            ExtensionBlock.BlockType extensionBlockType = ExtensionBlock.ReadSingle(reader, ReadExtensionBlock,
+              ExtensionBlock.Options.Id32 | ExtensionBlock.Options.Size64);
+            BlockType blockType = (BlockType)extensionBlockType;
 
-            if (blockType == (int)BlockType.Content)
-            {
-              for (; ; )
-              {
-                string original = reader.ReadEncryptedCString();
-                string translation = reader.ReadEncryptedCString();
+            if (blockType == BlockType.End)
+              break;
 
-                if ((original.Length < 1) && (translation.Length < 1))
-                  break;
+            //FIXME(adm244): well, this check is weird...
+            bool isExtensionBlock = Enum.IsDefined(extensionBlockType) && extensionBlockType >= 0;
+            bool isTranslationBlock = Enum.IsDefined(blockType);
 
-                OriginalLines.Add(original);
-                TranslatedLines.Add(translation);
-              }
-            }
-            else if (blockType == (int)BlockType.Header)
-            {
-              GameID = reader.ReadInt32();
-              GameName = reader.ReadEncryptedCString();
-            }
-            else if (blockType == (int)BlockType.Settings)
-            {
-              //TODO(adm244): read settings
-              break;
-            }
-            else if (blockType == (int)BlockType.End)
-            {
-              break;
-            }
-            else
-            {
-              Debug.Assert(false, "Unknown block type encountered!");
-              break;
-            }
+            if (isExtensionBlock)
+              continue;
+
+            if (!isTranslationBlock)
+              throw new InvalidDataException($"Unknown block type encountered: {blockType}");
+
+            ReadTranslationBlock(reader, blockType);
           }
         }
+      }
+    }
+
+    //FIXME(adm244): duplicate of AGSRoom.ReadOptionsExtensionBlock
+    private bool ReadOptionsExtensionBlock(BinaryReader reader)
+    {
+      int count = reader.ReadInt32();
+
+      for (int i = 0; i < count; ++i)
+      {
+        string key = reader.ReadPrefixedString32();
+        string value = reader.ReadPrefixedString32();
+
+        Options.Add(key, value);
+      }
+
+      return true;
+    }
+
+    //FIXME(adm244): duplicate of AGSRoom.WriteOptionsExtensionBlock
+    private bool WriteOptionsExtensionBlock(BinaryWriter writer)
+    {
+      writer.Write((Int32)Options.Count);
+
+      foreach (var option in Options)
+      {
+        writer.WritePrefixedString32(option.Key);
+        writer.WritePrefixedString32(option.Value);
+      }
+
+      return true;
+    }
+
+    private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
+    {
+      switch (id)
+      {
+        case "ext_sopts":
+          return ReadOptionsExtensionBlock(reader);
+
+        default:
+          Debug.Assert(false, $"Unknown extension block '{id}' encountered!");
+          return false;
+      }
+    }
+
+    private bool WriteExtensionBlock(BinaryWriter writer, string id)
+    {
+      switch (id)
+      {
+        case "ext_sopts":
+          return WriteOptionsExtensionBlock(writer);
+
+        default:
+          Debug.Assert(false, $"Unknown extension block '{id}' encountered!");
+          return false;
+      }
+    }
+
+    private bool ReadTranslationBlock(BinaryReader reader, BlockType type)
+    {
+      //TODO(adm244): check size
+      long size = reader.ReadInt32();
+
+      switch (type)
+      {
+        case BlockType.Content:
+        {
+          for (; ; )
+          {
+            string original = reader.ReadEncryptedCString();
+            string translation = reader.ReadEncryptedCString();
+
+            if ((original.Length < 1) && (translation.Length < 1))
+              return true;
+
+            OriginalLines.Add(original);
+            TranslatedLines.Add(translation);
+          }
+        }
+
+        case BlockType.Header:
+          GameID = reader.ReadInt32();
+          //FIXME(adm244): unicode support !!!
+          GameName = reader.ReadEncryptedCString();
+          return true;
+
+        case BlockType.Settings:
+          //TODO(adm244): implement settings block
+          return false;
+
+        default:
+          Debug.Assert(false, "Unknown block type encountered!");
+          return false;
       }
     }
 
@@ -211,6 +321,10 @@ namespace AGSUnpacker.Lib.Translation
               else if (line.StartsWith(TRS_TAG_GAMENAME))
               {
                 translation.GameName = line.Substring(TRS_TAG_GAMENAME.Length);
+              }
+              else if (line.StartsWith(TRS_TAG_ENCODING))
+              {
+                translation.TextEncoding = line.Substring(TRS_TAG_ENCODING.Length);
               }
 
               continue;
@@ -256,6 +370,7 @@ namespace AGSUnpacker.Lib.Translation
 
           writer.WriteLine("{0}{1}", TRS_TAG_GAMEID, GameID);
           writer.WriteLine("{0}{1}", TRS_TAG_GAMENAME, GameName);
+          writer.WriteLine("{0}{1}", TRS_TAG_ENCODING, TextEncoding);
 
           for (int i = 0; i < OriginalLines.Count; ++i)
           {
@@ -268,7 +383,6 @@ namespace AGSUnpacker.Lib.Translation
 
     private enum BlockType
     {
-      Invalid = 0,
       End = -1,
       Content = 1,
       Header = 2,

@@ -6,6 +6,7 @@ using System.Text;
 
 using AGSUnpacker.Lib.Game.View;
 using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Shared.FormatExtensions;
 using AGSUnpacker.Lib.Shared.Interaction;
 using AGSUnpacker.Shared.Extensions;
 using AGSUnpacker.Shared.Utils.Encryption;
@@ -31,6 +32,8 @@ namespace AGSUnpacker.Lib.Game
     public char[] save_folder;
     public byte[] font_flags;
     public byte[] font_outlines;
+    public int[] font_outlines_thickness;
+    public int[] font_outlines_style;
     public byte[] sprite_flags;
     public AGSInventoryItem[] inventoryItems;
     public AGSCursorInfo[] cursors;
@@ -66,6 +69,8 @@ namespace AGSUnpacker.Lib.Game
       save_folder = new char[0];
       font_flags = new byte[0];
       font_outlines = new byte[0];
+      font_outlines_thickness = new int[0];
+      font_outlines_style = new int[0];
       sprite_flags = new byte[0];
       inventoryItems = new AGSInventoryItem[0];
       cursors = new AGSCursorInfo[0];
@@ -358,6 +363,64 @@ namespace AGSUnpacker.Lib.Game
       if (dta_version >= 36) // 2.8 ???
       {
         ParseRoomsDebugInfo(r);
+      }
+
+      if (dta_version > 50) // > 3.5.0
+      {
+        //NOTE(adm244): don't try to read extension blocks if at the eof
+        if (r.BaseStream.Position < r.BaseStream.Length)
+        {
+          ExtensionBlock.ReadMultiple(r, ReadExtensionBlock,
+            ExtensionBlock.Options.Id8 | ExtensionBlock.Options.Size64);
+        }
+      }
+    }
+
+    private bool ReadFontsExtensionBlock(BinaryReader reader)
+    {
+      font_outlines_thickness = new int[setup.fonts_count];
+      font_outlines_style = new int[setup.fonts_count];
+
+      for (int i = 0; i < setup.fonts_count; ++i)
+      {
+        font_outlines_thickness[i] = reader.ReadInt32();
+        font_outlines_style[i] = reader.ReadInt32();
+
+        //NOTE(adm244): skip over reserved ints
+        // (btw, why do they reserve space if there's block size right there
+        //  and it's trivial to skip over unknown options and add extra stuff?)
+        reader.BaseStream.Seek(4 * sizeof(Int32), SeekOrigin.Current);
+      }
+
+      return true;
+    }
+
+    private bool ReadCursorsExtensionBlock(BinaryReader reader)
+    {
+      for (int i = 0; i < setup.cursors_count; ++i)
+      {
+        cursors[i].animdelay = reader.ReadInt32();
+
+        //NOTE(adm244): skip over reserved ints
+        reader.BaseStream.Seek(3 * sizeof(Int32), SeekOrigin.Current);
+      }
+
+      return true;
+    }
+
+    private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
+    {
+      switch (id)
+      {
+        case "v360_fonts":
+          return ReadFontsExtensionBlock(reader);
+
+        case "v360_cursors":
+          return ReadCursorsExtensionBlock(reader);
+
+        default:
+          Debug.Assert(false, $"Data extension block '{id}' is not supported!");
+          return false;
       }
     }
 

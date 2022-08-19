@@ -62,7 +62,18 @@ namespace AGSUnpacker.Lib.Graphics
       Int16 width = reader.ReadInt16();
       Int16 height = reader.ReadInt16();
 
-      byte[] buffer = AGSCompression.ReadAllegro(reader, width, height);
+      // NOTE(adm244): since commit 9a6b55bfe78bf0e9f24b2e3c2d1b073f850fae50
+      // "Common: simplified savecompressed_allegro() and renamed for clarity <...>"
+      // they "simplified" out the fact that image was compressed line-by-line
+      // and now it's compressed as a single buffer. Luckilly for them, it didn't break
+      // backwards-compatibility due to decompressors lack of care whether input
+      // was chuncked or not. (3.6.0.13)
+      // 
+      // This means we now can't rely on decompression method that expects input
+      // buffer to be compressed as line-by-line and forced to use a generic version
+      // which what "AGSCompression.ReadRLE8()" is doing...
+      //byte[] buffer = AGSCompression.ReadAllegro(reader, width, height);
+      byte[] buffer = AGSCompression.ReadRLE8(reader, width * height * bytesPerPixel);
       Debug.Assert(buffer.Length == (width * height * bytesPerPixel));
 
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
@@ -80,6 +91,9 @@ namespace AGSUnpacker.Lib.Graphics
 
       //byte[] pixels = image.InternalImage.GetPixels();
       byte[] pixels = image.GetPixels();
+
+      // NOTE(adm244): despite the fact described in "ReadAllegroImage",
+      // we still compress image on line-by-line basis to support pre 3.6.0.13 engine versions
       AGSCompression.WriteAllegro(writer, pixels, image.Width, image.Height);
 
       if (image.Palette == null)
@@ -98,7 +112,7 @@ namespace AGSUnpacker.Lib.Graphics
       // TODO(adm244): check compressed size; or read buffer first and then decode
       Int32 sizeCompressed = reader.ReadInt32();
 
-      byte[] bufferPixels = AGSCompression.ReadLZ77(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
+      byte[] bufferPixels = ReadLZ77Image(reader, sizeUncompressed, bytesPerPixel, out int width, out int height);
       PixelFormat format = PixelFormatExtension.FromBytesPerPixel(bytesPerPixel);
 
       // CHECK(adm244): palette format in room files
@@ -118,6 +132,24 @@ namespace AGSUnpacker.Lib.Graphics
         bitmap = bitmap.Convert(PixelFormat.Rgb24);
 
       return bitmap;
+    }
+
+    private static byte[] ReadLZ77Image(BinaryReader reader, long sizeUncompressed, int bytesPerPixel, out int width, out int height)
+    {
+      byte[] buffer = AGSCompression.ReadLZ77(reader, sizeUncompressed);
+
+      width = BitConverter.ToInt32(buffer, 0) / bytesPerPixel;
+      height = BitConverter.ToInt32(buffer, 4);
+
+      //TODO(adm244): consider using a utils function to convert from a byte buffer to int32
+      //width = ((buffer[3] << 24) | (buffer[2] << 16) | (buffer[1] << 8) | buffer[0]) / bytesPerPixel;
+      //height = ((buffer[7] << 24) | (buffer[6] << 16) | (buffer[5] << 8) | buffer[4]);
+
+      // TODO(adm244): consider switching to Spans
+      byte[] pixels = new byte[buffer.Length - 8];
+      Array.Copy(buffer, 8, pixels, 0, pixels.Length);
+
+      return pixels;
     }
 
     public static void WriteLZ77Image(BinaryWriter writer, Bitmap image, int bytesPerPixel)
@@ -141,15 +173,16 @@ namespace AGSUnpacker.Lib.Graphics
       byte[] pixels = image.GetPixels();
       Debug.Assert(pixels.Length == (image.Width * image.Height * bytesPerPixel));
 
+      // TODO(adm244): use stream write to directly write size and pixel data
       byte[] buffer = PreAppendImageSize(image.Width, image.Height, bytesPerPixel, pixels);
-      byte[] bufferCompressed = AGSCompression.LZ77Compress(buffer);
+      byte[] bufferCompressed = AGSCompression.WriteLZ77(buffer);
 
       writer.Write((UInt32)buffer.Length);
       writer.Write((UInt32)bufferCompressed.Length);
       writer.Write((byte[])bufferCompressed);
     }
 
-    //TODO(adm244): this method looks suspicious, investigate
+    // TODO(adm244): remove this method
     private static byte[] PreAppendImageSize(int width, int height, int bytesPerPixel, byte[] pixels)
     {
       byte[] rawData = new byte[pixels.Length + 8];
