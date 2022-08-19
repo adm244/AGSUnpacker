@@ -4,10 +4,10 @@ A program for unpacking/repacking AGS games assets/sprites, extracting text for 
 Written in C#.
 
 ## Supported versions
-Currently it supports games made with AGS 2.54 and newer. Latest supported AGS version is 3.5.0.
+Currently it supports games made with AGS 2.54 and newer. Latest supported AGS version is 3.6.0.
 
 ## Third-party requirements
-* [.NET 5](https://dotnet.microsoft.com/en-us/download/dotnet/5.0)
+* [.NET 6](https://dotnet.microsoft.com/en-us/download/dotnet/6.0/runtime)
 
 **AGSUnpacker.UI:**
 * [Microsoft.Toolkit.Mvvm](https://www.nuget.org/packages/Microsoft.Toolkit.Mvvm)
