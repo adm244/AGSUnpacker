@@ -637,13 +637,16 @@ namespace AGSUnpacker.Lib.Room
 
     private void ReadInteractions(BinaryReader reader, int roomVersion)
     {
-      if (roomVersion >= 19) // ???
+      if (roomVersion >= 19) // 2.53
       {
         Int32 interactionVariablesCount = reader.ReadInt32();
 
-        //TODO(adm244): implement old interaction variables reader
-        if (interactionVariablesCount > 0)
-          throw new NotImplementedException("CRM: Interaction variables reader is not implemented.");
+        Interactions.InteractionsLegacy = new AGSInteractionLegacy[interactionVariablesCount];
+        for (int i = 0; i < interactionVariablesCount; ++i)
+        {
+          Interactions.InteractionsLegacy[i] = new AGSInteractionLegacy();
+          Interactions.InteractionsLegacy[i].ReadFromStream(reader);
+        }
       }
 
       if (roomVersion >= 15) // ???
@@ -670,8 +673,14 @@ namespace AGSUnpacker.Lib.Room
     private void WriteInteractions(BinaryWriter writer, int roomVersion)
     {
       if (roomVersion >= 19) // ???
-        //TODO(adm244): implement old interaction variables writer
-        writer.Write((Int32)0x0);
+      {
+        writer.Write((Int32)Interactions.InteractionsLegacy.Length);
+
+        for (int i = 0; i < Interactions.InteractionsLegacy.Length; ++i)
+        {
+          Interactions.InteractionsLegacy[i].WriteToStream(writer);
+        }
+      }
 
       if (roomVersion >= 15) // ???
       {
