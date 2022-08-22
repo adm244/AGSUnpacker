@@ -1,5 +1,5 @@
 ﻿
-using Microsoft.Toolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AGSUnpacker.UI.Core
 {

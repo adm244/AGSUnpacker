@@ -5,7 +5,7 @@ using System.Windows.Media.Imaging;
 
 using AGSUnpacker.Lib.Room;
 
-using Microsoft.Toolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace AGSUnpacker.UI.Models.Room
 {

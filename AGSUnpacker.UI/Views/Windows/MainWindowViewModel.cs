@@ -12,7 +12,7 @@ using AGSUnpacker.Lib.Utils;
 using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Services;
 
-using Microsoft.Toolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
 
 namespace AGSUnpacker.UI.Views.Windows
