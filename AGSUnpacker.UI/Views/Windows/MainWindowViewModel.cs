@@ -283,6 +283,50 @@ namespace AGSUnpacker.UI.Views.Windows
     #endregion
     #endregion
 
+    #region ExtractScriptsCommand
+    private IAsyncRelayCommand _extractScriptsCommand;
+    public IAsyncRelayCommand ExtractScriptsCommand
+    {
+      get => _extractScriptsCommand;
+      set => SetProperty(ref _extractScriptsCommand, value);
+    }
+
+    private Task OnExtractScriptsExecute()
+    {
+      return ExtractAsync("Select AGS game executable", "AGS game executable|*.exe",
+        (filepath, sourceFolder) =>
+        {
+          string targetFolder = Path.Combine(sourceFolder, "Scripts");
+          ScriptExtractor.ExtractFromFolder(sourceFolder, targetFolder);
+        }
+      );
+    }
+
+    private bool OnCanExtractScriptsExecute()
+    {
+      return !ExtractScriptsCommand.IsRunning;
+    }
+    #endregion
+
+    #region InjectScriptCommand
+    private IAsyncRelayCommand _injectScriptCommand;
+    public IAsyncRelayCommand InjectScriptCommand
+    {
+      get => _injectScriptCommand;
+      set => SetProperty(ref _injectScriptCommand, value);
+    }
+
+    private Task OnInjectScriptExecute()
+    {
+      return Task.CompletedTask;
+    }
+
+    private bool OnCanInjectScriptExecute()
+    {
+      return false;
+    }
+    #endregion
+
     // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
     private Task SelectFileAsync(string title, string filter, Action<string> action)
     {
@@ -462,6 +506,12 @@ namespace AGSUnpacker.UI.Views.Windows
 
       CompileTranslationCommand = new AsyncRelayCommand(OnCompileTraslationExecute, OnCanCompileTranslationExecute);
       CompileTranslationCommand.PropertyChanged += OnPropertyChanged;
+
+      ExtractScriptsCommand = new AsyncRelayCommand(OnExtractScriptsExecute, OnCanExtractScriptsExecute);
+      ExtractScriptsCommand.PropertyChanged += OnPropertyChanged;
+
+      InjectScriptCommand = new AsyncRelayCommand(OnInjectScriptExecute, OnCanInjectScriptExecute);
+      InjectScriptCommand.PropertyChanged += OnPropertyChanged;
 
       ExtractGameIdCommand = new AsyncRelayCommand(OnExtractGameIdExecute, OnCanExtractGameIdExecute);
       ExtractGameIdCommand.PropertyChanged += OnPropertyChanged;

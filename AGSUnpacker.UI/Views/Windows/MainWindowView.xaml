@@ -8,7 +8,8 @@
         d:DataContext="{d:DesignInstance Type=local:MainWindowViewModel}"
         mc:Ignorable="d"
         Title="{Binding Title, FallbackValue='Title'}"
-        Height="480" Width="210" ResizeMode="NoResize"
+        MinHeight="200" MinWidth="400" MaxHeight="640" MaxWidth="800"
+        SizeToContent="WidthAndHeight" ResizeMode="NoResize"
         Margin="0" Padding="0">
   <Window.Resources>
     <conv:AppStatusToStringConverter x:Key="StatusConverter"/>
@@ -27,59 +28,83 @@
     </Style>
   </Window.Resources>
 
-  <DockPanel>
-    <StatusBar DockPanel.Dock="Bottom" Background="#ddd">
-      <StatusBarItem>
-        <TextBlock Text="{Binding Status, Converter={StaticResource StatusConverter},
+  <Grid Background="#eee">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="*"/>
+      <RowDefinition Height="50"/>
+    </Grid.RowDefinitions>
+
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*"/>
+      <ColumnDefinition Width="*"/>
+    </Grid.ColumnDefinitions>
+
+    <!-- Footer -->
+    <DockPanel Grid.Row="1" Grid.ColumnSpan="2">
+      <StatusBar DockPanel.Dock="Bottom" Background="#ddd">
+        <StatusBarItem>
+          <TextBlock Text="{Binding Status, Converter={StaticResource StatusConverter},
           FallbackValue='Status'}"/>
-      </StatusBarItem>
-      <StatusBarItem HorizontalAlignment="Right">
-        <TextBlock Text="{Binding TasksRunning, StringFormat='\{0} tasks running',
+        </StatusBarItem>
+        <StatusBarItem HorizontalAlignment="Right">
+          <TextBlock Text="{Binding TasksRunning, StringFormat='\{0} tasks running',
         FallbackValue='0 tasks running'}"/>
-      </StatusBarItem>
-    </StatusBar>
-    
-    <Border Margin="0" Background="#eee">
-      <StackPanel Margin="10" Style="{StaticResource SideMenu}">
-        <!-- Unpack section -->
-        <GroupBox Header="Unpack">
-          <StackPanel>
-            <Button Content="Unpack Assets" Command="{Binding UnpackAssetsCommand}"/>
-            <Button Content="Unpack Sprites" Command="{Binding UnpackSpritesCommand}"/>
-          </StackPanel>
-        </GroupBox>
+        </StatusBarItem>
+      </StatusBar>
 
-        <!-- Repack section -->
-        <GroupBox Header="Repack">
-          <StackPanel>
-            <Button Content="Repack Assets" Command="{Binding RepackAssetsCommand}"
-                    ToolTipService.ShowOnDisabled="True" ToolTip="Not implemented yet"/>
-            <Button Content="Repack Sprites" Command="{Binding RepackSpritesCommand}"/>
-          </StackPanel>
-        </GroupBox>
-
-        <!-- Translation section -->
-        <GroupBox Header="Translation">
-          <StackPanel>
-            <Button Content="Extract TRS from Assets" Command="{Binding ExtractTranslationCommand}"/>
-            <Button Content="Decompile TRA" Command="{Binding DecompileTranslationCommand}"/>
-            <Button Content="Compile TRS" Command="{Binding CompileTranslationCommand}"/>
-          </StackPanel>
-        </GroupBox>
-
-        <!-- Extra section -->
-        <GroupBox Header="Extra">
-          <StackPanel>
-            <Button Content="Extract Game ID" Command="{Binding ExtractGameIdCommand}"/>
-            <Button Content="Change room background" Command="{Binding ShowRoomManagerCommand}"/>
-          </StackPanel>
-        </GroupBox>
-
-        <Grid>
-          <TextBlock HorizontalAlignment="Left" Text="{Binding ProgramName, FallbackValue='Program name'}"/>
-          <TextBlock HorizontalAlignment="Right" Text="{Binding ProgramVersion, FallbackValue='Version'}"/>
-        </Grid>
+      <StackPanel Margin="10,0" Orientation="Horizontal" HorizontalAlignment="Right">
+        <TextBlock Margin="0,0,5,0" Text="{Binding ProgramName, FallbackValue='Program name'}"/>
+        <TextBlock Text="{Binding ProgramVersion, FallbackValue='Version'}"/>
       </StackPanel>
-    </Border>
-  </DockPanel>
+    </DockPanel>
+
+    <!-- Left panel -->
+    <StackPanel Grid.Column="0" Margin="10,10,5,10" Style="{StaticResource SideMenu}">
+      <!-- Unpack section -->
+      <GroupBox Header="Unpack">
+        <StackPanel>
+          <Button Content="Unpack Assets" Command="{Binding UnpackAssetsCommand}"/>
+          <Button Content="Unpack Sprites" Command="{Binding UnpackSpritesCommand}"/>
+        </StackPanel>
+      </GroupBox>
+
+      <!-- Repack section -->
+      <GroupBox Header="Repack">
+        <StackPanel>
+          <Button Content="Repack Assets" Command="{Binding RepackAssetsCommand}"
+                    ToolTipService.ShowOnDisabled="True" ToolTip="Not implemented yet"/>
+          <Button Content="Repack Sprites" Command="{Binding RepackSpritesCommand}"/>
+        </StackPanel>
+      </GroupBox>
+
+      <!-- Translation section -->
+      <GroupBox Header="Translation">
+        <StackPanel>
+          <Button Content="Extract TRS from Assets" Command="{Binding ExtractTranslationCommand}"/>
+          <Button Content="Decompile TRA" Command="{Binding DecompileTranslationCommand}"/>
+          <Button Content="Compile TRS" Command="{Binding CompileTranslationCommand}"/>
+        </StackPanel>
+      </GroupBox>
+    </StackPanel>
+
+    <!-- Right panel -->
+    <StackPanel Grid.Column="1" Margin="5,10,10,10" Style="{StaticResource SideMenu}">
+      <!-- Scripts section -->
+      <GroupBox Header="Scripts">
+        <StackPanel>
+          <Button Content="Extract Scripts from Assets" Command="{Binding ExtractScriptsCommand}"/>
+          <Button Content="Inject Script into Asset" Command="{Binding InjectScriptCommand}"
+                  ToolTipService.ShowOnDisabled="True" ToolTip="Not implemented yet"/>
+        </StackPanel>
+      </GroupBox>
+
+      <!-- Extra section -->
+      <GroupBox Header="Extra">
+        <StackPanel>
+          <Button Content="Extract Game ID" Command="{Binding ExtractGameIdCommand}"/>
+          <Button Content="Change room background" Command="{Binding ShowRoomManagerCommand}"/>
+        </StackPanel>
+      </GroupBox>
+    </StackPanel>
+  </Grid>
 </Window>
