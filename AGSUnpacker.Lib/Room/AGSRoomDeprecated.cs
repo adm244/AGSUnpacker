@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace AGSUnpacker.Lib.Room
@@ -9,6 +9,7 @@ namespace AGSUnpacker.Lib.Room
     public AGSEventBlock[] ObjectConditions;
     public AGSEventBlock MiscConditions;
 
+    public List<AGSGraphicalScript> GraphicalScripts;
     public string[] VariableNames;
 
     public AGSRoomDeprecated()
@@ -17,6 +18,8 @@ namespace AGSUnpacker.Lib.Room
       HotspotConditions = new AGSEventBlock[20];
       ObjectConditions = new AGSEventBlock[10];
       MiscConditions = null;
+
+      GraphicalScripts = new List<AGSGraphicalScript>();
       VariableNames = Array.Empty<string>();
     }
   }

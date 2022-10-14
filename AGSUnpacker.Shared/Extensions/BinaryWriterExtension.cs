@@ -8,6 +8,22 @@ namespace AGSUnpacker.Shared.Extensions
 {
   internal static class BinaryWriterExtension
   {
+    /// <summary>
+    /// Writes size difference between specified and current positions.
+    /// Doesn't include position itself.
+    /// </summary>
+    /// <param name="writer">BinaryWriter</param>
+    /// <param name="position">Position to write at</param>
+    public static void FixInt32(this BinaryWriter writer, long position)
+    {
+      long currentPosition = writer.BaseStream.Position;
+      writer.BaseStream.Seek(position, SeekOrigin.Begin);
+
+      writer.Write((Int32)(currentPosition - position - sizeof (Int32)));
+
+      writer.BaseStream.Seek(currentPosition, SeekOrigin.Begin);
+    }
+
     public static void WriteCString(this BinaryWriter writer, string text)
     {
       WriteCString(writer, text, AGSStringUtils.MaxCStringLength);

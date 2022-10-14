@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -1008,14 +1008,40 @@ namespace AGSUnpacker.Lib.Room
 
     private void ReadLegacyGraphicalScripts(BinaryReader reader, int roomVersion)
     {
-      //TODO(adm244): implement legacy room graphical scripts reader
-      throw new NotImplementedException("CRM: Legacy graphical scripts reader is not implemented.");
+      // NOTE(adm244): 2.31 has 20 script blocks limit
+      for (int i = 0; i < 20 && !reader.EOF(); ++i)
+      {
+        int id = reader.ReadInt32();
+        if (id == -1)
+          break;
+
+        int size = reader.ReadInt32();
+        long start = reader.BaseStream.Position;
+
+        AGSGraphicalScript script = AGSGraphicalScript.ReadFromStream(reader, id);
+        Deprecated.GraphicalScripts.Add(script);
+
+        long end = reader.BaseStream.Position;
+        if ((end - start) != size)
+          throw new InvalidDataException($"Invalid graphical script size.\n\nGot: {end - start}\nExpected: {size}");
+      }
     }
 
     private void WriteLegacyGraphicalScripts(BinaryWriter writer, int roomVersion)
     {
-      //TODO(adm244): implement legacy room graphical scripts writer
-      throw new NotImplementedException("CRM: Legacy graphical scripts writer is not implement.");
+      for (int i = 0; i < Deprecated.GraphicalScripts.Count; ++i)
+      {
+        writer.Write((Int32)Deprecated.GraphicalScripts[i].Id);
+
+        long sizePosition = writer.BaseStream.Position;
+        writer.Write((UInt32)0xDEADBEEF);
+
+        Deprecated.GraphicalScripts[i].WriteToStream(writer);
+
+        writer.FixInt32(sizePosition);
+      }
+
+      writer.Write((Int32)(-1));
     }
 
     private void ReadAreasLightLevels(BinaryReader reader, int roomVersion)
