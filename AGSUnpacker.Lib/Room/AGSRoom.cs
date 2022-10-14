@@ -782,8 +782,8 @@ namespace AGSUnpacker.Lib.Room
 
     private void ReadWalkableAreasInfo(BinaryReader reader, int roomVersion)
     {
-      Int32 count = 0;
-      if (roomVersion >= 14) // ???
+      Int32 count = 15;
+      if (roomVersion >= 14) // 2.4
         count = reader.ReadInt32();
 
       Markup.WalkableAreas = new AGSWalkableArea[count];
@@ -1051,6 +1051,10 @@ namespace AGSUnpacker.Lib.Room
         // read walkable areas light level (unused?)
         for (int i = 0; i < Markup.WalkableAreas.Length; ++i)
           Markup.WalkableAreas[i].Light = reader.ReadInt16();
+
+        // FIXME(adm244): dirty quick fix for walkies count debacle
+        if (roomVersion < 14)
+          reader.ReadInt16();
       }
 
       if (roomVersion >= 21) // ???
@@ -1070,8 +1074,12 @@ namespace AGSUnpacker.Lib.Room
       if (roomVersion >= 8) // ???
       {
         // write walkable areas light level (unused)
-        for (int i = 0; i < 16; ++i)
+        for (int i = 0; i < Markup.WalkableAreas.Length; ++i)
           writer.Write((Int16)Markup.WalkableAreas[i].Light);
+
+        // FIXME(adm244): dirty quick fix for walkies count debacle
+        if (roomVersion < 14)
+          writer.Write((Int16)0);
       }
 
       if (roomVersion >= 21) // ???
