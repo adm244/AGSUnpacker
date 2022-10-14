@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 
 using AGSUnpacker.Shared.Utils;
@@ -62,6 +62,17 @@ namespace AGSUnpacker.Shared.Extensions
       //NOTE(adm244): don't trust microsoft to have it initialized to 0
       buffer[length] = (char)0;
 
+      writer.Write((char[])buffer);
+    }
+
+    public static void WritePrefixedString8(this BinaryWriter writer, string text)
+    {
+      if (text.Length > byte.MaxValue)
+        throw new InvalidOperationException($"Text length is too big to fit 8-bit prefix: {text.Length}");
+
+      writer.Write((byte)text.Length);
+
+      char[] buffer = text.ToCharArray();
       writer.Write((char[])buffer);
     }
 

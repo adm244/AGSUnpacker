@@ -372,8 +372,11 @@ namespace AGSUnpacker.Lib.Room
       if (roomVersion >= 6) // ???
         ReadLegacyRoomAnimations(reader, roomVersion);
 
-      if ((roomVersion >= 4) && (roomVersion < 16)) // ???
+      if ((roomVersion >= 4) && (roomVersion < 16)) // ???, 2.5
+      {
+        ReadLegacyScriptConfig(reader, roomVersion);
         ReadLegacyGraphicalScripts(reader, roomVersion);
+      }
 
       ReadAreasLightLevels(reader, roomVersion);
       ReadRoomBitmaps(reader, roomVersion);
@@ -399,8 +402,11 @@ namespace AGSUnpacker.Lib.Room
       if (roomVersion >= 6)
         WriteLegacyRoomAnimations(writer, roomVersion);
 
-      if ((roomVersion >= 4) && (roomVersion < 16)) // ???
+      if ((roomVersion >= 4) && (roomVersion < 16)) // ???, 2.5
+      {
+        WriteLegacyScriptConfig(writer, roomVersion);
         WriteLegacyGraphicalScripts(writer, roomVersion);
+      }
 
       WriteAreasLightLevels(writer, roomVersion);
       WriteRoomBitmaps(writer, roomVersion);
@@ -976,6 +982,28 @@ namespace AGSUnpacker.Lib.Room
     {
       //TODO(adm244): implement legacy room animations writer
       writer.Write((Int16)0x0);
+    }
+
+    private void ReadLegacyScriptConfig(BinaryReader reader, int roomVersion)
+    {
+      int version = reader.ReadInt32();
+      if (version != 1)
+        throw new NotSupportedException($"Unknown script configuration version detected: {version}");
+
+      int count = reader.ReadInt32();
+
+      Deprecated.VariableNames = new string[count];
+      for (int i = 0; i < Deprecated.VariableNames.Length; ++i)
+        Deprecated.VariableNames[i] = reader.ReadPrefixedString8();
+    }
+
+    private void WriteLegacyScriptConfig(BinaryWriter writer, int roomVersion)
+    {
+      writer.Write((Int32)1);
+      writer.Write((Int32)Deprecated.VariableNames.Length);
+
+      for (int i = 0; i < Deprecated.VariableNames.Length; ++i)
+        writer.WritePrefixedString8(Deprecated.VariableNames[i]);
     }
 
     private void ReadLegacyGraphicalScripts(BinaryReader reader, int roomVersion)

@@ -86,6 +86,16 @@ namespace AGSUnpacker.Shared.Extensions
       return AGSStringUtils.ConvertCString(buffer);
     }
 
+    public static string ReadPrefixedString8(this BinaryReader reader)
+    {
+      if (reader.EOF())
+        return string.Empty;
+
+      byte length = reader.ReadByte();
+      char[] buffer = reader.ReadChars(length);
+      return new string(buffer);
+    }
+
     public static string ReadPrefixedString32(this BinaryReader reader)
     {
       if (reader.EOF())
