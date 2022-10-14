@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -39,7 +39,7 @@ namespace AGSUnpacker.Lib.Room
     13:  v2.14, add walkarea light levels
     14:  v2.4, fixed so it saves walkable area 15
     15:  v2.41, supports NewInteraction
-    16:  v2.5
+    16:  v2.5 - (what changed?)
     17:  v2.5 - just version change to force room re-compile for new charctr struct
     18:  v2.51 - vector scaling
     19:  v2.53 - interaction variables
@@ -76,6 +76,8 @@ namespace AGSUnpacker.Lib.Room
     public AGSInteractions Interactions;
     public AGSMessage[] Messages;
 
+    public AGSRoomDeprecated Deprecated;
+
     public Dictionary<string, string> Options;
 
     public AGSRoom()
@@ -102,6 +104,8 @@ namespace AGSUnpacker.Lib.Room
       Properties = new AGSRoomProperties(Markup);
       Interactions = new AGSInteractions();
       Messages = new AGSMessage[0];
+
+      Deprecated = new AGSRoomDeprecated();
 
       Options = new Dictionary<string, string>();
     }
@@ -426,6 +430,17 @@ namespace AGSUnpacker.Lib.Room
     {
       Int32 count = reader.ReadInt32();
 
+      if (Version < 15) // 2.41 (never released?)
+      {
+        for (int i = 0; i < Deprecated.HotspotConditions.Length; ++i)
+          Deprecated.HotspotConditions[i] = AGSEventBlock.ReadFromStream(reader);
+
+        for (int i = 0; i < Deprecated.ObjectConditions.Length; ++i)
+          Deprecated.ObjectConditions[i] = AGSEventBlock.ReadFromStream(reader);
+
+        Deprecated.MiscConditions = AGSEventBlock.ReadFromStream(reader);
+      }
+
       Markup.Hotspots = new AGSHotspot[count];
       for (int i = 0; i < Markup.Hotspots.Length; ++i)
       {
@@ -463,6 +478,17 @@ namespace AGSUnpacker.Lib.Room
     private void WriteRoomHotspots(BinaryWriter writer, int roomVersion)
     {
       writer.Write((Int32)Markup.Hotspots.Length);
+
+      if (Version < 15) // 2.41 (never released?)
+      {
+        for (int i = 0; i < Deprecated.HotspotConditions.Length; ++i)
+          Deprecated.HotspotConditions[i].WriteToStream(writer);
+
+        for (int i = 0; i < Deprecated.ObjectConditions.Length; ++i)
+          Deprecated.ObjectConditions[i].WriteToStream(writer);
+
+        Deprecated.MiscConditions.WriteToStream(writer);
+      }
 
       for (int i = 0; i < Markup.Hotspots.Length; ++i)
       {
@@ -649,7 +675,7 @@ namespace AGSUnpacker.Lib.Room
         }
       }
 
-      if (roomVersion >= 15) // ???
+      if (roomVersion >= 15) // 2.41 (never released?)
       {
         if (roomVersion < 26) // ???
           ReadInteractionsOld(reader, roomVersion);

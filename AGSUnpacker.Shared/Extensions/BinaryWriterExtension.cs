@@ -73,6 +73,12 @@ namespace AGSUnpacker.Shared.Extensions
       writer.Write((char[])buffer);
     }
 
+    public static void WriteArrayInt16(this BinaryWriter writer, Int16[] values)
+    {
+      for (int i = 0; i < values.Length; ++i)
+        writer.Write((Int16)values[i]);
+    }
+
     public static void WriteArrayInt32(this BinaryWriter writer, int[] values)
     {
       for (int i = 0; i < values.Length; ++i)
