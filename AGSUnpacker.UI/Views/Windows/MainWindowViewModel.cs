@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -60,7 +60,7 @@ namespace AGSUnpacker.UI.Views.Windows
     {
       try
       {
-        await UnpackAsync("Select AGS game executable", "AGS game executable|*.exe",
+        await UnpackAsync("Select AGS game archive", "AGS archive|*.ags;*.exe",
         (filepath, targetFolder) =>
         {
           AssetsManager assetsManager = AssetsManager.Create(filepath);
