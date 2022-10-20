@@ -20,6 +20,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\AGSUnpacker.Graphics.Custom\AGSUnpacker.Graphics.Custom.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$(RuntimeIdentifier.StartsWith('win'))">
     <ProjectReference Include="..\AGSUnpacker.Graphics.GDI\AGSUnpacker.Graphics.GDI.csproj" />
   </ItemGroup>
 
