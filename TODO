@@ -1,0 +1,6 @@
+* Graphics: Drop BMP support (store 24-bit images in PNG with a custom chunk maybe)
+* Script: Implement script extraction\injection
+
+Linux port:
+* Graphics: Implement custom PNG encoder\decoder
+* UI: Reimplement user interface with something that supports Linux (e.g. AvaloniaUI)
