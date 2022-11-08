@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 using AGSUnpacker.Lib.Game;
 using AGSUnpacker.Lib.Room;
@@ -11,8 +9,91 @@ using AGSUnpacker.Lib.Shared;
 
 namespace AGSUnpacker.Lib.Utils
 {
-  public static class ScriptExtractor
+  public static class ScriptManager
   {
+    public static void Inject(string targetFile, string scriptFile)
+    {
+      // TODO(adm244): determine file by it's signature
+      string extension = Path.GetExtension(targetFile).ToLower();
+      if (extension == ".dta")
+        InjectIntoData(targetFile, scriptFile);
+      else
+        InjectIntoRoom(targetFile, scriptFile);
+    }
+
+    private static void InjectIntoData(string targetFile, string scriptFile)
+    {
+      AGSGameData gameData = AGSGameData.ReadFromFile(targetFile);
+      AGSScript injectee = AGSScript.ReadFromFile(scriptFile);
+
+      if (injectee.Sections.Length > 0)
+      {
+        ((Action)(() => {
+          if (TryInjectInto(ref gameData.globalScript, injectee))
+            return;
+
+          if (TryInjectInto(ref gameData.dialogScript, injectee))
+            return;
+
+          if (TryInjectInto(ref gameData.scriptModules, injectee))
+            return;
+
+          throw new InvalidDataException(
+            $"Could not find script with name \"{injectee.Sections[0].Name}\" in game data file.");
+        }))();
+      }
+      else
+      {
+        // NOTE(adm244): old script, should be globalScript
+
+        if (gameData.globalScript.Sections.Length > 0)
+          throw new InvalidDataException(
+            "Sections length mismatch. Script you're trying to inject is too old.");
+
+        gameData.globalScript = injectee;
+      }
+
+      File.Copy(targetFile, targetFile + ".backup", true);
+      gameData.WriteToFile(targetFile);
+    }
+
+    private static void InjectIntoRoom(string targetFile, string scriptFile)
+    {
+      AGSRoom room = AGSRoom.ReadFromFile(targetFile);
+      AGSScript injectee = AGSScript.ReadFromFile(scriptFile);
+
+      if (!TryInjectInto(ref room.Script.SCOM3, injectee))
+        throw new InvalidDataException("Could not inject room script.");
+
+      File.Copy(targetFile, targetFile + ".backup", true);
+      room.WriteToFile(targetFile, room.Version);
+    }
+
+    private static bool TryInjectInto(ref AGSScript[] scripts, AGSScript injectee)
+    {
+      for (int i = 0; i < scripts.Length; ++i)
+      {
+        if (TryInjectInto(ref scripts[i], injectee))
+          return true;
+      }
+
+      return false;
+    }
+
+    private static bool TryInjectInto(ref AGSScript script, AGSScript injectee)
+    {
+      if (script.Sections.Length > 0)
+      {
+        if (script.Sections[0].Name == injectee.Sections[0].Name)
+        {
+          script = injectee;
+          return true;
+        }
+      }
+
+      return false;
+    }
+
     public static bool ExtractFromFolder(string sourceFolder, string targetFolder)
     {
       if (Directory.Exists(sourceFolder))
@@ -26,8 +107,6 @@ namespace AGSUnpacker.Lib.Utils
 
         for (int i = 0; i < filenames.Length; ++i)
         {
-          /*int index = filenames[i].LastIndexOf('.');
-          string fileExtension = filenames[i].Substring(index + 1);*/
           string fileExtension = Path.GetExtension(filenames[i].ToLower());
 
           if (fileExtension == ".dta")
@@ -43,7 +122,7 @@ namespace AGSUnpacker.Lib.Utils
             Console.Write("\tParsing {0} room file...", Path.GetFileName(filenames[i]));
 
             AGSRoom room = new AGSRoom(Path.GetFileNameWithoutExtension(filenames[i]));
-            room.ReadFromFile(filenames[i]);
+            room.ReadFromFileDeprecated(filenames[i]);
             rooms.Add(room);
 
             Console.WriteLine(" Done!");
@@ -65,7 +144,7 @@ namespace AGSUnpacker.Lib.Utils
             {
               filename = Path.GetRandomFileName();
             }
-            filename += ".s";
+            filename += ".txt";
 
             string targetFilepath = Path.Combine(targetFolder, filename);
 

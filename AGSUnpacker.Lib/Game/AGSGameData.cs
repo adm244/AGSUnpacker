@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -119,6 +119,18 @@ namespace AGSUnpacker.Lib.Game
       Plugins = Array.Empty<AGSPluginInfo>();
     }
 
+    public static AGSGameData ReadFromFile(string filepath)
+    {
+      AGSGameData gameData = new AGSGameData();
+
+      using FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+      using BinaryReader reader = new BinaryReader(stream, Encoding.Latin1);
+
+      gameData.LoadFromStream(reader);
+
+      return gameData;
+    }
+
     public void WriteToFile(string filepath)
     {
       using FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write);
@@ -127,6 +139,7 @@ namespace AGSUnpacker.Lib.Game
       WriteToStream(writer);
     }
 
+    // FIXME(adm244): remove this
     public void LoadFromFile(string filepath)
     {
       using (FileStream fs = new FileStream(filepath, FileMode.Open))

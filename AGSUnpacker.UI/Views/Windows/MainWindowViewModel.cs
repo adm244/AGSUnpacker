@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -297,7 +297,7 @@ namespace AGSUnpacker.UI.Views.Windows
         (filepath, sourceFolder) =>
         {
           string targetFolder = Path.Combine(sourceFolder, "Scripts");
-          ScriptExtractor.ExtractFromFolder(sourceFolder, targetFolder);
+          ScriptManager.ExtractFromFolder(sourceFolder, targetFolder);
         }
       );
     }
@@ -318,12 +318,26 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnInjectScriptExecute()
     {
-      return Task.CompletedTask;
+      return SelectFilesAsync(
+        (filenames) =>
+        {
+          ScriptManager.Inject(filenames[0], filenames[1]);
+        },
+        new DialogOptions {
+          Title = "Select asset file to inject into",
+          Filter = "Game data or room file|*.dta;*.crm"
+        },
+        new DialogOptions
+        {
+          Title = "Select script object file to inject",
+          Filter = "Script object file|*.o"
+        }
+      );
     }
 
     private bool OnCanInjectScriptExecute()
     {
-      return false;
+      return !InjectScriptCommand.IsRunning;
     }
     #endregion
 
@@ -344,6 +358,30 @@ namespace AGSUnpacker.UI.Views.Windows
 
       return Task.Run(
         () => action(openDialog.FileName)
+      );
+    }
+
+    private Task SelectFilesAsync(Action<string[]> action, params DialogOptions[] options)
+    {
+      string[] filenames = new string[options.Length];
+
+      OpenFileDialog openDialog = new OpenFileDialog();
+      for (int i = 0; i < options.Length; ++i)
+      {
+        openDialog.Title = options[i].Title;
+        openDialog.Filter = options[i].Filter;
+        openDialog.Multiselect = false;
+        openDialog.CheckFileExists = true;
+        openDialog.CheckPathExists = true;
+
+        if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
+          return Task.CompletedTask;
+
+        filenames[i] = openDialog.FileName;
+      }
+
+      return Task.Run(
+        () => action(filenames)
       );
     }
 
@@ -517,6 +555,12 @@ namespace AGSUnpacker.UI.Views.Windows
       ExtractGameIdCommand.PropertyChanged += OnPropertyChanged;
 
       ShowRoomManagerCommand = new RelayCommand(OnShowRoomManagerExecute);
+    }
+
+    private struct DialogOptions
+    {
+      public string Title;
+      public string Filter;
     }
   }
 }

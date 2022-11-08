@@ -110,7 +110,20 @@ namespace AGSUnpacker.Lib.Room
       Options = new Dictionary<string, string>();
     }
 
-    public void ReadFromFile(string filepath)
+    public static AGSRoom ReadFromFile(string filepath)
+    {
+      AGSRoom room = new AGSRoom();
+
+      using FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+      using BinaryReader reader = new BinaryReader(stream, Encoding.Latin1);
+
+      room.ReadFromStream(reader);
+
+      return room;
+    }
+
+    // FIXME(adm244): remove this
+    public void ReadFromFileDeprecated(string filepath)
     {
       using (FileStream stream = new FileStream(filepath, FileMode.Open))
       {

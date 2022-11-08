@@ -12,7 +12,7 @@ namespace AGSUnpacker.UI.Services
       AGSRoom agsRoom = new AGSRoom();
 
       await Task.Run(
-        () => agsRoom.ReadFromFile(filepath)
+        () => agsRoom.ReadFromFileDeprecated(filepath)
       );
 
       return new Room(agsRoom);

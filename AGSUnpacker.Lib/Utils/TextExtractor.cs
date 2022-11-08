@@ -110,7 +110,7 @@ namespace AGSUnpacker.Lib.Utils
             Console.Write("\tParsing {0} room file...", Path.GetFileName(filenames[i]));
 
             AGSRoom room = new AGSRoom(Path.GetFileNameWithoutExtension(filenames[i]));
-            room.ReadFromFile(filenames[i]);
+            room.ReadFromFileDeprecated(filenames[i]);
             rooms.Add(room);
 
             Console.WriteLine(" Done!");

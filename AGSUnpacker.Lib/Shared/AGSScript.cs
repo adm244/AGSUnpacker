@@ -42,6 +42,18 @@ namespace AGSUnpacker.Lib.Shared
       _stringsBlob = new byte[0];
     }
 
+    public static AGSScript ReadFromFile(string filepath)
+    {
+      AGSScript script = new AGSScript();
+
+      using FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
+      using BinaryReader reader = new BinaryReader(stream, Encoding.Latin1);
+
+      script.ReadFromStream(reader);
+
+      return script;
+    }
+
     public void ReadFromStream(BinaryReader reader)
     {
       string signatureHead = reader.ReadFixedCString(SignatureHead.Length);

@@ -93,8 +93,7 @@
       <GroupBox Header="Scripts">
         <StackPanel>
           <Button Content="Extract Scripts from Assets" Command="{Binding ExtractScriptsCommand}"/>
-          <Button Content="Inject Script into Asset" Command="{Binding InjectScriptCommand}"
-                  ToolTipService.ShowOnDisabled="True" ToolTip="Not implemented yet"/>
+          <Button Content="Inject Script into Asset" Command="{Binding InjectScriptCommand}"/>
         </StackPanel>
       </GroupBox>
 

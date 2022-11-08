@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 
 using AGSUnpacker.Lib.Assets;
 using AGSUnpacker.Lib.Game;
@@ -43,7 +43,7 @@ namespace AGSUnpacker.CLI
         if (Path.GetExtension(files[i]) == ".crm")
         {
           AGSRoom room = new AGSRoom();
-          room.ReadFromFile(files[i]);
+          room.ReadFromFileDeprecated(files[i]);
 
           string directory = Path.GetDirectoryName(files[i]);
           string filename = Path.GetFileNameWithoutExtension(files[i]);
