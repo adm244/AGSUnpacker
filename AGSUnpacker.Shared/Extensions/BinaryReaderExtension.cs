@@ -41,6 +41,7 @@ namespace AGSUnpacker.Shared.Extensions
       return stringBuilder.ToString();
     }
 
+    // FIXME(adm244): this is NOT a CString, it's PrefixString32 !!!
     public static string ReadEncryptedCString(this BinaryReader reader)
     {
       Int32 length = reader.ReadInt32();

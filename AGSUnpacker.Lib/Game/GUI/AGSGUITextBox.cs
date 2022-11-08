@@ -20,7 +20,7 @@ namespace AGSUnpacker.Lib.Game
       flags = 0;
     }
 
-    public void LoadFromStream(BinaryReader r, int gui_version)
+    public override void LoadFromStream(BinaryReader r, int gui_version)
     {
       base.LoadFromStream(r, gui_version);
 
@@ -33,6 +33,20 @@ namespace AGSUnpacker.Lib.Game
       font = r.ReadInt32();
       text_color = r.ReadInt32();
       flags = r.ReadInt32();
+    }
+
+    public override void WriteToStream(BinaryWriter writer, int version)
+    {
+      base.WriteToStream(writer, version);
+
+      if (version < 119) // 3.5.0
+        writer.WriteFixedString(text, 200);
+      else
+        writer.WritePrefixedString32(text);
+
+      writer.Write((Int32)font);
+      writer.Write((Int32)text_color);
+      writer.Write((Int32)flags);
     }
   }
 }

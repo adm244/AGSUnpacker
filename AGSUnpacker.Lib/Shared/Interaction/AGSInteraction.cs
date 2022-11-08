@@ -27,6 +27,7 @@ namespace AGSUnpacker.Lib.Shared.Interaction
       events = new AGSInteractionCommandsList[events_count];
 
       Int32[] types = new Int32[events.Length];
+      // NOTE(adm244): read as ArrayInt32
       for (int i = 0; i < events.Length; ++i)
         types[i] = r.ReadInt32();
 

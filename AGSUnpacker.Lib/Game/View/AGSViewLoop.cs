@@ -28,5 +28,18 @@ namespace AGSUnpacker.Lib
         ar.Reset();
       }
     }
+
+    public void WriteToStream(BinaryWriter writer)
+    {
+      writer.Write((Int16)Frames.Length);
+      writer.Write((Int32)Flags);
+
+      AGSAlignedStream aw = new AGSAlignedStream(writer);
+      for (int i = 0; i < Frames.Length; ++i)
+      {
+        Frames[i].WriteToStream(aw);
+        aw.Reset();
+      }
+    }
   }
 }

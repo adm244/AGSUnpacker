@@ -40,5 +40,22 @@ namespace AGSUnpacker.Lib.Game
 
       score_clip_id = r.ReadInt32();
     }
+
+    public void WriteToStream(BinaryWriter writer)
+    {
+      writer.Write((Int32)audioTypes.Length);
+      for (int i = 0; i < audioTypes.Length; ++i)
+        audioTypes[i].WriteToStream(writer);
+
+      AGSAlignedStream aw = new AGSAlignedStream(writer);
+      writer.Write((Int32)audioClips.Length);
+      for (int i = 0; i < audioClips.Length; ++i)
+      {
+        audioClips[i].WriteToStream(aw);
+        aw.Reset();
+      }
+
+      writer.Write((Int32)score_clip_id);
+    }
   }
 }

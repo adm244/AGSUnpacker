@@ -34,9 +34,21 @@ namespace AGSUnpacker.Lib
       view = ar.ReadInt16();
       name = ar.ReadFixedString(10);
       
+      // FIXME(adm244): doesn't seem right, double check
       //NOTE(adm244): structure is aligned at 4-byte boundary,
       // read with a padding and discard it
       flags = (byte)ar.ReadInt32();
+    }
+
+    public void WriteToStream(AGSAlignedStream aw)
+    {
+      aw.WriteInt32(picture);
+      aw.WriteInt16(hotspot_x);
+      aw.WriteInt16(hotspot_y);
+      aw.WriteInt16(view);
+      aw.WriteFixedString(name, 10);
+
+      aw.WriteInt32(flags);
     }
   }
 }

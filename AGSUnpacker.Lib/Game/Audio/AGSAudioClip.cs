@@ -42,5 +42,19 @@ namespace AGSUnpacker.Lib.Game
       volume_default = ar.ReadInt16();
       reserved1 = ar.ReadInt32();
     }
+
+    public void WriteToStream(AGSAlignedStream aw)
+    {
+      aw.WriteInt32(id);
+      aw.WriteFixedString(scriptname, 30);
+      aw.WriteFixedString(filename, 15);
+      aw.WriteByte(type_bundling);
+      aw.WriteByte(type);
+      aw.WriteByte(type_file);
+      aw.WriteByte(repeat_default);
+      aw.WriteInt16(priority_default);
+      aw.WriteInt16(volume_default);
+      aw.WriteInt32(reserved1);
+    }
   }
 }

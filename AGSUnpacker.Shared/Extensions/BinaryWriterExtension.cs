@@ -50,6 +50,7 @@ namespace AGSUnpacker.Shared.Extensions
         writer.Write((byte)0);
     }
 
+    // FIXME(adm244): this is NOT a CString, it's PrefixString32 !!!
     public static void WriteEncryptedCString(this BinaryWriter writer, string text)
     {
       byte[] buffer = AGSEncryption.EncryptAvis(text);

@@ -42,7 +42,7 @@ namespace AGSUnpacker.Lib.Game
       reserved1 = 0;
     }
 
-    public void LoadFromStream(BinaryReader r, int gui_version)
+    public override void LoadFromStream(BinaryReader r, int gui_version)
     {
       base.LoadFromStream(r, gui_version);
 
@@ -75,6 +75,41 @@ namespace AGSUnpacker.Lib.Game
         text_aligment = r.ReadInt32();
         if (gui_version < 119) // 3.5.0
           reserved1 = r.ReadInt32();
+      }
+    }
+
+    public override void WriteToStream(BinaryWriter writer, int version)
+    {
+      base.WriteToStream(writer, version);
+
+      writer.Write((Int32)image);
+      writer.Write((Int32)image_mouseover);
+      writer.Write((Int32)image_pushed);
+
+      if (version < 119) // 3.5.0
+      {
+        writer.Write((Int32)image_current);
+        writer.Write((Int32)is_pushed);
+        writer.Write((Int32)is_mouseover);
+      }
+
+      writer.Write((Int32)font);
+      writer.Write((Int32)text_color);
+      writer.Write((Int32)left_click_action);
+      writer.Write((Int32)right_click_action);
+      writer.Write((Int32)left_click_data);
+      writer.Write((Int32)right_click_data);
+
+      if (version < 119) // 3.5.0
+        writer.WriteFixedString(text, 50);
+      else
+        writer.WritePrefixedString32(text);
+
+      if (version >= 111) // 2.7.0+ ???
+      {
+        writer.Write((Int32)text_aligment);
+        if (version < 119) // 3.5.0
+          writer.Write((Int32)reserved1);
       }
     }
   }

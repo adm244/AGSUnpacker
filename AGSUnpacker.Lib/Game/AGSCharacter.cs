@@ -125,6 +125,7 @@ namespace AGSUnpacker.Lib.Game
       flags = ar.ReadInt32();
       following = ar.ReadInt16();
       followinfo = ar.ReadInt16();
+      // FIXME(adm244): is this int32 or  int16?
       view_idle = ar.ReadInt16();
       idle_time = ar.ReadInt16();
       idle_left = ar.ReadInt16();
@@ -161,8 +162,62 @@ namespace AGSUnpacker.Lib.Game
       name = ar.ReadFixedString(40);
       name_script = ar.ReadFixedString(20);
 
+      // FIXME(adm244): what's going on with this? investigate...
       //NOTE(adm244): in source it's a byte, but in the actual dta it's int16
       on = ar.ReadInt16();
+    }
+
+    public void WriteToStream(AGSAlignedStream aw)
+    {
+      aw.WriteInt32(view_default);
+      aw.WriteInt32(view_talk);
+      aw.WriteInt32(view_normal);
+      aw.WriteInt32(room);
+      aw.WriteInt32(room_previous);
+      aw.WriteInt32(x);
+      aw.WriteInt32(y);
+      aw.WriteInt32(wait);
+      aw.WriteInt32(flags);
+      aw.WriteInt16(following);
+      aw.WriteInt16(followinfo);
+      aw.WriteInt16((Int16)view_idle);
+      aw.WriteInt16(idle_time);
+      aw.WriteInt16(idle_left);
+      aw.WriteInt16(transparency);
+      aw.WriteInt16(baseline);
+      aw.WriteInt32(active_invitem);
+      aw.WriteInt32(talk_color);
+      aw.WriteInt32(view_think);
+      aw.WriteInt16(view_blink);
+      aw.WriteInt16(blink_interval);
+      aw.WriteInt16(blink_timer);
+      aw.WriteInt16(blink_frame);
+      aw.WriteInt16(walkspeed_y);
+      aw.WriteInt16(picture_offset_y);
+      aw.WriteInt32(z);
+      aw.WriteInt32(wait_walk);
+      aw.WriteInt16(speech_animation_speed);
+      aw.WriteInt16(reserved1);
+      aw.WriteInt16(blocking_width);
+      aw.WriteInt16(blocking_height);
+      aw.WriteInt32(index_id);
+      aw.WriteInt16(picture_offset_x);
+      aw.WriteInt16(walk_wait_counter);
+      aw.WriteInt16(loop);
+      aw.WriteInt16(frame);
+      aw.WriteInt16(walking);
+      aw.WriteInt16(animating);
+      aw.WriteInt16(walkspeed);
+      aw.WriteInt16(animspeed);
+      aw.WriteArrayInt16(inventory);
+      aw.WriteInt16(act_x);
+      aw.WriteInt16(act_y);
+
+      aw.WriteFixedString(name, 40);
+      aw.WriteFixedString(name_script, 20);
+
+      // FIXME(adm244): possible incorrect size, check load func
+      aw.WriteInt16(on);
     }
   }
 }

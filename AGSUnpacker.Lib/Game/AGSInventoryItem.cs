@@ -39,27 +39,29 @@ namespace AGSUnpacker.Lib
     public void LoadFromStream(AGSAlignedStream ar)
     {
       name = ar.ReadFixedString(25);
-      //Debug.Assert(r.BaseStream.Position == 0x851E);
-
       picture = ar.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x8525);
-
       cursor_picture = ar.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x8529);
-
       hotspot_x = ar.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x852D);
-
       hotspot_y = ar.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x8531);
-
       reserved = ar.ReadArrayInt32(5);
-      //Debug.Assert(r.BaseStream.Position == 0x8545);
 
+      // FIXME(adm244): this is probably bugged... double check
       //NOTE(adm244): structure is aligned at 4-byte boundary,
       // read with a padding and discard it
       flag = (byte)ar.ReadInt32();
-      //Debug.Assert(r.BaseStream.Position == 0x8549);
+    }
+
+    public void WriteToStream(AGSAlignedStream aw)
+    {
+      aw.WriteFixedString(name, 25);
+      aw.WriteInt32(picture);
+      aw.WriteInt32(cursor_picture);
+      aw.WriteInt32(hotspot_x);
+      aw.WriteInt32(hotspot_y);
+      aw.WriteArrayInt32(new Int32[5]);
+
+      // FIXME(adm244): this is probably bugged... double check
+      aw.WriteInt32(flag);
     }
   }
 }

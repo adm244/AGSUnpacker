@@ -35,6 +35,8 @@ namespace AGSUnpacker.Lib.Game
     public Int32 visibility_state;
     public Int32[] control_references;
 
+    public Int32 TextWindowTag;
+
     public AGSGUI()
     {
       name = string.Empty;
@@ -64,14 +66,14 @@ namespace AGSUnpacker.Lib.Game
       padding = 0;
       visibility_state = 0;
       control_references = new Int32[0];
+
+      TextWindowTag = 0;
     }
 
     public void LoadFromStream(BinaryReader r, int gui_version)
     {
       if (gui_version < 119) // 3.5.0
-      {
-        Int32 textWindowTag = r.ReadInt32();
-      }
+        TextWindowTag = r.ReadInt32();
 
       if (gui_version < 118) // 3.4.0
       {
@@ -80,12 +82,15 @@ namespace AGSUnpacker.Lib.Game
       }
       else
       {
+        // FIXME(adm244): double check this
         //FIX(adm244): why ReadString is not working?
-        Int32 strlen = r.ReadInt32();
-        name = r.ReadFixedCString(strlen);
+        // Int32 strlen = r.ReadInt32();
+        // name = r.ReadFixedCString(strlen);
+        name = r.ReadPrefixedString32();
 
-        strlen = r.ReadInt32();
-        onclick_handler = r.ReadFixedCString(strlen);
+        //strlen = r.ReadInt32();
+        //onclick_handler = r.ReadFixedCString(strlen);
+        onclick_handler = r.ReadPrefixedString32();
       }
 
       x = r.ReadInt32();
@@ -94,9 +99,7 @@ namespace AGSUnpacker.Lib.Game
       height = r.ReadInt32();
 
       if (gui_version < 119) // 3.5.0
-      {
         control_focus = r.ReadInt32();
-      }
 
       controls_count = r.ReadInt32();
       popup_style = r.ReadInt32();
@@ -119,6 +122,7 @@ namespace AGSUnpacker.Lib.Game
       transparency = r.ReadInt32();
       z_order = r.ReadInt32();
       id = r.ReadInt32();
+      // FIXME(adm244): is this a structure padding or padding used by GUI?
       padding = r.ReadInt32();
 
       if (gui_version < 119) // 3.5.0
@@ -137,9 +141,72 @@ namespace AGSUnpacker.Lib.Game
       else
       {
         if (controls_count > 0)
-        {
           control_references = r.ReadArrayInt32(controls_count);
-        }
+      }
+    }
+
+    public void WriteToStream(BinaryWriter writer, int version)
+    {
+      if (version < 119) // 3.5.0
+        writer.Write((Int32)TextWindowTag);
+
+      if (version < 118) // 3.4.0
+      {
+        writer.WriteFixedString(name, 16);
+        writer.WriteFixedString(onclick_handler, 20);
+      }
+      else
+      {
+        writer.WritePrefixedString32(name);
+        writer.WritePrefixedString32(onclick_handler);
+      }
+
+      writer.Write((Int32)x);
+      writer.Write((Int32)y);
+      writer.Write((Int32)width);
+      writer.Write((Int32)height);
+
+      if (version < 119) // 3.5.0
+        writer.Write((Int32)control_focus);
+
+      writer.Write((Int32)controls_count);
+      writer.Write((Int32)popup_style);
+      writer.Write((Int32)popup_at_mouse_y);
+      writer.Write((Int32)background_color);
+      writer.Write((Int32)background_image);
+      writer.Write((Int32)foreground_color);
+
+      if (version < 119) // 3.5.0
+      {
+        writer.Write((Int32)mouse_over_control);
+        writer.Write((Int32)mouse_was_at_y);
+        writer.Write((Int32)mouse_was_at_x);
+        writer.Write((Int32)mouse_down_control);
+        writer.Write((Int32)highlight_control);
+      }
+
+      writer.Write((Int32)flags);
+      writer.Write((Int32)transparency);
+      writer.Write((Int32)z_order);
+      writer.Write((Int32)id);
+      // FIXME(adm244): is this a structure padding or padding used by GUI?
+      writer.Write((Int32)padding);
+
+      if (version < 119) // 3.5.0
+      {
+        writer.WriteArrayInt32(new Int32[5]); // reserved
+        writer.Write((Int32)visibility_state);
+      }
+
+      if (version < 118) // 3.4.0
+      {
+        writer.WriteArrayInt32(new Int32[30]); // reserved
+        writer.WriteArrayInt32(control_references);
+      }
+      else
+      {
+        if (controls_count > 0)
+          writer.WriteArrayInt32(control_references);
       }
     }
   }

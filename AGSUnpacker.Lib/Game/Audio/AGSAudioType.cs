@@ -28,5 +28,14 @@ namespace AGSUnpacker.Lib.Game
       crossfade_speed = r.ReadInt32();
       reserved1 = r.ReadInt32();
     }
+
+    public void WriteToStream(BinaryWriter writer)
+    {
+      writer.Write((Int32)id);
+      writer.Write((Int32)channels);
+      writer.Write((Int32)volume_dumping);
+      writer.Write((Int32)crossfade_speed);
+      writer.Write((Int32)reserved1);
+    }
   }
 }

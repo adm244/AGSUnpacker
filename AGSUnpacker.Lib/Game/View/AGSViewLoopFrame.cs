@@ -36,5 +36,17 @@ namespace AGSUnpacker.Lib
       reserved1 = ar.ReadInt32();
       reserved2 = ar.ReadInt32();
     }
+
+    public void WriteToStream(AGSAlignedStream aw)
+    {
+      aw.WriteInt32(picture);
+      aw.WriteInt16(offset_x);
+      aw.WriteInt16(offset_y);
+      aw.WriteInt16(speed);
+      aw.WriteInt32(flags);
+      aw.WriteInt32(sound);
+      aw.WriteInt32(reserved1);
+      aw.WriteInt32(reserved2);
+    }
   }
 }

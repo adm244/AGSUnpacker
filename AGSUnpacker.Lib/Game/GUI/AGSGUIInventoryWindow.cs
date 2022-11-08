@@ -18,7 +18,7 @@ namespace AGSUnpacker.Lib.Game
       item_top = 0;
     }
 
-    public void LoadFromStream(BinaryReader r, int gui_version)
+    public override void LoadFromStream(BinaryReader r, int gui_version)
     {
       base.LoadFromStream(r, gui_version);
 
@@ -41,6 +41,21 @@ namespace AGSUnpacker.Lib.Game
         item_width = 40;
         item_height = 22;
         item_top = 0;
+      }
+    }
+
+    public override void WriteToStream(BinaryWriter writer, int version)
+    {
+      base.WriteToStream(writer, version);
+
+      if (version > 109) // ???
+      {
+        writer.Write((Int32)character_id);
+        writer.Write((Int32)item_width);
+        writer.Write((Int32)item_height);
+
+        if (version < 119) // 3.5.0
+          writer.Write((Int32)item_top);
       }
     }
   }

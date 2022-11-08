@@ -73,7 +73,7 @@ namespace AGSUnpacker.Lib
       window_height = 0;
     }
 
-    public void LoadFromStream(AGSAlignedStream ar, Int32 dta_version)
+    public void LoadFromStream(AGSAlignedStream ar, int dta_version)
     {
       name = ar.ReadFixedString(50);
       options = ar.ReadArrayInt32(100);
@@ -115,6 +115,49 @@ namespace AGSUnpacker.Lib
       some_globalscript_value = ar.ReadInt32();
       some_chars_value = ar.ReadInt32();
       is_scriptcompiled = ar.ReadInt32();
+    }
+
+    public void WriteToStream(AGSAlignedStream ar, int dta_version)
+    {
+      ar.WriteFixedString(name, 50);
+      ar.WriteArrayInt32(options);
+      ar.WriteBytes(paluses);
+
+      ar.WriteArrayInt32(defaultPallete);
+
+      ar.WriteInt32(views_count);
+      ar.WriteInt32(characters_count);
+      ar.WriteInt32(player_character_id);
+      ar.WriteInt32(total_score);
+      ar.WriteInt16(inventory_items_count);
+      ar.WriteInt32(dialogs_count);
+      ar.WriteInt32(dialog_messages_count);
+      ar.WriteInt32(fonts_count);
+      ar.WriteInt32(color_depth);
+      ar.WriteInt32(target_win);
+      ar.WriteInt32(dialog_bullet);
+      ar.WriteInt16(hotdot);
+      ar.WriteInt16(hotdot_outter);
+      ar.WriteInt32(unique_id);
+      ar.WriteInt32(guis_count);
+      ar.WriteInt32(cursors_count);
+
+      ar.WriteInt32(default_resolution);
+      if ((dta_version >= 44) && (default_resolution == 8)) // 3.3.1, 8 - custom resolution
+      {
+        ar.WriteInt32(window_width);
+        ar.WriteInt32(window_height);
+      }
+
+      ar.WriteInt32(default_lipsync_frame);
+      ar.WriteInt32(inventory_hotdot_sprite);
+      ar.WriteArrayInt32(new Int32[17]);
+      ar.WriteArrayInt32(global_messages);
+
+      ar.WriteInt32(load_dictionary);
+      ar.WriteInt32(some_globalscript_value);
+      ar.WriteInt32(some_chars_value);
+      ar.WriteInt32(is_scriptcompiled);
     }
   }
 }

@@ -30,5 +30,16 @@ namespace AGSUnpacker.Lib.Game
         words[i].group = reader.ReadInt16();
       }
     }
+
+    public void WriteToStream(BinaryWriter writer)
+    {
+      writer.Write((Int32)words.Length);
+
+      for (int i = 0; i < words.Length; ++i)
+      {
+        writer.WriteEncryptedCString(words[i].text);
+        writer.Write((Int16)words[i].group);
+      }
+    }
   }
 }

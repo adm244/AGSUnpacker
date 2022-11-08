@@ -30,7 +30,7 @@ namespace AGSUnpacker.Lib.Game
       events = new string[0];
     }
 
-    protected void LoadFromStream(BinaryReader r, int gui_version)
+    public virtual void LoadFromStream(BinaryReader r, int gui_version)
     {
       // parse gui object info
       flags = r.ReadInt32();
@@ -39,10 +39,11 @@ namespace AGSUnpacker.Lib.Game
       width = r.ReadInt32();
       height = r.ReadInt32();
       z_order = r.ReadInt32();
+
       if (gui_version < 119) // 3.5.0
         is_activated = r.ReadInt32();
 
-      if (gui_version >= 106)
+      if (gui_version >= 106) // ???
         name = r.ReadCString();
 
       if (gui_version >= 108) // ???
@@ -51,6 +52,29 @@ namespace AGSUnpacker.Lib.Game
         events = new string[events_count];
         for (int i = 0; i < events.Length; ++i)
           events[i] = r.ReadCString();
+      }
+    }
+
+    public virtual void WriteToStream(BinaryWriter writer, int version)
+    {
+      writer.Write((Int32)flags);
+      writer.Write((Int32)x);
+      writer.Write((Int32)y);
+      writer.Write((Int32)width);
+      writer.Write((Int32)height);
+      writer.Write((Int32)z_order);
+
+      if (version < 119) // 3.5.0
+        writer.Write((Int32)is_activated);
+
+      if (version >= 106) // ???
+        writer.WriteCString(name);
+
+      if (version >= 108) // ???
+      {
+        writer.Write((Int32)events.Length);
+        for (int i = 0; i < events.Length; ++i)
+          writer.WriteCString(events[i]);
       }
     }
   }

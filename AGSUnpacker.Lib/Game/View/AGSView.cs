@@ -23,5 +23,12 @@ namespace AGSUnpacker.Lib
         Loops[i].LoadFromStream(r);
       }
     }
+
+    public void WriteToStream(BinaryWriter writer)
+    {
+      writer.Write((Int16)Loops.Length);
+      for (int i = 0; i < Loops.Length; ++i)
+        Loops[i].WriteToStream(writer);
+    }
   }
 }
