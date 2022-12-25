@@ -123,24 +123,57 @@ namespace AGSUnpacker.Graphics
     {
       switch (format)
       {
+        case PixelFormat.Rgb565:
+          return FromRgb16(buffer, format);
+
         case PixelFormat.Rgb666:
         case PixelFormat.Rgb24:
-          return FromRgb(buffer, format);
+          return FromRgb24(buffer, format);
 
         case PixelFormat.Argb6666:
         case PixelFormat.Argb32:
-          return FromRgba(buffer, format, discardAlpha);
+          return FromRgba32(buffer, format, discardAlpha);
 
         default:
           throw new NotSupportedException("Not supported palette format!");
       }
     }
 
-    private static Palette FromRgb(byte[] buffer, PixelFormat format)
+    private static Palette FromRgb16(byte[] buffer, PixelFormat format)
+    {
+      int bytesPerPixel = format.GetBytesPerPixel();
+      if (bytesPerPixel != 2)
+        throw new ArgumentException("Invalid color format for RGB (16-bit)!");
+
+      int count = (buffer.Length / bytesPerPixel);
+      Color[] colors = new Color[count];
+      for (int i = 0; i < colors.Length; ++i)
+      {
+        byte msb = buffer[bytesPerPixel * i + 0];
+        byte lsb = buffer[bytesPerPixel * i + 1];
+
+        ushort value = (ushort)((msb << 8) | lsb);
+
+        // [bbbb] [bggg] [gggr] [rrrr]
+        byte blue  = (byte)((value >> 11) & 0x1f);
+        byte green = (byte)((value >> 5) & 0x3f);
+        byte red   = (byte)((value >> 0) & 0x1f);
+
+        blue  = (byte)((blue  / 32f) * 256f);
+        green = (byte)((green / 64f) * 256f);
+        red   = (byte)((red   / 32f) * 256f);
+
+        colors[i] = new Color(red, green, blue);
+      }
+
+      return new Palette(colors, format);
+    }
+
+    private static Palette FromRgb24(byte[] buffer, PixelFormat format)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 3)
-        throw new ArgumentException("Invalid color format for RGB!");
+        throw new ArgumentException("Invalid color format for RGB (24-bit)!");
 
       int count = (buffer.Length / bytesPerPixel);
       Color[] colors = new Color[count];
@@ -163,11 +196,11 @@ namespace AGSUnpacker.Graphics
       return new Palette(colors, format);
     }
 
-    private static Palette FromRgba(byte[] buffer, PixelFormat format, bool discardAlpha = true)
+    private static Palette FromRgba32(byte[] buffer, PixelFormat format, bool discardAlpha = true)
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 4)
-        throw new ArgumentException("Invalid color format for RGBA!");
+        throw new ArgumentException("Invalid color format for RGBA (32-bit)!");
 
       int count = (buffer.Length / bytesPerPixel);
       Color[] colors = new Color[count];

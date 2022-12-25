@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using AGSUnpacker.Graphics.Formats;
 
@@ -47,7 +47,7 @@ namespace AGSUnpacker.Graphics
       switch (format)
       {
         case PixelFormat.Rgb565:
-          return colors.ToRgb565();
+          return colors.ToRgb16();
 
         case PixelFormat.Rgb666:
         case PixelFormat.Rgb24:
@@ -62,7 +62,7 @@ namespace AGSUnpacker.Graphics
       }
     }
 
-    private static byte[] ToRgb565(this Color[] colors)
+    private static byte[] ToRgb16(this Color[] colors)
     {
       int bytesPerPixel = 2;
 
@@ -92,7 +92,7 @@ namespace AGSUnpacker.Graphics
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 3)
-        throw new ArgumentException("Invalid color format for RGB!");
+        throw new ArgumentException("Invalid color format for RGB (24-bit)!");
 
       byte[] buffer = new byte[colors.Length * bytesPerPixel];
 
@@ -122,7 +122,7 @@ namespace AGSUnpacker.Graphics
     {
       int bytesPerPixel = format.GetBytesPerPixel();
       if (bytesPerPixel != 4)
-        throw new ArgumentException("Invalid color format for RGBA!");
+        throw new ArgumentException("Invalid color format for RGBA (32-bit)!");
 
       byte[] buffer = new byte[colors.Length * bytesPerPixel];
 
