@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 using AGSUnpacker.Graphics.Formats;
 
@@ -79,7 +79,7 @@ namespace AGSUnpacker.Graphics
         blue  = (int)((blue  / 256f) * 32);
 
         // NOTE(adm244): little-endian bgr565 format
-        UInt16 value = (UInt16)((byte)(blue << 11) | (byte)(green << 5) | (byte)(red));
+        UInt16 value = (UInt16)(((blue & 0xFF) << 11) | ((green & 0xFF) << 5) | (red & 0xFF));
 
         buffer[bytesPerPixel * i + 0] = (byte)(value >> 8);
         buffer[bytesPerPixel * i + 1] = (byte)(value);
