@@ -1,6 +1,7 @@
 ﻿using System;
 
 using AGSUnpacker.Graphics.Formats;
+using AGSUnpacker.Shared.Utils;
 
 namespace AGSUnpacker.Graphics
 {
@@ -74,9 +75,9 @@ namespace AGSUnpacker.Graphics
         int green = colors[i].G;
         int blue  = colors[i].B;
 
-        red   = (int)((red   / 256f) * 32);
-        green = (int)((green / 256f) * 64);
-        blue  = (int)((blue  / 256f) * 32);
+        red   = Utils.Remap(255, red,   31);
+        green = Utils.Remap(255, green, 63);
+        blue  = Utils.Remap(255, blue,  31);
 
         // NOTE(adm244): little-endian bgr565 format
         UInt16 value = (UInt16)(((blue & 0xFF) << 11) | ((green & 0xFF) << 5) | (red & 0xFF));
@@ -104,10 +105,9 @@ namespace AGSUnpacker.Graphics
 
         if (format == PixelFormat.Rgb666)
         {
-          //TODO(adm244): consider moving this into MathUtils or something
-          red   = (int)((red   / 256f) * 64f);
-          green = (int)((green / 256f) * 64f);
-          blue  = (int)((blue  / 256f) * 64f);
+          red   = Utils.Remap(255, red,   63);
+          green = Utils.Remap(255, green, 63);
+          blue  = Utils.Remap(255, blue,  63);
         }
 
         buffer[bytesPerPixel * i + 0] = (byte)red;
@@ -135,10 +135,10 @@ namespace AGSUnpacker.Graphics
 
         if (format == PixelFormat.Argb6666)
         {
-          red   = (int)((red   / 256f) * 64f);
-          green = (int)((green / 256f) * 64f);
-          blue  = (int)((blue  / 256f) * 64f);
-          alpha = (int)((alpha / 256f) * 64f);
+          red   = Utils.Remap(255, red,   63);
+          green = Utils.Remap(255, green, 63);
+          blue  = Utils.Remap(255, blue,  63);
+          alpha = Utils.Remap(255, alpha, 63);
         }
 
         buffer[bytesPerPixel * i + 0] = (byte)red;

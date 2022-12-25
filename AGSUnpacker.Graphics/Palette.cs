@@ -1,6 +1,7 @@
 ﻿using System;
 
 using AGSUnpacker.Graphics.Formats;
+using AGSUnpacker.Shared.Utils;
 
 namespace AGSUnpacker.Graphics
 {
@@ -159,9 +160,9 @@ namespace AGSUnpacker.Graphics
         byte green = (byte)((value >> 5) & 0x3f);
         byte red   = (byte)((value >> 0) & 0x1f);
 
-        blue  = (byte)((blue  / 32f) * 256f);
-        green = (byte)((green / 64f) * 256f);
-        red   = (byte)((red   / 32f) * 256f);
+        red   = (byte)Utils.Remap(31, red,   255);
+        green = (byte)Utils.Remap(63, green, 255);
+        blue  = (byte)Utils.Remap(31, blue,  255);
 
         colors[i] = new Color(red, green, blue);
       }
@@ -185,9 +186,9 @@ namespace AGSUnpacker.Graphics
 
         if (format == PixelFormat.Rgb666)
         {
-          blue  = (byte)((blue  / 64f) * 256f);
-          green = (byte)((green / 64f) * 256f);
-          red   = (byte)((red   / 64f) * 256f);
+          red   = (byte)Utils.Remap(63, red,   255);
+          green = (byte)Utils.Remap(63, green, 255);
+          blue  = (byte)Utils.Remap(63, blue,  255);
         }
 
         colors[i] = new Color(red, green, blue);
@@ -213,10 +214,10 @@ namespace AGSUnpacker.Graphics
 
         if (format == PixelFormat.Argb6666)
         {
-          red   = (byte)((red   / 64f) * 256f);
-          green = (byte)((green / 64f) * 256f);
-          blue  = (byte)((blue  / 64f) * 256f);
-          alpha = (byte)((alpha / 64f) * 256f);
+          red   = (byte)Utils.Remap(63, red,   255);
+          green = (byte)Utils.Remap(63, green, 255);
+          blue  = (byte)Utils.Remap(63, blue,  255);
+          alpha = (byte)Utils.Remap(63, alpha, 255);
         }
 
         if (discardAlpha)

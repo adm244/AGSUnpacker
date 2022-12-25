@@ -15,5 +15,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utils\AGSStringUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\Encryption\AGSEncryption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utils\IEEE754Utils.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utils\Utils.cs" />
   </ItemGroup>
 </Project>
