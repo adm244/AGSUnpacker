@@ -9,6 +9,11 @@ using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Translation
 {
+  // FIXME(adm244): "encoding" field is missing from trs file produced by "create trs from assets"
+  // TODO(adm244): what if source language is not the language you want to make a translation from?
+  // for example, game default language is german and there's an english.tra file, you want to translate
+  // from english into your language, but the trs file must contain the original lines...
+
   public class AGSTranslation
   {
     private const string TRA_SIGNATURE = "AGSTranslation\x0";

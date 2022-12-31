@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -6,12 +6,45 @@ using System.Text;
 using AGSUnpacker.Lib.Game;
 using AGSUnpacker.Lib.Room;
 using AGSUnpacker.Lib.Shared;
+using AGSUnpacker.Lib.Translation;
 
 namespace AGSUnpacker.Lib.Utils
 {
   public static class ScriptManager
   {
     public const string ScriptFileExtension = "scom3";
+
+    public static void ReplaceText(string trsFile, string[] targetFiles)
+    {
+      AGSTranslation translation = AGSTranslation.ReadSourceFile(trsFile);
+
+      // FIXME(adm244): this is messy, consider rewriting
+      for (int i = 0; i < targetFiles.Length; ++i)
+      {
+        AGSScript script = AGSScript.ReadFromFile(targetFiles[i]);
+
+        int changedTexts = 0;
+        for (int j = 0; j < script.StringsReferenced.Length; ++j)
+        {
+          int index = translation.OriginalLines.IndexOf(script.StringsReferenced[j].Text);
+          if (index >= 0)
+          {
+            string replacementString = translation.TranslatedLines[index];
+            if (!string.IsNullOrEmpty(replacementString))
+            {
+              script.StringsReferenced[j].Text = replacementString;
+              ++changedTexts;
+            }
+          }
+        }
+
+        if (changedTexts > 0)
+        {
+          File.Copy(targetFiles[i], targetFiles[i] + ".backup", true);
+          script.WriteToFile(targetFiles[i]);
+        }
+      }
+    }
 
     public static void Inject(string targetFile, string scriptFile)
     {

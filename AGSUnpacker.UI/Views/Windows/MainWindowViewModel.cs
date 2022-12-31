@@ -1,4 +1,5 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -13,6 +14,7 @@ using AGSUnpacker.UI.Core;
 using AGSUnpacker.UI.Services;
 
 using CommunityToolkit.Mvvm.Input;
+
 using Microsoft.Win32;
 
 namespace AGSUnpacker.UI.Views.Windows
@@ -281,7 +283,6 @@ namespace AGSUnpacker.UI.Views.Windows
       _windowService.Show(new RoomManagerWindowViewModel(_windowService));
     }
     #endregion
-    #endregion
 
     #region ExtractScriptsCommand
     private IAsyncRelayCommand _extractScriptsCommand;
@@ -342,6 +343,42 @@ namespace AGSUnpacker.UI.Views.Windows
     }
     #endregion
 
+    #region ReplaceScriptTextCommand
+    private IAsyncRelayCommand _replaceScriptTextCommand;
+    public IAsyncRelayCommand ReplaceScriptTextCommand
+    {
+      get => _replaceScriptTextCommand;
+      set => SetProperty(ref _replaceScriptTextCommand, value);
+    }
+
+    private Task OnReplaceScriptTextCommand()
+    {
+      return SelectFilesAsync(
+        (filenames) =>
+        {
+          ScriptManager.ReplaceText(filenames[0], filenames.AsSpan(1).ToArray());
+        },
+        new DialogOptions
+        {
+          Title = "Select trs file to get replacements from",
+          Filter = "Translation source file|*.trs"
+        },
+        new DialogOptions
+        {
+          Title = "Select one or more script files",
+          Filter = "SCOM3 script file|*." + ScriptManager.ScriptFileExtension,
+          Multiselect = true
+        }
+      );
+    }
+
+    private bool OnCanReplaceScriptTextCommand()
+    {
+      return !ReplaceScriptTextCommand.IsRunning;
+    }
+    #endregion
+    #endregion
+
     // FIXME(adm244): code duplication; see RoomManagerWindowViewModel
     private Task SelectFileAsync(string title, string filter, Action<string> action)
     {
@@ -364,25 +401,25 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task SelectFilesAsync(Action<string[]> action, params DialogOptions[] options)
     {
-      string[] filenames = new string[options.Length];
+      List<string> filenames = new List<string>();
 
       OpenFileDialog openDialog = new OpenFileDialog();
       for (int i = 0; i < options.Length; ++i)
       {
         openDialog.Title = options[i].Title;
         openDialog.Filter = options[i].Filter;
-        openDialog.Multiselect = false;
+        openDialog.Multiselect = options[i].Multiselect;
         openDialog.CheckFileExists = true;
         openDialog.CheckPathExists = true;
 
         if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
           return Task.CompletedTask;
 
-        filenames[i] = openDialog.FileName;
+        filenames.AddRange(openDialog.FileNames);
       }
 
       return Task.Run(
-        () => action(filenames)
+        () => action(filenames.ToArray())
       );
     }
 
@@ -552,6 +589,9 @@ namespace AGSUnpacker.UI.Views.Windows
       InjectScriptCommand = new AsyncRelayCommand(OnInjectScriptExecute, OnCanInjectScriptExecute);
       InjectScriptCommand.PropertyChanged += OnPropertyChanged;
 
+      ReplaceScriptTextCommand = new AsyncRelayCommand(OnReplaceScriptTextCommand, OnCanReplaceScriptTextCommand);
+      ReplaceScriptTextCommand.PropertyChanged += OnPropertyChanged;
+
       ExtractGameIdCommand = new AsyncRelayCommand(OnExtractGameIdExecute, OnCanExtractGameIdExecute);
       ExtractGameIdCommand.PropertyChanged += OnPropertyChanged;
 
@@ -562,6 +602,14 @@ namespace AGSUnpacker.UI.Views.Windows
     {
       public string Title;
       public string Filter;
+      public bool Multiselect;
+
+      public DialogOptions()
+      {
+        Title = string.Empty;
+        Filter = string.Empty;
+        Multiselect = false;
+      }
     }
   }
 }

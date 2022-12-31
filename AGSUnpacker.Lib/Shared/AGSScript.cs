@@ -54,6 +54,17 @@ namespace AGSUnpacker.Lib.Shared
       return script;
     }
 
+    public void WriteToFile(string filepath)
+    {
+      using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+      {
+        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
+        {
+          WriteToStream(writer);
+        }
+      }
+    }
+
     public void ReadFromStream(BinaryReader reader)
     {
       string signatureHead = reader.ReadFixedCString(SignatureHead.Length);

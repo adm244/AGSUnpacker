@@ -94,6 +94,7 @@
         <StackPanel>
           <Button Content="Extract Scripts from Assets" Command="{Binding ExtractScriptsCommand}"/>
           <Button Content="Inject Script into Asset" Command="{Binding InjectScriptCommand}"/>
+          <Button Content="Replace text from TRS" Command="{Binding ReplaceScriptTextCommand}"/>
         </StackPanel>
       </GroupBox>
 
