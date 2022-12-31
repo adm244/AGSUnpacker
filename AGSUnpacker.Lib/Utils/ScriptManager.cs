@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -11,6 +11,8 @@ namespace AGSUnpacker.Lib.Utils
 {
   public static class ScriptManager
   {
+    public const string ScriptFileExtension = "scom3";
+
     public static void Inject(string targetFile, string scriptFile)
     {
       // TODO(adm244): determine file by it's signature
@@ -192,7 +194,7 @@ namespace AGSUnpacker.Lib.Utils
       {
         filename = Path.GetRandomFileName();
       }
-      filename += ".o";
+      filename += "." + ScriptFileExtension;
 
       string targetFilepath = Path.Combine(targetFolder, filename);
 

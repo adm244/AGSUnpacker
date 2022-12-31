@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -323,14 +323,15 @@ namespace AGSUnpacker.UI.Views.Windows
         {
           ScriptManager.Inject(filenames[0], filenames[1]);
         },
-        new DialogOptions {
+        new DialogOptions
+        {
           Title = "Select asset file to inject into",
           Filter = "Game data or room file|*.dta;*.crm"
         },
         new DialogOptions
         {
           Title = "Select script object file to inject",
-          Filter = "Script object file|*.o"
+          Filter = "SCOM3 script file|*." + ScriptManager.ScriptFileExtension
         }
       );
     }
