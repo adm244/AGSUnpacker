@@ -72,6 +72,14 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
       writer.BaseStream.Seek(blockEnd, SeekOrigin.Begin);
     }
 
+    public static void WriteEndOfFile(BinaryWriter writer, Options options)
+    {
+      if (options.HasFlag(Options.Id32))
+        writer.Write((Int32)BlockType.EndOfFile);
+      else
+        writer.Write((byte)BlockType.EndOfFile);
+    }
+
     public static bool ReadMultiple(BinaryReader reader,
       Func<BinaryReader, string, long, bool> readData, Options options)
     {

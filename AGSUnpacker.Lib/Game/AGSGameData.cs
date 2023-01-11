@@ -558,8 +558,13 @@ namespace AGSUnpacker.Lib.Game
 
       if (Version > 50) // > 3.5.0
       {
+        ExtensionBlock.Options options = ExtensionBlock.Options.Id8 | ExtensionBlock.Options.Size64;
+
         for (int i = 0; i < ExtensionBlocks.Count; ++i)
-          WriteExtensionBlock(writer, ExtensionBlocks[i]);
+          ExtensionBlock.WriteSingle(writer, ExtensionBlocks[i], WriteExtensionBlock, options);
+
+        if (ExtensionBlocks.Count > 0)
+          ExtensionBlock.WriteEndOfFile(writer, options);
       }
     }
 
