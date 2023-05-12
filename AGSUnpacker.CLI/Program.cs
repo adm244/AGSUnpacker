@@ -1,10 +1,8 @@
-﻿using System.IO;
-
-using AGSUnpacker.Lib.Assets;
-using AGSUnpacker.Lib.Game;
-using AGSUnpacker.Lib.Graphics;
-using AGSUnpacker.Lib.Room;
-using AGSUnpacker.Lib.Translation;
+﻿using System;
+using System.IO;
+using System.IO.Compression;
+using AGSUnpacker.Graphics;
+using AGSUnpacker.Graphics.Formats;
 
 namespace AGSUnpacker.CLI
 {
@@ -12,50 +10,20 @@ namespace AGSUnpacker.CLI
   {
     static void Main(string[] args)
     {
-      //AssetsManager manager = AssetsManager.Create(args[0]);
-      //manager.Extract(args[1]);
+      // Bitmap bmp = new Bitmap(args[0]);
+      // bmp.Save(args[1], ImageFormat.Png);
 
-      //AGSSpriteSet.UnpackSprites(args[0], args[1]);
+      using FileStream inputStream = new FileStream(args[0], FileMode.Open, FileAccess.Read);
+      using FileStream outputStream = new FileStream(args[1], FileMode.Create, FileAccess.Write);
 
-      //AGSTranslation translation = AGSTranslation.ReadSourceFile(args[0]);
-      //translation.Compile(args[1], 1302728765, "A Golden Wake");
+      // using MemoryStream scanlinesStream = new MemoryStream();
 
-      //SaveRoomFrames(args[0]);
-
-      SetDebugMode(args[0], true);
-    }
-
-    private static void SetDebugMode(string filepath, bool value)
-    {
-      AGSGameData data = new AGSGameData();
-      data.LoadFromFile(filepath);
-
-      //data.setup.options[0] = value ? 1 : 0;
-
-      //data.SaveToFile(filepath);
-    }
-
-    private static void SaveRoomFrames(string sourceFolder)
-    {
-      string[] files = Directory.GetFiles(sourceFolder);
-      for (int i = 0; i < files.Length; ++i)
       {
-        if (Path.GetExtension(files[i]) == ".crm")
-        {
-          AGSRoom room = new AGSRoom();
-          room.ReadFromFile(files[i]);
-
-          string directory = Path.GetDirectoryName(files[i]);
-          string filename = Path.GetFileNameWithoutExtension(files[i]);
-
-          string baseFilepath = Path.Combine(directory, filename);
-          for (int k = 0; k < room.Background.Frames.Count; ++k)
-          {
-            string filepath = $"{baseFilepath}_frame{k}";
-            room.Background.Frames[k].Save(filepath, Graphics.Formats.ImageFormat.Png);
-          }
-        }
+        using ZLibStream zlibStream = new ZLibStream(outputStream, CompressionMode.Compress, leaveOpen: false);
+        inputStream.CopyTo(zlibStream);
       }
+
+      // TODO(adm244): read filter type and scanline
     }
   }
 }

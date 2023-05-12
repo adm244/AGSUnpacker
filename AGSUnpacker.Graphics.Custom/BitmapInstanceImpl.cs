@@ -34,7 +34,15 @@ namespace AGSUnpacker.Graphics
 
     protected override BitmapInstanceInfo LoadFromFile(string filepath)
     {
-      throw new NotImplementedException();
+      Bitmap bitmap = PngImage.ReadFile(filepath);
+      return new BitmapInstanceInfo
+      {
+        Width = bitmap.Width,
+        Height = bitmap.Height,
+        Palette = bitmap.Palette,
+        Format = bitmap.Format,
+        Buffer = bitmap.GetPixels()
+      };
     }
   }
 }

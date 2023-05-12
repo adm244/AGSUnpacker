@@ -19,5 +19,6 @@
   </PropertyGroup>
 
   <Import Project="..\AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems" Label="Shared" />
+  <Import Project="..\AGSUnpacker.Shared\AGSUnpacker.Shared.projitems" Label="Shared" />
 
 </Project>

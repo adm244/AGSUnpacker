@@ -29,6 +29,7 @@ namespace AGSUnpacker.Graphics.Formats
       }
     }
 
+    // FIXME(adm244): we shouldn't mix AGS-specific pixel formats implementation with a generic one
     public static PixelFormat FromBytesPerPixel(int bytesPerPixel)
     {
       switch (bytesPerPixel)

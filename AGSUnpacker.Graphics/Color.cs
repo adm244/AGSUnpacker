@@ -19,10 +19,10 @@ namespace AGSUnpacker.Graphics
       A = a;
     }
 
-    public byte R { get; }
-    public byte G { get; }
-    public byte B { get; }
-    public byte A { get; }
+    public byte R { get; set; }
+    public byte G { get; set; }
+    public byte B { get; set; }
+    public byte A { get; set; }
 
     public int ToRgba32()
     {
@@ -137,7 +137,7 @@ namespace AGSUnpacker.Graphics
         {
           red   = (int)((red   / 256f) * 64f);
           green = (int)((green / 256f) * 64f);
-          blue  = (int)((blue  / 256f) * 64f);
+          blue = (int)((blue / 256f) * 64f);
           alpha = (int)((alpha / 256f) * 64f);
         }
 

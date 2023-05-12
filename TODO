@@ -4,3 +4,6 @@
 Linux port:
 * Graphics: Implement custom PNG encoder\decoder
 * UI: Reimplement user interface with something that supports Linux (e.g. AvaloniaUI)
+
+Low priority:
+* Clean up palette specific pixel formats (rgb666, argb6666)

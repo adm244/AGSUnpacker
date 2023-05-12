@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Buffers.Binary;
 using System.IO;
 using System.Text;
 
@@ -57,6 +58,7 @@ namespace AGSUnpacker.Shared.Extensions
       return AGSEncryption.DecryptAvis(buffer);
     }
 
+    // TODO(adm244): verify that merging this won't break anything...
     public static string ReadFixedString(this BinaryReader reader, int length)
     {
       if (length < 1)
@@ -70,6 +72,19 @@ namespace AGSUnpacker.Shared.Extensions
       return new string(buffer);
     }
 
+    public static string ReadFixedString(this BinaryReader reader, int length, Encoding encoding)
+    {
+      if (length < 1)
+        return string.Empty;
+
+      if (reader.EOF())
+        return string.Empty;
+
+      byte[] buffer = reader.ReadBytes(length);
+
+      return encoding.GetString(buffer);
+    }
+
     public static string ReadFixedCString(this BinaryReader reader, int length)
     {
       if (length < 1)
@@ -79,7 +94,7 @@ namespace AGSUnpacker.Shared.Extensions
         return string.Empty;
 
       char[] buffer = reader.ReadChars(length);
-      
+
       //NOTE(adm244): the reason why we use ConvertCString here is that we expect that
       // the string can be null-terminated (when it's actual length is less the the length specified)
       // Should we consider using a different method for this case??
@@ -124,6 +139,32 @@ namespace AGSUnpacker.Shared.Extensions
         values[i] = reader.ReadInt32();
 
       return values;
+    }
+
+    // REWRITE(adm244): implement custom BinaryReader that's endianness-aware
+
+    public static Int16 ReadInt16BE(this BinaryReader reader)
+    {
+      ReadOnlySpan<byte> bytes = reader.ReadBytes(sizeof(Int16));
+      return BinaryPrimitives.ReadInt16BigEndian(bytes);
+    }
+
+    public static UInt16 ReadUInt16BE(this BinaryReader reader)
+    {
+      ReadOnlySpan<byte> bytes = reader.ReadBytes(sizeof(UInt16));
+      return BinaryPrimitives.ReadUInt16BigEndian(bytes);
+    }
+
+    public static Int32 ReadInt32BE(this BinaryReader reader)
+    {
+      ReadOnlySpan<byte> bytes = reader.ReadBytes(sizeof(Int32));
+      return BinaryPrimitives.ReadInt32BigEndian(bytes);
+    }
+
+    public static UInt32 ReadUInt32BE(this BinaryReader reader)
+    {
+      ReadOnlySpan<byte> bytes = reader.ReadBytes(sizeof(UInt32));
+      return BinaryPrimitives.ReadUInt32BigEndian(bytes);
     }
   }
 }
