@@ -1,0 +1,130 @@
+v08:
+
+General:
+- Added support for script extraction
+- Added support for script injection
+- Added support for text replacement in scripts
+- Added support for writing game data file
+- Microsoft.Toolkit -> CommunityToolkit migration
+
+Game:
+- Fixed dta writer missing extension blocks header
+
+Graphics:
+- Fixed incorrect color channel range conversions
+- Fixed incorrect rgb565 color to buffer conversion
+- Added rgb565 buffer to color conversion support
+
+Room:
+- Fixed incorrect walkable areas count
+- Added graphical scripts support
+- Added pre 2.5 script configurations support
+- Added pre 2.41 conditions support
+- Implemented legacy interaction variables
+
+Translation:
+- Fixed mixed-case assets being ignored
+
+
+v07:
+
+General:
+- .Net 6.0 migration
+- Support for AGS 3.6.0
+- Fixed RLE decompression issue introduced in AGS 3.6.0
+
+Assets:
+- Added support for user packed files
+- Added support for folders
+
+Room:
+- Added support for extension blocks
+
+Graphics:
+- Added support for version 12
+- Added support for indexed sprites
+- Added support for LZW compression
+
+Translation:
+- Added support for extension blocks
+- Added support for Unicode option
+
+
+v06:
+
+General:
+- .Net 5.0 migration
+- New user interface
+- Fixed 2.x clib reader
+
+Game:
+- Added unencrypted global messages support (pre 2.62)
+- Added unencrypted dialog strings support (pre 2.61)
+
+Room:
+- Added proper support for 64-bit block lengths
+- Fixed incorrect palette format writing room files
+- Fixed incorrect room background frames data writing room files
+- Fixed ReadSourceBlock not reading legacy source code correctly
+- Fixed typo writing old interactions (copy-paste bug)
+- Changed background palette format to 6-bits
+- Workaround for background null alpha-channel
+- No more properties block for pre 2.56
+
+Graphics:
+- Added support for RGB888 palette format (AGS 2.7x)
+- Added support for old sprite index format (pre 3.1.2)
+- Added support for new sprite index format (3.5)
+- Added missing support for new sprite set format (3.5)
+- Added version checks
+- Removed unused alpha channel in palette
+- Fixed typo preventing 6-bits to 8-bits conversion
+- Fixed palette not being null when loading bitmap
+- Fixed missing new sprite index support
+- 16bpp images are now saved as bmp files
+- 32bpp with null alpha to 24bpp conversion
+- 24bpp to 32bpp with null alpha conversion
+- Workaround for 2.7x busted palette
+- Header file now stores palette in AGS format
+
+Translation:
+- Added missing tra end block support
+- Added support for trs extraction from exe file (fake)
+- Removed redundant extracted trs garbage checks
+- Fixed incorrect game id format
+- Fixed internal data not being reinitialized
+- Embedded gameid and gamename into trs file
+- Using Latin1 encoding for files
+
+IdentityExtractor:
+- Added multilib support (fake)
+
+
+v05:
+Fixed: Incorrect encoding for script referenced strings
+Added: Support for CLib version 6 (vox files)
+Added: Support for multiple CLib files
+Added: Reimplemented CLib reader
+Refactor: Cleaned up AGSScript code
+Fixed: AGSScript::SaveToStream incorrectly writing empty sections
+Fixed: AGSScript::LoadFromStream didn't check the fixup type
+Refactor: Moved encryption methods into AGSEncryption
+Refactor: Cleaned up AGSRoom, AGSStringUtils code
+Added: Support for 64-bit room block length
+Fixed: Removed garbage from script strings
+Re-added: AGSSpriteSet outputs sprindex.dat
+Fixed: AGSSpriteSet::Pack now properly packs sprites based on their index
+Fixed: AGSSpriteSet::Pack writting compression type for file version below 6
+Refactor: cleaned up AGSSpriteSet, AGSGraphicUtils code
+Refactor: renamed AGSSpritesCache -> AGSSpriteSet
+Added: TRA file compiler
+Added: TRS file reader
+Fixed: WriteEncryptedString is now null-terminates strings as it should
+Fixed: Removed garbage from dialog options
+Fixed: TextExtractor only extracts valid dialog options
+Fixed: Incorrect data reading from a MemoryStream
+
+
+v04:
+Fixed: TextExtractor now extracts old dialog script strings
+Fixed: TextExtractor now extracts dictionary strings

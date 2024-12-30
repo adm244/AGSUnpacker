@@ -3,14 +3,20 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net6.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <UseWPF>true</UseWPF>
     <StartupObject>AGSUnpacker.UI.App</StartupObject>
     <AssemblyName>AGSUnpacker</AssemblyName>
     <ApplicationIcon>Resources\Icons\cup_icon.ico</ApplicationIcon>
     <Win32Resource />
-    <Version>0.6</Version>
-    <Authors>AdM244</Authors>
   </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="AGSUnpacker.UI.BuildInfoAttribute">
+      <_Parameter1>$(PublicReleaseVersion)</_Parameter1>
+      <_Parameter2>$(ProcessorArchitecture)</_Parameter2>
+    </AssemblyAttribute>
+  </ItemGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>none</DebugType>

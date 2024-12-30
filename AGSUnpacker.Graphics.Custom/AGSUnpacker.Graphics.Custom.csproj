@@ -2,10 +2,13 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <AssemblyName>AGSUnpacker.Graphics</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <Import Project="..\AGSUnpacker.Graphics\AGSUnpacker.Graphics.projitems" Label="Shared" />
+
+  <Import Project="..\AGSUnpacker.Shared\AGSUnpacker.Shared.projitems" Label="Shared" />
 
 </Project>

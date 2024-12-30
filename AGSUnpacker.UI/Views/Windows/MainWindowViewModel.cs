@@ -25,6 +25,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     #region Properties
     public static string ProgramName => AppDescription.ProgramName;
+    public static string ProgramConfiguration => AppDescription.ProgramConfiguration;
     public static string ProgramVersion => AppDescription.ProgramVersion;
 
     private string _title;
