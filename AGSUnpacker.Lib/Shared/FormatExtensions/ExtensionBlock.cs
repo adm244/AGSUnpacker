@@ -89,7 +89,7 @@ namespace AGSUnpacker.Lib.Shared.FormatExtensions
       {
         BlockType blockType = ReadSingle(reader, readData, options);
 
-        if (!Enum.IsDefined(blockType) || blockType < 0)
+        if (!Enum.IsDefined(blockType))
           throw new InvalidDataException(
             $"Unknown extension block '{blockType}' encountered in game data!");
 
