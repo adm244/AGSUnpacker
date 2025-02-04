@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Lib.Game.ExtensionBlocks;
 using AGSUnpacker.Lib.Game.View;
 using AGSUnpacker.Lib.Shared;
 using AGSUnpacker.Lib.Shared.FormatExtensions;
@@ -31,6 +32,7 @@ namespace AGSUnpacker.Lib.Game
     public string[] Capabilities;
 
     public List<string> ExtensionBlocks;
+    public AGSObjectNamesExt extObjectNames;
 
     public AGSGameSetupStruct setup;
     public char[] save_guid;
@@ -78,6 +80,7 @@ namespace AGSUnpacker.Lib.Game
       Capabilities = Array.Empty<string>();
 
       ExtensionBlocks = new List<string>();
+      extObjectNames = null;
 
       setup = new AGSGameSetupStruct();
       save_guid = new char[0];
@@ -703,6 +706,101 @@ namespace AGSUnpacker.Lib.Game
       return true;
     }
 
+    private bool ReadObjNamesExtensionBlock(BinaryReader reader)
+    {
+      extObjectNames = new AGSObjectNamesExt
+      {
+        GameName = reader.ReadPrefixedString32(),
+        SaveGameFolderName = reader.ReadPrefixedString32()
+      };
+
+      int charactersCount = reader.ReadInt32();
+      for (int i = 0; i < charactersCount; ++i)
+      {
+        extObjectNames.Characters.Add
+        (
+          new ObjectNameExt
+          {
+            ScriptName = reader.ReadPrefixedString32(),
+            RealName = reader.ReadPrefixedString32()
+          }
+        );
+      }
+
+      int inventoryItemsCount = reader.ReadInt32();
+      for (int i = 0; i < inventoryItemsCount; ++i)
+      {
+        extObjectNames.InventoryItems.Add
+        (
+          new ObjectNameExt
+          {
+            RealName = reader.ReadPrefixedString32()
+          }
+        );
+      }
+
+      int cursorsCount = reader.ReadInt32();
+      for (int i = 0; i < cursorsCount; ++i)
+      {
+        extObjectNames.Cursors.Add
+        (
+          new ObjectNameExt
+          {
+            RealName = reader.ReadPrefixedString32()
+          }
+        );
+      }
+
+      int audioClipsCount = reader.ReadInt32();
+      for (int i = 0; i < audioClipsCount; ++i)
+      {
+        extObjectNames.AudioClips.Add
+        (
+          new ObjectNameExt
+          {
+            ScriptName = reader.ReadPrefixedString32(),
+            RealName = reader.ReadPrefixedString32()
+          }
+        );
+      }
+
+      return true;
+    }
+
+    private bool WriteObjNamesExtensionBlock(BinaryWriter writer)
+    {
+      writer.WritePrefixedString32(extObjectNames.GameName);
+      writer.WritePrefixedString32(extObjectNames.SaveGameFolderName);
+
+      writer.Write((Int32)extObjectNames.Characters.Count);
+      for (int i = 0; i < extObjectNames.Characters.Count; ++i)
+      {
+        writer.WritePrefixedString32(extObjectNames.Characters[i].ScriptName);
+        writer.WritePrefixedString32(extObjectNames.Characters[i].RealName);
+      }
+
+      writer.Write((Int32)extObjectNames.InventoryItems.Count);
+      for (int i = 0; i < extObjectNames.InventoryItems.Count; ++i)
+      {
+        writer.WritePrefixedString32(extObjectNames.InventoryItems[i].RealName);
+      }
+
+      writer.Write((Int32)extObjectNames.Cursors.Count);
+      for (int i = 0; i < extObjectNames.Cursors.Count; ++i)
+      {
+        writer.WritePrefixedString32(extObjectNames.Cursors[i].RealName);
+      }
+
+      writer.Write((Int32)extObjectNames.AudioClips.Count);
+      for (int i = 0; i < extObjectNames.AudioClips.Count; ++i)
+      {
+        writer.WritePrefixedString32(extObjectNames.AudioClips[i].ScriptName);
+        writer.WritePrefixedString32(extObjectNames.AudioClips[i].RealName);
+      }
+
+      return false;
+    }
+
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
     {
       bool result = false;
@@ -717,7 +815,12 @@ namespace AGSUnpacker.Lib.Game
           result = ReadCursorsExtensionBlock(reader);
           break;
 
+        case "v361_objnames":
+          result = ReadObjNamesExtensionBlock(reader);
+          break;
+
         default:
+          // TODO(adm244): better logging system (show warnings to user but continue execution)
           Debug.Assert(false, $"Data extension block '{id}' is not supported!");
           break;
       }
@@ -737,6 +840,9 @@ namespace AGSUnpacker.Lib.Game
 
         case "v360_cursors":
           return WriteCursorsExtensionBlock(writer);
+
+        case "v361_objnames":
+          return WriteObjNamesExtensionBlock(writer);
 
         default:
           throw new NotSupportedException($"Unknown game data extension block: {id}.");
