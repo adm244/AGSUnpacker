@@ -1,0 +1,32 @@
+name: Development Build
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        config: [Release, Debug]
+        arch: [x64, x86]
+        target: [win]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Building ${{ matrix.config }}-${{ matrix.target }}-${{ matrix.arch }}
+      shell: bash
+      run: make publish CONFIG=${{ matrix.config }} ARCH=${{ matrix.arch }} TARGET=${{ matrix.target }}
+    - uses: actions/upload-artifact@v4
+      with:
+        name: AGSUnpacker-Dev-${{ matrix.config }}-${{ matrix.target }}-${{ matrix.arch }}
+        path: ${{ github.workspace }}/build/package/*
+        if-no-files-found: error
