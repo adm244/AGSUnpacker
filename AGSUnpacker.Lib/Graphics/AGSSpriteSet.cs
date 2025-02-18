@@ -227,6 +227,11 @@ namespace AGSUnpacker.Lib.Graphics
       return AGSCompression.ReadLZ77(reader, sizeUncompressed);
     }
 
+    private static byte[] DecompressZlib(BinaryReader reader, long size, long sizeUncompressed)
+    {
+      return AGSCompression.ReadZlib(reader, size, sizeUncompressed);
+    }
+
     private static int GetSpriteIndexVersion(SpriteSetHeader header)
     {
       switch (header.Version)
@@ -706,6 +711,9 @@ namespace AGSUnpacker.Lib.Graphics
           format != SpriteFormat.Default ? 1 : bytesPerPixel);
       else if (compression == CompressionType.LZW)
         pixels = DecompressLZW(reader, sizeUncompressed);
+      else if (compression == CompressionType.Deflate)
+        //NOTE(adm244): yes, it's called deflate but they use zlib header
+        pixels = DecompressZlib(reader, size, sizeUncompressed);
       else if (compression == CompressionType.Uncompressed)
         pixels = reader.ReadBytes((int)size);
       else

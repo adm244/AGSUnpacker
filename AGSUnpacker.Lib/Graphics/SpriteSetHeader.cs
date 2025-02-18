@@ -21,6 +21,7 @@ namespace AGSUnpacker.Lib.Graphics
     Uncompressed = 0,
     RLE = 1,
     LZW = 2,
+    Deflate = 3
   }
 
   public class SpriteSetHeader

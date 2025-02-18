@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Compression;
+using AGSUnpacker.Shared;
 
 namespace AGSUnpacker.Lib.Utils
 {
@@ -450,6 +452,42 @@ namespace AGSUnpacker.Lib.Utils
     //    return stream.ToArray();
     //  }
     //}
+
+    internal static byte[] ReadZlib(BinaryReader reader, long size, long sizeUncompressed)
+    {
+      //NOTE(adm244): just a funny observation:
+      // some compressed data is larger then uncompressed counterpart
+
+      using ReadOnlySubStream stream = new(reader.BaseStream, reader.BaseStream.Position, size);
+      using ZLibStream zlibStream = new(stream, CompressionMode.Decompress, leaveOpen: true);
+
+      byte[] buffer = new byte[sizeUncompressed];
+
+      int totalRead = 0;
+      while (totalRead < buffer.Length)
+      {
+        int bytesRead = zlibStream.Read(buffer.AsSpan(totalRead));
+        if (bytesRead == 0) break;
+        totalRead += bytesRead;
+      }
+
+      if (totalRead < buffer.Length)
+        throw new IOException($"Expected more bytes in zlib stream: {buffer.Length}." +
+                              $" Got: {totalRead}." +
+                              $" Decompression failed.");
+
+      if (stream.Position < stream.Length)
+      {
+        //NOTE(adm244): sometimes there's extra stuff beyond zlib stream (after adler32);
+        // at this point we've successfully read full buffer, assume it's garbage and skip
+        long unknownBytes = stream.Length - stream.Position;
+        Trace.TraceWarning($"Unexpected {unknownBytes} bytes of data beyond zlib stream." +
+                           $" Skipping extra bytes...");
+        reader.BaseStream.Position += unknownBytes;
+      }
+
+      return buffer;
+    }
 
     // TODO(adm244): rename to something like "WriteRLE8Chuncked"?
     internal static void WriteAllegro(BinaryWriter writer, byte[] buffer, int width, int height)
