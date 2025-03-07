@@ -489,6 +489,17 @@ namespace AGSUnpacker.Lib.Utils
       return buffer;
     }
 
+    internal static byte[] WriteZlib(byte[] buffer)
+    {
+      using MemoryStream outputStream = new(buffer.Length);
+      using ZLibStream zlibStream = new(outputStream, CompressionMode.Compress);
+
+      zlibStream.Write(buffer.AsSpan());
+      zlibStream.Close();
+
+      return outputStream.ToArray();
+    }
+
     // TODO(adm244): rename to something like "WriteRLE8Chuncked"?
     internal static void WriteAllegro(BinaryWriter writer, byte[] buffer, int width, int height)
     {

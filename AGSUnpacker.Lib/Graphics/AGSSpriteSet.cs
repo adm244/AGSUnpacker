@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -198,6 +198,11 @@ namespace AGSUnpacker.Lib.Graphics
 
       //TODO(adm244): is it LZ77 or LZW? dig into that...
       return AGSCompression.WriteLZ77(buffer);
+    }
+
+    private static byte[] CompressZlib(byte[] buffer)
+    {
+      return AGSCompression.WriteZlib(buffer);
     }
 
     private static byte[] DecompressRLE(BinaryReader reader, long sizeUncompressed, int bytesPerPixel)
@@ -450,18 +455,15 @@ namespace AGSUnpacker.Lib.Graphics
 
     private static byte[] CompressSprite(byte[] buffer, Bitmap sprite, CompressionType compressionType)
     {
-      switch (compressionType)
+      return compressionType switch
       {
-        case CompressionType.RLE:
-          return CompressRLE(buffer, sprite.Width, sprite.Height, sprite.BytesPerPixel);
-
-        case CompressionType.LZW:
-          return CompressLZW(buffer);
-
-        default:
-          throw new NotSupportedException(
-            $"Sprite compression type '{compressionType}' is not supported.");
-      }
+        CompressionType.Uncompressed => buffer,
+        CompressionType.RLE => CompressRLE(buffer, sprite.Width, sprite.Height, sprite.BytesPerPixel),
+        CompressionType.LZW => CompressLZW(buffer),
+        CompressionType.Deflate => CompressZlib(buffer),
+        _ => throw new NotSupportedException(
+          $"Sprite compression type '{compressionType}' is not supported."),
+      };
     }
 
     private static void WriteSpritePalette(BinaryWriter writer, Bitmap sprite, SpriteFormat format)
