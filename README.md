@@ -98,11 +98,11 @@ If everything went OK you'll find compiled program in `build/package` folder.
 
 In terminal navigate to AGSUnpacker root folder and use this dotnet command:
 ```sh
-dotnet publish AGSUnpacker.UI/AGSUnpacker.UI.csproj --os win -c Release -a x64 --no-self-contained -o build/package/
+dotnet publish AGSUnpacker.UI/AGSUnpacker.UI.csproj --os win -c Release -a x64 --no-self-contained /p:TargetOS="win" -o build/package/
 ```
 or to compile 32-bit executables:
 ```sh
-dotnet publish AGSUnpacker.UI/AGSUnpacker.UI.csproj --os win -c Release -a x86 --no-self-contained -o build/package/
+dotnet publish AGSUnpacker.UI/AGSUnpacker.UI.csproj --os win -c Release -a x86 --no-self-contained /p:TargetOS="win" -o build/package/
 ```
 
 If everything went OK you'll find compiled program in `build/package` folder.

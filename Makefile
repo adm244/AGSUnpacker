@@ -40,6 +40,7 @@ BUILD_OPTIONS += /p:Authors="$(AUTHORS)"
 ifneq ($(strip $(PUBLIC_RELEASE)),)
 BUILD_OPTIONS += /p:PublicReleaseVersion="$(PUBLIC_RELEASE)"
 endif
+BUILD_OPTIONS += /p:TargetOS="$(TARGET)"
 
 PROJECT_UI ?= AGSUnpacker.UI/AGSUnpacker.UI.csproj
 
