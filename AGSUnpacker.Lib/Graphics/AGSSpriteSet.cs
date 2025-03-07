@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -268,23 +268,14 @@ namespace AGSUnpacker.Lib.Graphics
     private static void PackSpritesInternal(string outputFilepath, string headerFilepath, params string[] filepaths)
     {
       SpriteSetHeader header = SpriteSetHeader.ReadFromFile(headerFilepath);
-      List<SpriteEntry> sprites = GetSortedSpritesList(filepaths);
 
-      using (FileStream stream = new FileStream(outputFilepath, FileMode.Create))
-      {
-        using (BinaryWriter writer = new BinaryWriter(stream, Encoding.Latin1))
-        {
-          int spritesCount = GetLargestIndex(sprites);
-          WriteSpriteSetHeader(writer, header, spritesCount);
-          SpriteIndexInfo[] spritesWritten = WriteSprites(writer, header, sprites);
+      SpriteIndexInfo[] spritesWritten = WriteSpriteSetFile(outputFilepath, filepaths, header);
 
-          // HACK(adm244): temp solution
-          string indexFilepath = Path.GetDirectoryName(outputFilepath);
+      // HACK(adm244): temp solution
+      string indexFilepath = Path.GetDirectoryName(outputFilepath);
 
-          int version = GetSpriteIndexVersion(header);
-          WriteSpriteIndexFile(indexFilepath, header, spritesWritten, version);
-        }
-      }
+      int version = GetSpriteIndexVersion(header);
+      WriteSpriteIndexFile(indexFilepath, header, spritesWritten, version);
     }
 
     private static bool UnpackSpritesInternal(string spriteFilePath, string targetFolderPath)
@@ -311,6 +302,7 @@ namespace AGSUnpacker.Lib.Graphics
           {
             Console.Write(string.Format("\tExtracting spr{0:D5}...", index));
 
+            //TODO(adm244): maybe check for EndOfStreamException?
             Bitmap sprite = ReadSprite(reader, header, index);
             if (sprite == null)
             {
@@ -342,64 +334,49 @@ namespace AGSUnpacker.Lib.Graphics
       return (header.SpritesCount > 0);
     }
 
-    private static bool GetSpriteIndex(string filename, out int index)
+    private static bool GetSpriteIndex(string filepath, out int index)
     {
       index = -1;
 
       const string prefix = "spr";
 
+      string filename = Path.GetFileNameWithoutExtension(filepath);
+
       if (!filename.StartsWith(prefix))
         return false;
 
-      return int.TryParse(filename.Substring(prefix.Length), out index);
+      return int.TryParse(filename.AsSpan(prefix.Length), out index);
     }
 
-    private static List<SpriteEntry> GetSortedSpritesList(string[] filePaths)
+    //NOTE(adm244): assumes filepaths list is sorted in ascending order
+    private static SpriteIndexInfo[] WriteSprites(BinaryWriter writer, SpriteSetHeader header, List<string> filepaths)
     {
-      List<SpriteEntry> sprites = new List<SpriteEntry>();
-
-      for (int i = 0; i < filePaths.Length; ++i)
-      {
-        string filename = Path.GetFileNameWithoutExtension(filePaths[i]);
-
-        if (!GetSpriteIndex(filename, out int index))
-          continue;
-
-        Bitmap sprite = new Bitmap(filePaths[i]);
-        sprites.Add(new SpriteEntry(index, sprite));
-      }
-
-      sprites.Sort();
-
-      return sprites;
-    }
-
-    private static int GetLargestIndex(List<SpriteEntry> sprites)
-    {
-      //NOTE(adm244): assumes that sprites list is sorted
-      return sprites[sprites.Count - 1].Index;
-    }
-
-    private static SpriteIndexInfo[] WriteSprites(BinaryWriter writer, SpriteSetHeader header, List<SpriteEntry> sprites)
-    {
-      List<SpriteIndexInfo> spriteIndexData = new List<SpriteIndexInfo>();
+      List<SpriteIndexInfo> spriteIndexData = new();
 
       int spriteIndex = 0;
       int listIndex = 0;
 
-      while (listIndex < sprites.Count)
+      //NOTE(adm244): sprites count + special 0 sprite
+      while (spriteIndex <= header.SpritesCount)
       {
-        if (sprites[listIndex].Index == spriteIndex)
+        Console.Write($"Writting spr{spriteIndex:D5}... ");
+
+        int index = -1;
+        bool isIndexValid = (listIndex < filepaths.Count) && GetSpriteIndex(filepaths[listIndex], out index);
+        if (isIndexValid && (index == spriteIndex))
         {
-          SpriteIndexInfo spriteWritten = WriteSprite(writer, header, sprites[listIndex].Sprite);
+          Bitmap bitmap = new(filepaths[listIndex]);
+          SpriteIndexInfo spriteWritten = WriteSprite(writer, header, bitmap);
           spriteIndexData.Add(spriteWritten);
           ++listIndex;
+          Console.WriteLine("Done!");
         }
         else
         {
-          SpriteIndexInfo spriteEmpty = new SpriteIndexInfo(writer.BaseStream.Position);
+          SpriteIndexInfo spriteEmpty = new(writer.BaseStream.Position);
           spriteIndexData.Add(spriteEmpty);
           writer.Write((UInt16)0);
+          Console.WriteLine("Empty.");
         }
 
         ++spriteIndex;
@@ -410,11 +387,12 @@ namespace AGSUnpacker.Lib.Graphics
 
     private static SpriteIndexInfo WriteSprite(BinaryWriter writer, SpriteSetHeader header, Bitmap sprite)
     {
-      SpriteIndexInfo spriteIndexData = new SpriteIndexInfo();
-
-      spriteIndexData.Width = sprite.Width;
-      spriteIndexData.Height = sprite.Height;
-      spriteIndexData.Offset = writer.BaseStream.Position;
+      SpriteIndexInfo spriteIndexData = new()
+      {
+        Width = sprite.Width,
+        Height = sprite.Height,
+        Offset = writer.BaseStream.Position
+      };
 
       sprite = PrepareSpriteForWritting(sprite, header, out SpriteFormat format);
 
@@ -552,7 +530,7 @@ namespace AGSUnpacker.Lib.Graphics
       return new SpriteSetHeader(version, compression, fileID, spritesCount, palette, storeFlags);
     }
 
-    private static void WriteSpriteSetHeader(BinaryWriter writer, SpriteSetHeader header, int spritesCount)
+    private static void WriteSpriteSetHeader(BinaryWriter writer, SpriteSetHeader header)
     {
       writer.Write((UInt16)header.Version);
       writer.Write((char[])SpriteSetSignature.ToCharArray());
@@ -567,9 +545,9 @@ namespace AGSUnpacker.Lib.Graphics
         AGSGraphics.WritePalette(writer, header.Palette);
 
       if (header.Version < 11)
-        writer.Write((UInt16)spritesCount);
+        writer.Write((UInt16)header.SpritesCount);
       else
-        writer.Write((Int32)spritesCount);
+        writer.Write((Int32)header.SpritesCount);
 
       if (header.Version >= 12)
       {
@@ -578,6 +556,18 @@ namespace AGSUnpacker.Lib.Graphics
         writer.Write((byte)0);
         writer.Write((byte)0);
       }
+    }
+
+    private static SpriteIndexInfo[] WriteSpriteSetFile(string outputFilepath, string[] filepaths, SpriteSetHeader header)
+    {
+      List<string> sortedFilepaths = new(filepaths);
+      sortedFilepaths.Sort();
+
+      using FileStream stream = new(outputFilepath, FileMode.Create);
+      using BinaryWriter writer = new(stream, Encoding.Latin1);
+
+      WriteSpriteSetHeader(writer, header);
+      return WriteSprites(writer, header, sortedFilepaths);
     }
 
     //TODO(adm244): ReadSpriteIndexFile
@@ -789,29 +779,6 @@ namespace AGSUnpacker.Lib.Graphics
         format = ImageFormat.Bmp;
 
       image.Save(filePath, format);
-    }
-
-    private class SpriteEntry : IComparable<SpriteEntry>
-    {
-      public int Index { get; }
-      public Bitmap Sprite { get; }
-
-      public SpriteEntry(int index, Bitmap sprite)
-      {
-        Index = index;
-        Sprite = sprite;
-      }
-
-      public int CompareTo(SpriteEntry other)
-      {
-        if (Index == other.Index)
-          return 0;
-
-        if (Index > other.Index)
-          return 1;
-        else
-          return -1;
-      }
     }
 
     private struct SpriteIndexInfo
