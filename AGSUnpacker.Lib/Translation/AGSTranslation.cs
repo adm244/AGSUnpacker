@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -83,6 +83,18 @@ namespace AGSUnpacker.Lib.Translation
       {
         Trace.Assert(false, "AGSTranslation::Compile: Original and Tranlated lines count do not match!");
         return;
+      }
+
+      if (GameID == 0) {
+        throw new InvalidDataException(
+          "Invalid GameID. Possibly missing \"//#GameID=\" field in trs file."
+        );
+      }
+
+      if (string.IsNullOrEmpty(GameName)) {
+        throw new InvalidDataException(
+          "Empty GameName. Possibly missing \"//#GameName=\" field in trs file."
+        );
       }
 
       GameID = gameID;
