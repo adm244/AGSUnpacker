@@ -22,6 +22,9 @@ namespace AGSUnpacker.Lib.Translation
     public const string TRS_TAG_GAMENAME = "//#GameName=";
     public const string TRS_TAG_ENCODING = "//#Encoding=";
 
+    //TODO(adm244): check if there's other options added by newer engine versions
+    private const string EncodingOption = "encoding";
+
     // FIXME(adm244): temporary? public
     public List<string> OriginalLines { get; set; }
     public List<string> TranslatedLines { get; set; }
@@ -30,18 +33,21 @@ namespace AGSUnpacker.Lib.Translation
     public string GameName { get; private set; }
 
     public Dictionary<string, string> Options;
-    
+
+    public bool HasTextEncoding => Options.ContainsKey(EncodingOption);
+
     public string TextEncoding
     {
       get
       {
-        if (Options.ContainsKey("encoding"))
-          return Options["encoding"];
+        if (HasTextEncoding)
+          return Options[EncodingOption];
 
+        //NOTE(adm244): should we return ASCII as default?
         return "ASCII";
       }
 
-      set => Options["encoding"] = value;
+      set => Options[EncodingOption] = value;
     }
 
     public AGSTranslation()
@@ -377,24 +383,24 @@ namespace AGSUnpacker.Lib.Translation
 
     public void WriteSourceFile(string filepath)
     {
-      using (FileStream stream = new FileStream(filepath, FileMode.Create, FileAccess.Write))
+      using FileStream stream = new(filepath, FileMode.Create, FileAccess.Write);
+      using StreamWriter writer = new(stream, Encoding.Latin1);
+
+      Debug.Assert(OriginalLines.Count == TranslatedLines.Count);
+
+      // TODO(adm244): assert GameID and GameName are valid
+
+      writer.WriteLine("{0}{1}", TRS_TAG_GAMEID, GameID);
+      writer.WriteLine("{0}{1}", TRS_TAG_GAMENAME, GameName);
+
+      //NOTE(adm244): don't output any encoding setting if corresponding option's not set
+      if (HasTextEncoding)
+        writer.WriteLine("{0}{1}", TRS_TAG_ENCODING, TextEncoding);
+
+      for (int i = 0; i < OriginalLines.Count; ++i)
       {
-        using (StreamWriter writer = new StreamWriter(stream, Encoding.Latin1))
-        {
-          Debug.Assert(OriginalLines.Count == TranslatedLines.Count);
-
-          // TODO(adm244): assert GameID and GameName are valid
-
-          writer.WriteLine("{0}{1}", TRS_TAG_GAMEID, GameID);
-          writer.WriteLine("{0}{1}", TRS_TAG_GAMENAME, GameName);
-          writer.WriteLine("{0}{1}", TRS_TAG_ENCODING, TextEncoding);
-
-          for (int i = 0; i < OriginalLines.Count; ++i)
-          {
-            writer.WriteLine(OriginalLines[i]);
-            writer.WriteLine(TranslatedLines[i]);
-          }
-        }
+        writer.WriteLine(OriginalLines[i]);
+        writer.WriteLine(TranslatedLines[i]);
       }
     }
 
