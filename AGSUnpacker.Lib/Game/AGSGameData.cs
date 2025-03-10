@@ -27,6 +27,8 @@ namespace AGSUnpacker.Lib.Game
 
     private static readonly int LIMIT_MAX_GLOBAL_MESSAGES = 500;
 
+    public static readonly int EncodingOption = 49;
+
     public int Version;
     public string VersionEngine;
     public string[] Capabilities;

@@ -140,6 +140,13 @@ namespace AGSUnpacker.Lib.Utils
       lines.Add($"{AGSTranslation.TRS_TAG_GAMEID}{gameData.setup.unique_id}");
       lines.Add($"{AGSTranslation.TRS_TAG_GAMENAME}{gameData.setup.name}");
 
+      if (gameData.Version >= 3060000) { // 3.6.0
+        //FIXME(adm244): this assumes there's only two encodings
+        string encoding = gameData.setup.options[AGSGameData.EncodingOption] == 65001 ?
+          "UTF-8" : "ASCII";
+        lines.Add($"{AGSTranslation.TRS_TAG_ENCODING}{encoding}");
+      }
+
       // extract translation lines from game data
       lines.Add("// [game28.dta]");
       ExtractTranslationLines(gameData);

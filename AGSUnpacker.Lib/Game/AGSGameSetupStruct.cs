@@ -76,6 +76,7 @@ namespace AGSUnpacker.Lib
     public void LoadFromStream(AGSAlignedStream ar, int dta_version)
     {
       name = ar.ReadFixedString(50);
+      //TODO(adm244): parse options property
       options = ar.ReadArrayInt32(100);
       paluses = ar.ReadBytes(256);
 
