@@ -9,7 +9,6 @@ using AGSUnpacker.Shared.Extensions;
 
 namespace AGSUnpacker.Lib.Translation
 {
-  // FIXME(adm244): "encoding" field is missing from trs file produced by "create trs from assets"
   // TODO(adm244): what if source language is not the language you want to make a translation from?
   // for example, game default language is german and there's an english.tra file, you want to translate
   // from english into your language, but the trs file must contain the original lines...
@@ -22,6 +21,14 @@ namespace AGSUnpacker.Lib.Translation
     public const string TRS_TAG_GAMENAME = "//#GameName=";
     public const string TRS_TAG_ENCODING = "//#Encoding=";
 
+    public const string TRS_TAG_NORMAL_FONT = "//#NormalFont=";
+    public const string TRS_TAG_SPEECH_FONT = "//#SpeechFont=";
+    public const string TRS_TAG_TEXT_DIRECTION = "//#TextDirection=";
+
+    private const string TRS_TAG_DEFAULT = "DEFAULT";
+    private const string TRS_TAG_TEXT_DIRECTION_LEFT = "LEFT";
+    private const string TRS_TAG_TEXT_DIRECTION_RIGHT = "RIGHT";
+
     //TODO(adm244): check if there's other options added by newer engine versions
     private const string EncodingOption = "encoding";
 
@@ -31,6 +38,9 @@ namespace AGSUnpacker.Lib.Translation
 
     public int GameID { get; private set; }
     public string GameName { get; private set; }
+    public int NormalFont { get; private set; }
+    public int SpeechFont { get; private set; }
+    public int TextDirection { get; private set; }
 
     public Dictionary<string, string> Options;
 
@@ -57,6 +67,9 @@ namespace AGSUnpacker.Lib.Translation
 
       GameID = 0;
       GameName = string.Empty;
+      NormalFont = -1;
+      SpeechFont = -1;
+      TextDirection = -1;
 
       Options = new Dictionary<string, string>();
     }
@@ -114,9 +127,7 @@ namespace AGSUnpacker.Lib.Translation
 
           WriteBlock(writer, BlockType.Header);
           WriteBlock(writer, BlockType.Content);
-
-          //TODO(adm244): implement settings block
-          //WriteBlock(writer, BlockType.Settings);
+          WriteBlock(writer, BlockType.Settings);
 
           if (Options.Count > 0)
             ExtensionBlock.WriteSingle(writer, "ext_sopts", WriteExtensionBlock,
@@ -161,7 +172,10 @@ namespace AGSUnpacker.Lib.Translation
           } break;
 
         case BlockType.Settings:
-          throw new NotImplementedException("AGSTranslation: Setting block is not implemented!");
+          writer.Write((Int32)NormalFont);
+          writer.Write((Int32)SpeechFont);
+          writer.Write((Int32)TextDirection);
+          break;
 
         case BlockType.End:
           // do nothing
@@ -312,7 +326,9 @@ namespace AGSUnpacker.Lib.Translation
           return true;
 
         case BlockType.Settings:
-          //TODO(adm244): implement settings block
+          NormalFont = reader.ReadInt32();
+          SpeechFont = reader.ReadInt32();
+          TextDirection = reader.ReadInt32();
           return false;
 
         default:
@@ -320,6 +336,38 @@ namespace AGSUnpacker.Lib.Translation
           return false;
       }
     }
+
+    //FIXME(adm244): read\write naming is really dumb
+    private static int ReadOptionalInt(string str)
+    {
+      if (str == TRS_TAG_DEFAULT)
+        return -1;
+
+      if (int.TryParse(str, out int value))
+        return value;
+      return -1;
+    }
+
+    private static string WriteOptionalInt(int value)
+    {
+      if (value == -1)
+        return TRS_TAG_DEFAULT;
+      return string.Format($"{value}");
+    }
+
+    private static int ReadOptionalTextDirection(string directionText) => directionText switch
+    {
+      TRS_TAG_TEXT_DIRECTION_LEFT => (int)TextDirections.Left,
+      TRS_TAG_TEXT_DIRECTION_RIGHT => (int)TextDirections.Right,
+      _ => (int)TextDirections.Default
+    };
+
+    private static string WriteOptionalTextDirection(int direction) => direction switch
+    {
+      (int)TextDirections.Left => TRS_TAG_TEXT_DIRECTION_LEFT,
+      (int)TextDirections.Right => TRS_TAG_TEXT_DIRECTION_RIGHT,
+      _ => TRS_TAG_DEFAULT
+    };
 
     public static AGSTranslation ReadSourceFile(string filename)
     {
@@ -344,6 +392,18 @@ namespace AGSUnpacker.Lib.Translation
               else if (line.StartsWith(TRS_TAG_GAMENAME))
               {
                 translation.GameName = line.Substring(TRS_TAG_GAMENAME.Length);
+              }
+              else if (line.StartsWith(TRS_TAG_NORMAL_FONT))
+              {
+                translation.NormalFont = ReadOptionalInt(line.Substring(TRS_TAG_NORMAL_FONT.Length));
+              }
+              else if (line.StartsWith(TRS_TAG_SPEECH_FONT))
+              {
+                translation.SpeechFont = ReadOptionalInt(line.Substring(TRS_TAG_SPEECH_FONT.Length));
+              }
+              else if (line.StartsWith(TRS_TAG_TEXT_DIRECTION))
+              {
+                translation.TextDirection = ReadOptionalTextDirection(line.Substring(TRS_TAG_TEXT_DIRECTION.Length));
               }
               else if (line.StartsWith(TRS_TAG_ENCODING))
               {
@@ -392,6 +452,9 @@ namespace AGSUnpacker.Lib.Translation
 
       writer.WriteLine("{0}{1}", TRS_TAG_GAMEID, GameID);
       writer.WriteLine("{0}{1}", TRS_TAG_GAMENAME, GameName);
+      writer.WriteLine("{0}{1}", TRS_TAG_NORMAL_FONT, WriteOptionalInt(NormalFont));
+      writer.WriteLine("{0}{1}", TRS_TAG_SPEECH_FONT, WriteOptionalInt(SpeechFont));
+      writer.WriteLine("{0}{1}", TRS_TAG_TEXT_DIRECTION, WriteOptionalTextDirection(TextDirection));
 
       //NOTE(adm244): don't output any encoding setting if corresponding option's not set
       if (HasTextEncoding)
@@ -417,6 +480,13 @@ namespace AGSUnpacker.Lib.Translation
       Invalid = 0,
       Original,
       Translation,
+    }
+
+    private enum TextDirections
+    {
+      Default = -1,
+      Left = 1,
+      Right = 2,
     }
   }
 }
