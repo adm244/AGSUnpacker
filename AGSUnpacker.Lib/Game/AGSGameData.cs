@@ -800,7 +800,7 @@ namespace AGSUnpacker.Lib.Game
         writer.WritePrefixedString32(extObjectNames.AudioClips[i].RealName);
       }
 
-      return false;
+      return true;
     }
 
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
