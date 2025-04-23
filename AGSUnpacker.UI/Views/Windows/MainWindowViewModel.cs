@@ -323,7 +323,7 @@ namespace AGSUnpacker.UI.Views.Windows
       return SelectFilesAsync(
         (filenames) =>
         {
-          ScriptManager.Inject(filenames[0], filenames[1]);
+          ScriptManager.Inject(filenames[0], filenames.AsSpan(1).ToArray());
         },
         new DialogOptions
         {
@@ -332,8 +332,9 @@ namespace AGSUnpacker.UI.Views.Windows
         },
         new DialogOptions
         {
-          Title = "Select script object file to inject",
-          Filter = "SCOM3 script file|*." + ScriptManager.ScriptFileExtension
+          Title = "Select one or more script files",
+          Filter = "SCOM3 script file|*." + ScriptManager.ScriptFileExtension,
+          Multiselect = true
         }
       );
     }

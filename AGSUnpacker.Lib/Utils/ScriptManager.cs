@@ -46,21 +46,22 @@ namespace AGSUnpacker.Lib.Utils
       }
     }
 
-    public static void Inject(string targetFile, string scriptFile)
+    public static void Inject(string targetFile, string[] scriptFiles)
     {
       // TODO(adm244): determine file by it's signature
       string extension = Path.GetExtension(targetFile).ToLower();
       if (extension == ".dta")
-        InjectIntoData(targetFile, scriptFile);
+        InjectIntoData(targetFile, scriptFiles);
       else
-        InjectIntoRoom(targetFile, scriptFile);
+      {
+        // FIXME(adm244): silently inject first script, maybe show warning message
+        InjectIntoRoom(targetFile, scriptFiles[0]);
+      }
     }
 
-    private static void InjectIntoData(string targetFile, string scriptFile)
+    private static void InjectIntoData(AGSGameData gameData, string scriptFile)
     {
-      AGSGameData gameData = AGSGameData.ReadFromFile(targetFile);
       AGSScript injectee = AGSScript.ReadFromFile(scriptFile);
-
       if (injectee.Sections.Length > 0)
       {
         ((Action)(() => {
@@ -86,6 +87,16 @@ namespace AGSUnpacker.Lib.Utils
             "Sections length mismatch. Script you're trying to inject is too old.");
 
         gameData.globalScript = injectee;
+      }
+    }
+
+    private static void InjectIntoData(string targetFile, string[] scriptFiles)
+    {
+      AGSGameData gameData = AGSGameData.ReadFromFile(targetFile);
+
+      for (int i = 0; i < scriptFiles.Length; ++i)
+      {
+        InjectIntoData(gameData, scriptFiles[i]);
       }
 
       File.Copy(targetFile, targetFile + ".backup", true);
