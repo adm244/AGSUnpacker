@@ -214,12 +214,17 @@ namespace AGSUnpacker.Lib.Utils
 
     private static void ExtractGameDataScripts(AGSGameData gameData, string targetFolder)
     {
+      // NOTE(adm244): extracting dialog and global scripts into a separate folder
+      //  because script modules with exact same name will overwrite them!
+      string builtinFolder = Path.Combine(targetFolder, "built-in");
+      Directory.CreateDirectory(builtinFolder);
+
       // FIXME(adm244): now that's just stupid, assign null if it's not initialized
       if (gameData.dialogScript.Code.Length > 0)
-        DumpScript(gameData.dialogScript, targetFolder, "DialogScripts");
+        DumpScript(gameData.dialogScript, builtinFolder, "DialogScript");
 
       if (gameData.globalScript.Code.Length > 0)
-      DumpScript(gameData.globalScript, targetFolder, "GlobalScript");
+        DumpScript(gameData.globalScript, builtinFolder, "GlobalScript");
 
       for (int i = 0; i < gameData.scriptModules.Length; ++i)
       {
