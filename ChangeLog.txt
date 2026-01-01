@@ -1,3 +1,23 @@
+v09:
+
+Script:
+- Added support for multiple scripts injection into dta file
+- Fixed built-in scripts being overwritten by user ones
+
+Game:
+- Added support for "v361_objnames" extension block
+- Fixed crash when unknown extension block is encountered
+
+Graphics:
+- Added support for deflate\zlib compression option
+- Optimized sprites packaging memory consumption (to some extent)
+
+Translation:
+- Added support for "Settings" block (fixes crashes)
+- Added checks for missing "GameID", "GameName" fields
+- Fixed support for "Encoding" field
+
+
 v08:
 
 General:
