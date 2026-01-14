@@ -6,6 +6,7 @@ using System.Text;
 using AGSUnpacker.Lib.Game;
 using AGSUnpacker.Lib.Room;
 using AGSUnpacker.Lib.Translation;
+using AGSUnpacker.Shared.Utils;
 
 namespace AGSUnpacker.Lib.Utils
 {
@@ -313,6 +314,7 @@ namespace AGSUnpacker.Lib.Utils
       return true;
     }
 
+    // FIXME(adm244): generate AGSTranslation and use its reading\writting methods
     public static void WriteTranslationFile(string filename, List<string> lines)
     {
       string filepath = Path.Combine(Environment.CurrentDirectory, filename);
@@ -322,7 +324,7 @@ namespace AGSUnpacker.Lib.Utils
         {
           for (int i = 0; i < lines.Count; ++i)
           {
-            writer.WriteLine(lines[i]);
+            writer.WriteLine(AGSStringUtils.Escape(lines[i]));
             if (!lines[i].StartsWith("//"))
             {
               writer.WriteLine();
