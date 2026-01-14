@@ -26,15 +26,11 @@ namespace AGSUnpacker.Lib.Utils
         int changedTexts = 0;
         for (int j = 0; j < script.StringsReferenced.Length; ++j)
         {
-          int index = translation.OriginalLines.IndexOf(script.StringsReferenced[j].Text);
-          if (index >= 0)
+          bool found = translation.Lines.TryGetValue(script.StringsReferenced[j].Text, out string translated);
+          if (found && !string.IsNullOrEmpty(translated))
           {
-            string replacementString = translation.TranslatedLines[index];
-            if (!string.IsNullOrEmpty(replacementString))
-            {
-              script.StringsReferenced[j].Text = replacementString;
-              ++changedTexts;
-            }
+            script.StringsReferenced[j].Text = translated;
+            ++changedTexts;
           }
         }
 
