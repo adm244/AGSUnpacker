@@ -6,6 +6,7 @@ using System.Text;
 
 using AGSUnpacker.Lib.Shared.FormatExtensions;
 using AGSUnpacker.Shared.Extensions;
+using AGSUnpacker.Shared.Utils;
 
 namespace AGSUnpacker.Lib.Translation
 {
@@ -419,14 +420,14 @@ namespace AGSUnpacker.Lib.Translation
             {
               case ReadState.Original:
                 {
-                  translation.OriginalLines.Add(line);
+                  translation.OriginalLines.Add(AGSStringUtils.Unescape(line));
                   state = ReadState.Translation;
                 }
                 break;
 
               case ReadState.Translation:
                 {
-                  translation.TranslatedLines.Add(line);
+                  translation.TranslatedLines.Add(AGSStringUtils.Unescape(line));
                   state = ReadState.Original;
                 }
                 break;
@@ -462,8 +463,10 @@ namespace AGSUnpacker.Lib.Translation
 
       for (int i = 0; i < OriginalLines.Count; ++i)
       {
-        writer.WriteLine(OriginalLines[i]);
-        writer.WriteLine(TranslatedLines[i]);
+        // NOTE(adm244): 3.6.1 added support for C-like escape sequences;
+        //  we must property substitute them before\after writing
+        writer.WriteLine(AGSStringUtils.Escape(OriginalLines[i]));
+        writer.WriteLine(AGSStringUtils.Escape(TranslatedLines[i]));
       }
     }
 

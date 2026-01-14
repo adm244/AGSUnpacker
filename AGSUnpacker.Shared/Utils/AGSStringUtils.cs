@@ -108,5 +108,58 @@ namespace AGSUnpacker.Shared.Utils
         return stream.ToArray();
       }
     }
+
+    // NOTE(adm244): escape only invisible characters, don't care about rest
+    private static string EscapeChar(char c) => c switch
+    {
+      '\a' => "\\a",
+      '\b' => "\\b",
+      '\f' => "\\f",
+      '\n' => "\\n",
+      '\r' => "\\r",
+      '\t' => "\\t",
+      '\v' => "\\v",
+      _ => c.ToString()
+    };
+
+    private static char UnescapeChar(char c) => c switch
+    {
+      'a' => '\a',
+      'b' => '\b',
+      'f' => '\f',
+      'n' => '\n',
+      'r' => '\r',
+      't' => '\t',
+      'v' => '\v',
+      _ => '\\'
+    };
+
+    public static string Escape(string s)
+    {
+      StringBuilder sb = new();
+
+      for (int i = 0; i < s.Length; ++i)
+        sb.Append(EscapeChar(s[i]));
+
+      return sb.ToString();
+    }
+
+    public static string Unescape(string s)
+    {
+      StringBuilder sb = new(s.Length);
+
+      for (int i = 0; i < s.Length; ++i)
+      {
+        char c = s[i];
+        if ((c == '\\') && (i + 1 < s.Length))
+        {
+          c = UnescapeChar(s[i + 1]);
+          ++i;
+        }
+        sb.Append(c);
+      }
+
+      return sb.ToString();
+    }
   }
 }
