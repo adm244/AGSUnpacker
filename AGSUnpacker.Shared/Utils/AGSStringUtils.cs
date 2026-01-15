@@ -142,7 +142,7 @@ namespace AGSUnpacker.Shared.Utils
       '?' => new char[] { '?' },
       // NOTE(adm244): ignore unescaping "\["; '[' is an old-style newline
       '[' => new char[] { '\\', '[' },
-      _ => new char[] { c }
+      _ => new char[] { '\\', c }
     };
 
     public static string Escape(string s)
