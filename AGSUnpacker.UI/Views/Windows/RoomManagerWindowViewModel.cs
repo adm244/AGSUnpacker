@@ -319,10 +319,10 @@ namespace AGSUnpacker.UI.Views.Windows
       CloseRoomCommand = new RelayCommand(OnCloseRoomExecute, OnCanCloseRoomExecute);
       QuitCommand = new RelayCommand(OnQuitExecute);
 
-      SaveImageCommand = new AsyncRelayCommand(OnSaveImageExecute, OnCanSaveImageExecute);
+      SaveImageCommand = new AsyncRelayCommand(OnSaveImageExecute, OnCanSaveImageExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       SaveImageCommand.PropertyChanged += OnPropertyChanged;
 
-      ReplaceImageCommand = new AsyncRelayCommand(OnReplaceImageExecute, OnCanReplaceImageExecute);
+      ReplaceImageCommand = new AsyncRelayCommand(OnReplaceImageExecute, OnCanReplaceImageExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       ReplaceImageCommand.PropertyChanged += OnReplaceImagePropertyChanged;
     }
   }

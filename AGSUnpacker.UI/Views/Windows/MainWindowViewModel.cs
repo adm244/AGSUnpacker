@@ -564,37 +564,37 @@ namespace AGSUnpacker.UI.Views.Windows
 
       // TODO(adm244): automate this
 
-      UnpackAssetsCommand = new AsyncRelayCommand(OnUnpackAssetsExecute, OnCanUnpackAssetsExecute);
+      UnpackAssetsCommand = new AsyncRelayCommand(OnUnpackAssetsExecute, OnCanUnpackAssetsExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       UnpackAssetsCommand.PropertyChanged += OnPropertyChanged;
 
-      UnpackSpritesCommand = new AsyncRelayCommand(OnUnpackSpritesExecute, OnCanUnpackSpritesExecute);
+      UnpackSpritesCommand = new AsyncRelayCommand(OnUnpackSpritesExecute, OnCanUnpackSpritesExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       UnpackSpritesCommand.PropertyChanged += OnPropertyChanged;
 
-      RepackAssetsCommand = new AsyncRelayCommand(OnRepackAssetsExecute, OnCanRepackAssetsExecute);
+      RepackAssetsCommand = new AsyncRelayCommand(OnRepackAssetsExecute, OnCanRepackAssetsExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       RepackAssetsCommand.PropertyChanged += OnPropertyChanged;
 
-      RepackSpritesCommand = new AsyncRelayCommand(OnRepackSpritesExecute, OnCanRepackSpritesExecute);
+      RepackSpritesCommand = new AsyncRelayCommand(OnRepackSpritesExecute, OnCanRepackSpritesExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       RepackSpritesCommand.PropertyChanged += OnPropertyChanged;
 
-      ExtractTranslationCommand = new AsyncRelayCommand(OnExtractTranslationExecute, OnCanExtractTranslationExecute);
+      ExtractTranslationCommand = new AsyncRelayCommand(OnExtractTranslationExecute, OnCanExtractTranslationExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       ExtractTranslationCommand.PropertyChanged += OnPropertyChanged;
 
-      DecompileTranslationCommand = new AsyncRelayCommand(OnDecompileTranslationExecute, OnCanDecompileTranslationExecute);
+      DecompileTranslationCommand = new AsyncRelayCommand(OnDecompileTranslationExecute, OnCanDecompileTranslationExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       DecompileTranslationCommand.PropertyChanged += OnPropertyChanged;
 
-      CompileTranslationCommand = new AsyncRelayCommand(OnCompileTraslationExecute, OnCanCompileTranslationExecute);
+      CompileTranslationCommand = new AsyncRelayCommand(OnCompileTraslationExecute, OnCanCompileTranslationExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       CompileTranslationCommand.PropertyChanged += OnPropertyChanged;
 
-      ExtractScriptsCommand = new AsyncRelayCommand(OnExtractScriptsExecute, OnCanExtractScriptsExecute);
+      ExtractScriptsCommand = new AsyncRelayCommand(OnExtractScriptsExecute, OnCanExtractScriptsExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       ExtractScriptsCommand.PropertyChanged += OnPropertyChanged;
 
-      InjectScriptCommand = new AsyncRelayCommand(OnInjectScriptExecute, OnCanInjectScriptExecute);
+      InjectScriptCommand = new AsyncRelayCommand(OnInjectScriptExecute, OnCanInjectScriptExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       InjectScriptCommand.PropertyChanged += OnPropertyChanged;
 
-      ReplaceScriptTextCommand = new AsyncRelayCommand(OnReplaceScriptTextCommand, OnCanReplaceScriptTextCommand);
+      ReplaceScriptTextCommand = new AsyncRelayCommand(OnReplaceScriptTextCommand, OnCanReplaceScriptTextCommand, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       ReplaceScriptTextCommand.PropertyChanged += OnPropertyChanged;
 
-      ExtractGameIdCommand = new AsyncRelayCommand(OnExtractGameIdExecute, OnCanExtractGameIdExecute);
+      ExtractGameIdCommand = new AsyncRelayCommand(OnExtractGameIdExecute, OnCanExtractGameIdExecute, AsyncRelayCommandOptions.FlowExceptionsToTaskScheduler);
       ExtractGameIdCommand.PropertyChanged += OnPropertyChanged;
 
       ShowRoomManagerCommand = new RelayCommand(OnShowRoomManagerExecute);
