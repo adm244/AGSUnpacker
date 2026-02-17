@@ -25,6 +25,15 @@ namespace AGSUnpacker.Lib.Game
     public Int32 padding_x;
     public Int32 padding_y;
 
+    public int button_flags;
+    public int shadow_color;
+    public int mouseover_back_color;
+    public int pushed_back_color;
+    public int mouseover_border_color;
+    public int pushed_border_color;
+    public int mouseover_text_color;
+    public int pushed_text_color;
+
     public AGSGUIButton()
     {
       image = 0;
@@ -44,6 +53,15 @@ namespace AGSUnpacker.Lib.Game
       reserved1 = 0;
       padding_x = 0;
       padding_y = 0;
+
+      button_flags = 0;
+      shadow_color = 0;
+      mouseover_back_color = 0;
+      pushed_back_color = 0;
+      mouseover_border_color = 0;
+      pushed_border_color = 0;
+      mouseover_text_color = 0;
+      pushed_text_color = 0;
     }
 
     public override void LoadFromStream(BinaryReader r, int gui_version)
@@ -115,6 +133,40 @@ namespace AGSUnpacker.Lib.Game
         if (version < 119) // 3.5.0
           writer.Write((Int32)reserved1);
       }
+    }
+
+    public override void LoadFromStream_v363(BinaryReader r)
+    {
+      base.LoadFromStream_v363(r);
+
+      button_flags = r.ReadInt32();
+      shadow_color = r.ReadInt32();
+      mouseover_back_color = r.ReadInt32();
+      pushed_back_color = r.ReadInt32();
+      mouseover_border_color = r.ReadInt32();
+      pushed_border_color = r.ReadInt32();
+      mouseover_text_color = r.ReadInt32();
+      pushed_text_color = r.ReadInt32();
+
+      // skip reserved fields
+      _ = r.ReadArrayInt32(4);
+    }
+
+    public override void WriteToStream_v363(BinaryWriter writer)
+    {
+      base.WriteToStream_v363(writer);
+
+      writer.Write((Int32)button_flags);
+      writer.Write((Int32)shadow_color);
+      writer.Write((Int32)mouseover_back_color);
+      writer.Write((Int32)pushed_back_color);
+      writer.Write((Int32)mouseover_border_color);
+      writer.Write((Int32)pushed_border_color);
+      writer.Write((Int32)mouseover_text_color);
+      writer.Write((Int32)pushed_text_color);
+
+      // nullify reserved fields
+      writer.WriteArrayInt32(new int[4]);
     }
   }
 }

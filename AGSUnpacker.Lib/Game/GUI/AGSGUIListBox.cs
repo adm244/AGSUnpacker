@@ -16,7 +16,7 @@ namespace AGSUnpacker.Lib.Game
     public Int32 font;
     public Int32 text_color;
     public Int32 text_color_selected;
-    public Int32 flags;
+    public new Int32 flags;
     public Int32 text_aligment;
     public Int32 reserved1;
     public Int32 background_color_selected;

@@ -17,6 +17,12 @@ namespace AGSUnpacker.Lib.Game
     public string name;
     public string[] events;
 
+    public int background_color;
+    public int border_color;
+    public int border_width;
+    public int base_padding_x;
+    public int base_padding_y;
+
     public AGSGUIObject()
     {
       flags = 0;
@@ -28,6 +34,12 @@ namespace AGSUnpacker.Lib.Game
       is_activated = 0;
       name = string.Empty;
       events = new string[0];
+
+      background_color = 0;
+      border_color = 0;
+      border_width = 0;
+      base_padding_x = 0;
+      base_padding_y = 0;
     }
 
     public virtual void LoadFromStream(BinaryReader r, int gui_version)
@@ -76,6 +88,30 @@ namespace AGSUnpacker.Lib.Game
         for (int i = 0; i < events.Length; ++i)
           writer.WriteCString(events[i]);
       }
+    }
+
+    public virtual void LoadFromStream_v363(BinaryReader r)
+    {
+      background_color = r.ReadInt32();
+      border_color = r.ReadInt32();
+      border_width = r.ReadInt32();
+      base_padding_x = r.ReadInt32();
+      base_padding_y = r.ReadInt32();
+
+      // skip reserved fields
+      _ = r.ReadArrayInt32(4);
+    }
+
+    public virtual void WriteToStream_v363(BinaryWriter writer)
+    {
+      writer.Write((Int32)background_color);
+      writer.Write((Int32)border_color);
+      writer.Write((Int32)border_width);
+      writer.Write((Int32)base_padding_x);
+      writer.Write((Int32)base_padding_y);
+
+      // nullify reserved fields
+      writer.WriteArrayInt32(new int[4]);
     }
   }
 }

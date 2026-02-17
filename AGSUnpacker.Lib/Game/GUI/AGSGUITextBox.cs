@@ -10,7 +10,9 @@ namespace AGSUnpacker.Lib.Game
     public string text;
     public Int32 font;
     public Int32 text_color;
-    public Int32 flags;
+    public new Int32 flags;
+
+    public int text_alignment;
 
     public AGSGUITextBox()
     {
@@ -18,6 +20,8 @@ namespace AGSUnpacker.Lib.Game
       font = 0;
       text_color = 0;
       flags = 0;
+
+      text_alignment = 0;
     }
 
     public override void LoadFromStream(BinaryReader r, int gui_version)
@@ -47,6 +51,26 @@ namespace AGSUnpacker.Lib.Game
       writer.Write((Int32)font);
       writer.Write((Int32)text_color);
       writer.Write((Int32)flags);
+    }
+
+    public override void LoadFromStream_v363(BinaryReader r)
+    {
+      base.LoadFromStream_v363(r);
+
+      text_alignment = r.ReadInt32();
+
+      // skip reserved fields
+      _ = r.ReadArrayInt32(3);
+    }
+
+    public override void WriteToStream_v363(BinaryWriter writer)
+    {
+      base.WriteToStream_v363(writer);
+
+      writer.Write((Int32)text_alignment);
+
+      // nullify reserved fields
+      writer.WriteArrayInt32(new int[3]);
     }
   }
 }

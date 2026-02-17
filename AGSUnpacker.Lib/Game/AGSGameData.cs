@@ -960,6 +960,88 @@ namespace AGSUnpacker.Lib.Game
       return true;
     }
 
+    private bool ReadGUIControlsExBlock(BinaryReader reader)
+    {
+      // buttons
+      int buttonsCount = reader.ReadInt32();
+      if (buttonsCount != buttons.Length)
+        return false;
+
+      for (int i = 0; i < buttonsCount; ++i)
+        buttons[i].LoadFromStream_v363(reader);
+
+      // labels
+      int labelsCount = reader.ReadInt32();
+      if (labelsCount != labels.Length)
+        return false;
+
+      for (int i = 0; i < labelsCount; ++i)
+        labels[i].LoadFromStream_v363(reader);
+
+      // inventory windows
+      int invwindowsCount = reader.ReadInt32();
+      if (invwindowsCount != inventoryWindows.Length)
+        return false;
+
+      for (int i = 0; i < invwindowsCount; ++i)
+        inventoryWindows[i].LoadFromStream_v363(reader);
+
+      // sliders
+      int slidersCount = reader.ReadInt32();
+      if (slidersCount != sliders.Length)
+        return false;
+
+      for (int i = 0; i < slidersCount; ++i)
+        sliders[i].LoadFromStream_v363(reader);
+
+      // textboxes
+      int textboxesCount = reader.ReadInt32();
+      if (textboxesCount != textboxes.Length)
+        return false;
+
+      for (int i = 0; i < textboxesCount; ++i)
+        textboxes[i].LoadFromStream_v363(reader);
+
+      // listboxes
+      int listboxesCount = reader.ReadInt32();
+      if (listboxesCount != listboxes.Length)
+        return false;
+
+      for (int i = 0; i < listboxesCount; ++i)
+        listboxes[i].LoadFromStream_v363(reader);
+
+      return true;
+    }
+
+    private bool WriteGUIControlsExBlock(BinaryWriter writer)
+    {
+      writer.Write((Int32)buttons.Length);
+      for (int i = 0; i < buttons.Length; ++i)
+        buttons[i].WriteToStream_v363(writer);
+
+      writer.Write((Int32)labels.Length);
+      for (int i = 0; i < labels.Length; ++i)
+        labels[i].WriteToStream_v363(writer);
+
+      writer.Write((Int32)inventoryWindows.Length);
+      for (int i = 0; i < inventoryWindows.Length; ++i)
+        inventoryWindows[i].WriteToStream_v363(writer);
+
+      writer.Write((Int32)sliders.Length);
+      for (int i = 0; i < sliders.Length; ++i)
+        sliders[i].WriteToStream_v363(writer);
+
+      writer.Write((Int32)textboxes.Length);
+      for (int i = 0; i < textboxes.Length; ++i)
+        textboxes[i].WriteToStream_v363(writer);
+
+      writer.Write((Int32)listboxes.Length);
+      for (int i = 0; i < listboxes.Length; ++i)
+        listboxes[i].WriteToStream_v363(writer);
+
+      return true;
+    }
+
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
     {
       bool result = false;
@@ -996,6 +1078,10 @@ namespace AGSUnpacker.Lib.Game
 
         case "v363_dialogsnew":
           result = ReadDialogsBlock(reader);
+          break;
+
+        case "v363_guictrls":
+          result = ReadGUIControlsExBlock(reader);
           break;
 
         default:
@@ -1037,6 +1123,9 @@ namespace AGSUnpacker.Lib.Game
 
         case "v363_dialogsnew":
           return WriteDialogsBlock(writer);
+
+        case "v363_guictrls":
+          return WriteGUIControlsExBlock(writer);
 
         default:
           throw new NotSupportedException($"Unknown game data extension block: {id}.");

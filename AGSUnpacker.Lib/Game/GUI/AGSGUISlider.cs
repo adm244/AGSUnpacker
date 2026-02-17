@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
+using AGSUnpacker.Shared.Extensions;
+
 namespace AGSUnpacker.Lib.Game
 {
   public class AGSGUISlider : AGSGUIObject
@@ -15,6 +17,9 @@ namespace AGSUnpacker.Lib.Game
     public Int32 handle_offset;
     public Int32 background_image;
 
+    public int handle_color;
+    public int shadow_color;
+
     public AGSGUISlider()
     {
       value_min = 0;
@@ -24,6 +29,9 @@ namespace AGSUnpacker.Lib.Game
       handle_image = 0;
       handle_offset = 0;
       background_image = 0;
+
+      handle_color = 0;
+      shadow_color = 0;
     }
 
     public override void LoadFromStream(BinaryReader r, int gui_version)
@@ -66,6 +74,28 @@ namespace AGSUnpacker.Lib.Game
         writer.Write((Int32)handle_offset);
         writer.Write((Int32)background_image);
       }
+    }
+
+    public override void LoadFromStream_v363(BinaryReader r)
+    {
+      base.LoadFromStream_v363(r);
+
+      handle_color = r.ReadInt32();
+      shadow_color = r.ReadInt32();
+
+      // skip reserved fields
+      _ = r.ReadArrayInt32(4);
+    }
+
+    public override void WriteToStream_v363(BinaryWriter writer)
+    {
+      base.WriteToStream_v363(writer);
+
+      writer.Write((Int32)handle_color);
+      writer.Write((Int32)shadow_color);
+
+      // nullify reserved fields
+      writer.WriteArrayInt32(new int[4]);
     }
   }
 }
