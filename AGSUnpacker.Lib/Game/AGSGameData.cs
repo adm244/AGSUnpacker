@@ -803,6 +803,79 @@ namespace AGSUnpacker.Lib.Game
       return true;
     }
 
+    private bool ReadInteractionEventsBlock(BinaryReader reader)
+    {
+      // characters
+      int charactersCount = reader.ReadInt32();
+      if (charactersCount != characters.Length)
+        return false;
+
+      for (int i = 0; i < charactersCount; ++i)
+        characters[i].interactions.LoadFromStream_v362(reader);
+
+      // inventory items
+      int invCount = reader.ReadInt32();
+      if (invCount != inventoryItems.Length)
+        return false;
+
+      for (int i = 0; i < invCount; ++i)
+        inventoryItems[i].interactions.LoadFromStream_v362(reader);
+
+      // guis
+      int guisCount = reader.ReadInt32();
+      if (guisCount != guis.Length)
+        return false;
+
+      for (int i = 0; i < guisCount; ++i)
+        guis[i].ScriptModule = reader.ReadPrefixedString32();
+
+      return true;
+    }
+
+    private bool WriteInteractionEventsBlock(BinaryWriter writer)
+    {
+      writer.Write((Int32)characters.Length);
+      for (int i = 0; i < characters.Length; ++i)
+        characters[i].interactions.WriteToStream_v362(writer);
+
+      writer.Write((Int32)inventoryItems.Length);
+      for (int i = 0; i < inventoryItems.Length; ++i)
+        inventoryItems[i].interactions.WriteToStream_v362(writer);
+
+      writer.Write((Int32)guis.Length);
+      for (int i = 0; i < guis.Length; ++i)
+        writer.WritePrefixedString32(guis[i].ScriptModule);
+
+      return true;
+    }
+
+    private bool ReadInteractionEventsExBlock(BinaryReader reader)
+    {
+      globalScript.Name = reader.ReadPrefixedString32();
+      dialogScript.Name = reader.ReadPrefixedString32();
+
+      int modulesCount = reader.ReadInt32();
+      if (modulesCount != scriptModules.Length)
+        return false;
+
+      for (int i = 0; i < modulesCount; ++i)
+        scriptModules[i].Name = reader.ReadPrefixedString32();
+
+      return ReadInteractionEventsBlock(reader);
+    }
+
+    private bool WriteInteractionEventsExBlock(BinaryWriter writer)
+    {
+      writer.WritePrefixedString32(globalScript.Name);
+      writer.WritePrefixedString32(dialogScript.Name);
+
+      writer.Write((Int32)scriptModules.Length);
+      for (int i = 0; i < scriptModules.Length; ++i)
+        writer.WritePrefixedString32(scriptModules[i].Name);
+
+      return WriteInteractionEventsBlock(writer);
+    }
+
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
     {
       bool result = false;
@@ -819,6 +892,14 @@ namespace AGSUnpacker.Lib.Game
 
         case "v361_objnames":
           result = ReadObjNamesExtensionBlock(reader);
+          break;
+
+        case "v362_interevents":
+          result = ReadInteractionEventsBlock(reader);
+          break;
+
+        case "v362_interevent2":
+          result = ReadInteractionEventsExBlock(reader);
           break;
 
         default:
@@ -845,6 +926,12 @@ namespace AGSUnpacker.Lib.Game
 
         case "v361_objnames":
           return WriteObjNamesExtensionBlock(writer);
+
+        case "v362_interevents":
+          return WriteInteractionEventsBlock(writer);
+
+        case "v362_interevent2":
+          return WriteInteractionEventsExBlock(writer);
 
         default:
           throw new NotSupportedException($"Unknown game data extension block: {id}.");

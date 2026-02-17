@@ -14,6 +14,7 @@ namespace AGSUnpacker.Lib.Shared
     private static readonly string SignatureHead = "SCOM";
     private static readonly uint SignatureTail = 0xBEEFCAFE;
 
+    public string Name;
     public int Version;
     public byte[] GlobalData;
     public int[] Code;
@@ -26,9 +27,10 @@ namespace AGSUnpacker.Lib.Shared
     public Fixup[] Fixups;
 
     private byte[] _stringsBlob;
-
+ 
     public AGSScript()
     {
+      Name = string.Empty;
       GlobalData = new byte[0];
       Code = new int[0];
       StringsStored = new string[0];

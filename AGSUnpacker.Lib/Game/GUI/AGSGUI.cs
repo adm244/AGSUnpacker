@@ -36,6 +36,7 @@ namespace AGSUnpacker.Lib.Game
     public Int32[] control_references;
 
     public Int32 TextWindowTag;
+    public string ScriptModule;
 
     public AGSGUI()
     {
@@ -68,6 +69,7 @@ namespace AGSUnpacker.Lib.Game
       control_references = new Int32[0];
 
       TextWindowTag = 0;
+      ScriptModule = string.Empty;
     }
 
     public void LoadFromStream(BinaryReader r, int gui_version)
