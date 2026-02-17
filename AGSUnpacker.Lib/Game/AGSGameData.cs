@@ -75,6 +75,8 @@ namespace AGSUnpacker.Lib.Game
     public int PluginVersion;
     public AGSPluginInfo[] Plugins;
 
+    public Dictionary<string, string> GameInfo;
+
     public AGSGameData()
     {
       Version = 0;
@@ -122,6 +124,8 @@ namespace AGSUnpacker.Lib.Game
 
       PluginVersion = 0;
       Plugins = Array.Empty<AGSPluginInfo>();
+
+      GameInfo = new();
     }
 
     public static AGSGameData ReadFromFile(string filepath)
@@ -908,6 +912,31 @@ namespace AGSUnpacker.Lib.Game
       return true;
     }
 
+    private bool ReadGameInfoBlock(BinaryReader reader)
+    {
+      int count = reader.ReadInt32();
+      for (int i = 0; i < count; ++i)
+      {
+        string key = reader.ReadPrefixedString32();
+        string value = reader.ReadPrefixedString32();
+        GameInfo.Add(key, value);
+      }
+
+      return true;
+    }
+
+    private bool WriteGameInfoBlock(BinaryWriter writer)
+    {
+      writer.Write((Int32)GameInfo.Count);
+      foreach (var (key, value) in GameInfo)
+      {
+        writer.WritePrefixedString32(key);
+        writer.WritePrefixedString32(value);
+      }
+
+      return true;
+    }
+
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
     {
       bool result = false;
@@ -936,6 +965,10 @@ namespace AGSUnpacker.Lib.Game
 
         case "v362_guictrls":
           result = ReadGUIControlsBlock(reader);
+          break;
+
+        case "v363_gameinfo":
+          result = ReadGameInfoBlock(reader);
           break;
 
         default:
@@ -971,6 +1004,9 @@ namespace AGSUnpacker.Lib.Game
 
         case "v362_guictrls":
           return WriteGUIControlsBlock(writer);
+
+        case "v363_gameinfo":
+          return WriteGameInfoBlock(writer);
 
         default:
           throw new NotSupportedException($"Unknown game data extension block: {id}.");
