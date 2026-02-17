@@ -876,6 +876,38 @@ namespace AGSUnpacker.Lib.Game
       return WriteInteractionEventsBlock(writer);
     }
 
+    private bool ReadGUIControlsBlock(BinaryReader reader)
+    {
+      int buttonsCount = reader.ReadInt32();
+      if (buttonsCount != buttons.Length)
+        return false;
+
+      for (int i = 0; i < buttonsCount; ++i)
+      {
+        buttons[i].padding_x = reader.ReadInt32();
+        buttons[i].padding_y = reader.ReadInt32();
+        // ignore reserved fields
+        _ = reader.ReadArrayInt32(2);
+      }
+
+      return true;
+    }
+
+    private bool WriteGUIControlsBlock(BinaryWriter writer)
+    {
+      writer.Write((Int32)buttons.Length);
+      for (int i = 0; i < buttons.Length; ++i)
+      {
+        writer.Write((Int32)buttons[i].padding_x);
+        writer.Write((Int32)buttons[i].padding_y);
+        // nullify reserved fields
+        writer.Write((Int32)0);
+        writer.Write((Int32)0);
+      }
+
+      return true;
+    }
+
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
     {
       bool result = false;
@@ -900,6 +932,10 @@ namespace AGSUnpacker.Lib.Game
 
         case "v362_interevent2":
           result = ReadInteractionEventsExBlock(reader);
+          break;
+
+        case "v362_guictrls":
+          result = ReadGUIControlsBlock(reader);
           break;
 
         default:
@@ -932,6 +968,9 @@ namespace AGSUnpacker.Lib.Game
 
         case "v362_interevent2":
           return WriteInteractionEventsExBlock(writer);
+
+        case "v362_guictrls":
+          return WriteGUIControlsBlock(writer);
 
         default:
           throw new NotSupportedException($"Unknown game data extension block: {id}.");

@@ -22,6 +22,8 @@ namespace AGSUnpacker.Lib.Game
     public string text;
     public Int32 text_aligment;
     public Int32 reserved1;
+    public Int32 padding_x;
+    public Int32 padding_y;
 
     public AGSGUIButton()
     {
@@ -40,6 +42,8 @@ namespace AGSUnpacker.Lib.Game
       text = string.Empty;
       text_aligment = 0;
       reserved1 = 0;
+      padding_x = 0;
+      padding_y = 0;
     }
 
     public override void LoadFromStream(BinaryReader r, int gui_version)
