@@ -18,6 +18,7 @@ namespace AGSUnpacker.UI.Views.Windows
   internal class RoomManagerWindowViewModel : ViewModel
   {
     private readonly WindowService _windowService;
+    private string LastSelectedFilepath = string.Empty;
 
     #region Properties
     private string _title;
@@ -90,11 +91,14 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = "AGS room file (*.crm)|*.crm|All files|*.*",
         Multiselect = false,
         CheckFileExists = true,
-        CheckPathExists = true
+        CheckPathExists = true,
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return;
+
+      LastSelectedFilepath = Path.GetDirectoryName(openDialog.FileName);
 
       Status = AppStatus.Loading;
 
@@ -124,11 +128,14 @@ namespace AGSUnpacker.UI.Views.Windows
         CreatePrompt = false,
         OverwritePrompt = true,
         // FIXME(adm244): room filename stored in Title, really?
-        FileName = Title
+        FileName = Title,
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (saveDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return;
+
+      LastSelectedFilepath = Path.GetDirectoryName(saveDialog.FileName);
 
       Status = AppStatus.Busy;
 
@@ -194,11 +201,14 @@ namespace AGSUnpacker.UI.Views.Windows
         CreatePrompt = false,
         OverwritePrompt = true,
         // FIXME(adm244): room filename stored in Title, really?
-        FileName = Path.GetFileNameWithoutExtension(Title)
+        FileName = Path.GetFileNameWithoutExtension(Title),
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (saveDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return Task.CompletedTask;
+
+      LastSelectedFilepath = Path.GetDirectoryName(saveDialog.FileName);
 
       return Task.Run(
         () =>
@@ -239,11 +249,14 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = "Image file (*.png;*.bmp)|*.png;*.bmp|All files|*.*",
         Multiselect = false,
         CheckFileExists = true,
-        CheckPathExists = true
+        CheckPathExists = true,
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return;
+
+      LastSelectedFilepath = Path.GetDirectoryName(openDialog.FileName);
 
       Graphics.Bitmap image = await Task.Run(
         () => new Graphics.Bitmap(openDialog.FileName)
@@ -306,9 +319,10 @@ namespace AGSUnpacker.UI.Views.Windows
       SaveImageCommand.NotifyCanExecuteChanged();
     }
 
-    public RoomManagerWindowViewModel(WindowService windowService)
+    public RoomManagerWindowViewModel(WindowService windowService, string lastSelectedFilepath)
     {
       _windowService = windowService;
+      LastSelectedFilepath = lastSelectedFilepath;
 
       Room = null;
       Title = null;

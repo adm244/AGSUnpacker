@@ -22,6 +22,7 @@ namespace AGSUnpacker.UI.Views.Windows
   internal class MainWindowViewModel : ViewModel
   {
     private readonly WindowService _windowService;
+    private string LastSelectedFilepath = string.Empty;
 
     #region Properties
     public static string ProgramName => AppDescription.ProgramName;
@@ -281,7 +282,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private void OnShowRoomManagerExecute()
     {
-      _windowService.Show(new RoomManagerWindowViewModel(_windowService));
+      _windowService.Show(new RoomManagerWindowViewModel(_windowService, LastSelectedFilepath));
     }
     #endregion
 
@@ -328,14 +329,16 @@ namespace AGSUnpacker.UI.Views.Windows
         new DialogOptions
         {
           Title = "Select asset file to inject into",
-          Filter = "Game data or room file (*.dta,*.crm)|*.dta;*.crm|All files|*.*"
+          Filter = "Game data or room file (*.dta,*.crm)|*.dta;*.crm|All files|*.*",
+          InitialDirectory = LastSelectedFilepath
         },
         new DialogOptions
         {
           Title = "Select one or more script files",
           Filter = "SCOM3 script file (*." + ScriptManager.ScriptFileExtension + ")|*."
                     + ScriptManager.ScriptFileExtension + "|All files|*.*",
-          Multiselect = true
+          Multiselect = true,
+          InitialDirectory = LastSelectedFilepath
         }
       );
     }
@@ -364,14 +367,16 @@ namespace AGSUnpacker.UI.Views.Windows
         new DialogOptions
         {
           Title = "Select trs file to get replacements from",
-          Filter = "Translation source file (*.trs)|*.trs|All files|*.*"
+          Filter = "Translation source file (*.trs)|*.trs|All files|*.*",
+          InitialDirectory = LastSelectedFilepath
         },
         new DialogOptions
         {
           Title = "Select one or more script files",
           Filter = "SCOM3 script file(*." + ScriptManager.ScriptFileExtension + ")|*."
                     + ScriptManager.ScriptFileExtension + "|All files|*.*",
-          Multiselect = true
+          Multiselect = true,
+          InitialDirectory = LastSelectedFilepath
         }
       );
     }
@@ -392,11 +397,14 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = filter,
         Multiselect = false,
         CheckFileExists = true,
-        CheckPathExists = true
+        CheckPathExists = true,
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
         return Task.CompletedTask;
+
+      LastSelectedFilepath = Path.GetDirectoryName(openDialog.FileName);
 
       return Task.Run(
         () => action(openDialog.FileName)
@@ -415,9 +423,12 @@ namespace AGSUnpacker.UI.Views.Windows
         openDialog.Multiselect = options[i].Multiselect;
         openDialog.CheckFileExists = true;
         openDialog.CheckPathExists = true;
+        openDialog.InitialDirectory = options[i].InitialDirectory;
 
         if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
           return Task.CompletedTask;
+
+        LastSelectedFilepath = Path.GetDirectoryName(openDialog.FileName);
 
         filenames.AddRange(openDialog.FileNames);
       }
@@ -435,7 +446,10 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = filter,
         Multiselect = false,
         CheckFileExists = true,
-        CheckPathExists = true
+        CheckPathExists = true,
+        // NOTE(adm244): not implemented in WPF
+        // RestoreDirectory = true
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
@@ -445,6 +459,8 @@ namespace AGSUnpacker.UI.Views.Windows
       string filename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
       string folder = Path.GetDirectoryName(openDialog.FileName);
       string targetFolder = Path.Combine(folder, filename);
+
+      LastSelectedFilepath = folder;
 
       if (!Directory.Exists(targetFolder))
         Directory.CreateDirectory(targetFolder);
@@ -462,7 +478,8 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = filter,
         Multiselect = false,
         CheckFileExists = true,
-        CheckPathExists = true
+        CheckPathExists = true,
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (openDialog.ShowDialog(_windowService.GetWindow(this)) != true)
@@ -471,6 +488,8 @@ namespace AGSUnpacker.UI.Views.Windows
       string filepath = openDialog.FileName;
       string folder = Path.GetDirectoryName(openDialog.FileName);
       string targetFolder = Path.Combine(folder, "packed");
+
+      LastSelectedFilepath = folder;
 
       if (!Directory.Exists(targetFolder))
         Directory.CreateDirectory(targetFolder);
@@ -488,7 +507,8 @@ namespace AGSUnpacker.UI.Views.Windows
         Filter = filter,
         Multiselect = false,
         CheckFileExists = true,
-        CheckPathExists = true
+        CheckPathExists = true,
+        InitialDirectory = LastSelectedFilepath
       };
 
       if (openDialog.ShowDialog(App.Current.MainWindow) != true)
@@ -498,6 +518,8 @@ namespace AGSUnpacker.UI.Views.Windows
       string filename = Path.GetFileNameWithoutExtension(openDialog.SafeFileName);
       string folder = Path.GetDirectoryName(openDialog.FileName);
       string targetFolder = Path.Combine(folder, filename);
+
+      LastSelectedFilepath = folder;
 
       if (!Directory.Exists(targetFolder))
       {
@@ -607,12 +629,14 @@ namespace AGSUnpacker.UI.Views.Windows
       public string Title;
       public string Filter;
       public bool Multiselect;
+      public string InitialDirectory;
 
       public DialogOptions()
       {
         Title = string.Empty;
         Filter = string.Empty;
         Multiselect = false;
+        InitialDirectory = string.Empty;
       }
     }
   }
