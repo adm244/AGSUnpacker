@@ -937,6 +937,29 @@ namespace AGSUnpacker.Lib.Game
       return true;
     }
 
+    private bool ReadDialogsBlock(BinaryReader reader)
+    {
+      int dialogCount = reader.ReadInt32();
+
+      // NOTE(adm244): overwrites old data
+      setup.dialogs_count = dialogCount;
+      dialogs = new AGSDialog[dialogCount];
+
+      for (int i = 0; i < dialogCount; ++i)
+        dialogs[i].LoadFromStream_v363(reader);
+
+      return true;
+    }
+
+    private bool WriteDialogsBlock(BinaryWriter writer)
+    {
+      writer.Write((Int32)setup.dialogs_count);
+      for (int i = 0; i < setup.dialogs_count; ++i)
+        dialogs[i].WriteToStream_v363(writer);
+
+      return true;
+    }
+
     private bool ReadExtensionBlock(BinaryReader reader, string id, long size)
     {
       bool result = false;
@@ -969,6 +992,10 @@ namespace AGSUnpacker.Lib.Game
 
         case "v363_gameinfo":
           result = ReadGameInfoBlock(reader);
+          break;
+
+        case "v363_dialogsnew":
+          result = ReadDialogsBlock(reader);
           break;
 
         default:
@@ -1007,6 +1034,9 @@ namespace AGSUnpacker.Lib.Game
 
         case "v363_gameinfo":
           return WriteGameInfoBlock(writer);
+
+        case "v363_dialogsnew":
+          return WriteDialogsBlock(writer);
 
         default:
           throw new NotSupportedException($"Unknown game data extension block: {id}.");

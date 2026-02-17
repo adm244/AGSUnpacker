@@ -77,5 +77,41 @@ namespace AGSUnpacker.Lib.Game
       writer.Write((Int32)options_number);
       writer.Write((Int32)topic_flags);
     }
+
+    public void LoadFromStream_v363(BinaryReader r)
+    {
+      scriptName = r.ReadPrefixedString32();
+      topic_flags = r.ReadInt32();
+      // skip reserved fields
+      _ = r.ReadArrayInt32(3);
+
+      options_number = r.ReadInt32();
+      options = new string[options_number];
+      flags = new int[options_number];
+      for (int i = 0; i < options_number; ++i)
+      {
+        options[i] = r.ReadPrefixedString32();
+        flags[i] = r.ReadInt32();
+        // skip more reserved fields
+        _ = r.ReadArrayInt32(3);
+      }
+    }
+
+    public void WriteToStream_v363(BinaryWriter writer)
+    {
+      writer.WritePrefixedString32(scriptName);
+      writer.Write((Int32)topic_flags);
+      // nullify reserved fields
+      writer.WriteArrayInt32(new int[3]);
+
+      writer.Write((Int32)options_number);
+      for (int i = 0; i < options_number; ++i)
+      {
+        writer.WritePrefixedString32(options[i]);
+        writer.Write((Int32)flags[i]);
+        // nullify more reserved fields
+        writer.WriteArrayInt32(new int[3]);
+      }
+    }
   }
 }
