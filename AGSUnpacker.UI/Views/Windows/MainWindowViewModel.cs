@@ -63,7 +63,7 @@ namespace AGSUnpacker.UI.Views.Windows
     {
       try
       {
-        await UnpackAsync("Select AGS game archive", "AGS archive|*.ags;*.exe",
+        await UnpackAsync("Select AGS game archive", "AGS archive (*.ags;*.exe;*.001;*.vox)|*.ags;*.exe;*.001;*.vox|All files|*.*",
         (filepath, targetFolder) =>
         {
           AssetsManager assetsManager = AssetsManager.Create(filepath);
@@ -102,7 +102,7 @@ namespace AGSUnpacker.UI.Views.Windows
     {
       try
       {
-        await UnpackAsync("Select acsprset.spr file", "AGS sprite set|*.spr",
+        await UnpackAsync("Select acsprset.spr file", "AGS sprites file (*.spr)|*.spr|All files|*.*",
           (filepath, targetFolder) => AGSSpriteSet.UnpackSprites(filepath, targetFolder)
         );
       }
@@ -152,7 +152,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnRepackSpritesExecute()
     {
-      return RepackAsync("Select header.bin file", "Sprite set header|header.bin",
+      return RepackAsync("Select header.bin file", "Sprite set header (header.bin)|header.bin",
         (filepath, targetFolder) =>
         {
           string inputFolder = Path.GetDirectoryName(filepath);
@@ -177,7 +177,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnExtractTranslationExecute()
     {
-      return ExtractAsync("Select AGS game executable", "AGS game executable|*.exe",
+      return ExtractAsync("Select AGS archive", "AGS archive (*.ags;*.exe;*.001)|*.ags;*.exe;*.001|All files|*.*",
         (filepath, targetFolder) =>
         {
           string targetFilepath = Path.Combine(targetFolder, "Extracted.trs");
@@ -202,7 +202,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnDecompileTranslationExecute()
     {
-      return SelectFileAsync("Select TRA file", "AGS compiled translation|*.tra",
+      return SelectFileAsync("Select TRA file", "AGS compiled translation (*.tra)|*.tra|All files|*.*",
         (filepath) =>
         {
           string targetFilepath = Path.ChangeExtension(filepath, "trs");
@@ -230,7 +230,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnCompileTraslationExecute()
     {
-      return SelectFileAsync("Select TRS file", "AGS translation|*.trs",
+      return SelectFileAsync("Select TRS file", "AGS source translation (*.trs)|*.trs|All files|*.*",
         (filepath) =>
         {
           string targetFilepath = Path.ChangeExtension(filepath, "tra");
@@ -256,7 +256,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnExtractGameIdExecute()
     {
-      return ExtractAsync("Select AGS game executable", "AGS game executable|*.exe",
+      return ExtractAsync("Select AGS archive", "AGS archive (*.ags;*.exe;*.001)|*.ags;*.exe;*.001|All files|*.*",
         (filepath, targetFolder) =>
         {
           string targetFilepath = Path.Combine(targetFolder, "game_id.txt");
@@ -295,7 +295,7 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnExtractScriptsExecute()
     {
-      return ExtractAsync("Select AGS game executable", "AGS game executable|*.exe",
+      return ExtractAsync("Select AGS archive", "AGS archive (*.ags;*.exe;*.001)|*.ags;*.exe;*.001|All files|*.*",
         (filepath, sourceFolder) =>
         {
           string targetFolder = Path.Combine(sourceFolder, "Scripts");
@@ -328,12 +328,13 @@ namespace AGSUnpacker.UI.Views.Windows
         new DialogOptions
         {
           Title = "Select asset file to inject into",
-          Filter = "Game data or room file|*.dta;*.crm"
+          Filter = "Game data or room file (*.dta,*.crm)|*.dta;*.crm|All files|*.*"
         },
         new DialogOptions
         {
           Title = "Select one or more script files",
-          Filter = "SCOM3 script file|*." + ScriptManager.ScriptFileExtension,
+          Filter = "SCOM3 script file (*." + ScriptManager.ScriptFileExtension + ")|*."
+                    + ScriptManager.ScriptFileExtension + "|All files|*.*",
           Multiselect = true
         }
       );
@@ -363,12 +364,13 @@ namespace AGSUnpacker.UI.Views.Windows
         new DialogOptions
         {
           Title = "Select trs file to get replacements from",
-          Filter = "Translation source file|*.trs"
+          Filter = "Translation source file (*.trs)|*.trs|All files|*.*"
         },
         new DialogOptions
         {
           Title = "Select one or more script files",
-          Filter = "SCOM3 script file|*." + ScriptManager.ScriptFileExtension,
+          Filter = "SCOM3 script file(*." + ScriptManager.ScriptFileExtension + ")|*."
+                    + ScriptManager.ScriptFileExtension + "|All files|*.*",
           Multiselect = true
         }
       );

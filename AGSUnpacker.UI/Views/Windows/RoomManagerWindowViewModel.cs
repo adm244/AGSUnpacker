@@ -87,7 +87,7 @@ namespace AGSUnpacker.UI.Views.Windows
       OpenFileDialog openDialog = new OpenFileDialog()
       {
         Title = "Select room file",
-        Filter = "AGS room file|*.crm",
+        Filter = "AGS room file (*.crm)|*.crm|All files|*.*",
         Multiselect = false,
         CheckFileExists = true,
         CheckPathExists = true
@@ -120,7 +120,7 @@ namespace AGSUnpacker.UI.Views.Windows
       SaveFileDialog saveDialog = new SaveFileDialog()
       {
         Title = "Save room file",
-        Filter = "AGS room file|*.crm",
+        Filter = "AGS room file (*.crm)|*.crm|All files|*.*",
         CreatePrompt = false,
         OverwritePrompt = true,
         // FIXME(adm244): room filename stored in Title, really?
@@ -190,7 +190,7 @@ namespace AGSUnpacker.UI.Views.Windows
       SaveFileDialog saveDialog = new SaveFileDialog()
       {
         Title = "Save image",
-        Filter = "Image file|*.png;*.bmp",
+        Filter = "Image file (*.png;*.bmp)|*.png;*.bmp|All files|*.*",
         CreatePrompt = false,
         OverwritePrompt = true,
         // FIXME(adm244): room filename stored in Title, really?
@@ -236,7 +236,7 @@ namespace AGSUnpacker.UI.Views.Windows
       OpenFileDialog openDialog = new OpenFileDialog()
       {
         Title = "Select image file",
-        Filter = "Image file|*.png;*.bmp",
+        Filter = "Image file (*.png;*.bmp)|*.png;*.bmp|All files|*.*",
         Multiselect = false,
         CheckFileExists = true,
         CheckPathExists = true
