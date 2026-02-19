@@ -21,7 +21,7 @@ RM     ?= rm
 TARGET  ?= win
 ARCH    ?= x64
 CONFIG  ?= Debug
-VERSION ?= 0.9
+VERSION ?= 0.10
 AUTHORS ?= Unknown
 PUBLIC_RELEASE ?=
 

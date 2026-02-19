@@ -1,3 +1,27 @@
+v010:
+
+General:
+- Resolved compiler warnings
+
+UI:
+- Fixed error messages not being shown
+- Improved open file dialog filters
+- Fixed file dialogs not remembering last selected folder
+- Added keyboard shortcuts support for Room Manager
+
+Game:
+- Added support for "v362_interevents" extension block
+- Added support for "v362_interevent2" extension block
+- Added support for "v362_guictrls" extension block
+- Added support for "v363_gameinfo" extension block
+- Added support for "v363_dialogsnew" extension block
+- Added support for "v363_guicrls" extension block
+
+Translation:
+- Fixed parsing misaligned TRS files
+- Added support for C-style escape sequences in TRS files
+
+
 v09:
 
 Script:
