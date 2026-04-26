@@ -64,7 +64,7 @@ namespace AGSUnpacker.UI.Views.Windows
     {
       try
       {
-        await UnpackAsync("Select AGS game archive", "AGS archive (*.ags;*.exe;*.001;*.vox)|*.ags;*.exe;*.001;*.vox|All files|*.*",
+        await UnpackAsync("Select AGS game archive", "AGS archive (*.ags;*.exe;*.001;*.vox;*.agt)|*.ags;*.exe;*.001;*.vox;*.agt|All files|*.*",
         (filepath, targetFolder) =>
         {
           AssetsManager assetsManager = AssetsManager.Create(filepath);

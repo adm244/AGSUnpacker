@@ -58,7 +58,8 @@ namespace AGSUnpacker.Lib.Assets
     {
       for (int i = 0; i < Archives.Length; ++i)
       {
-        string archiveOutputFolder = Path.Combine(outputFolder, Archives[i].Filename);
+        string archiveFileName = Path.GetFileName(Archives[i].Filename);
+        string archiveOutputFolder = Path.Combine(outputFolder, archiveFileName);
         Directory.CreateDirectory(archiveOutputFolder);
 
         ExtractFilesFromArchive(Archives[i], archiveOutputFolder);
