@@ -32,6 +32,7 @@ namespace AGSUnpacker.Lib.Translation
 
     //TODO(adm244): check if there's other options added by newer engine versions
     private const string EncodingOption = "encoding";
+    private const string EncodingOptionDefault = "ASCII";
 
     // FIXME(adm244): temporary? public
     public Dictionary<string, string> Lines { get; private set; }
@@ -50,11 +51,11 @@ namespace AGSUnpacker.Lib.Translation
     {
       get
       {
-        if (HasTextEncoding)
+        // NOTE(adm244): some TRA files contain empty encoding field
+        if (HasTextEncoding && !string.IsNullOrWhiteSpace(Options[EncodingOption]))
           return Options[EncodingOption];
 
-        //NOTE(adm244): should we return ASCII as default?
-        return "ASCII";
+        return EncodingOptionDefault;
       }
 
       set => Options[EncodingOption] = value;
