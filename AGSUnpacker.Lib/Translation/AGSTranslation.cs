@@ -79,9 +79,8 @@ namespace AGSUnpacker.Lib.Translation
       if (string.IsNullOrEmpty(original) || string.IsNullOrEmpty(translation))
         return false;
 
-      Lines.Add(original, translation);
-
-      return true;
+      // NOTE(adm244); some TRA files contain duplicates, ignore it here
+      return Lines.TryAdd(original, translation);
     }
 
     public void Compile(string filepath)
