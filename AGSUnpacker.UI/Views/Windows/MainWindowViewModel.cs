@@ -203,14 +203,24 @@ namespace AGSUnpacker.UI.Views.Windows
 
     private Task OnDecompileTranslationExecute()
     {
-      return SelectFileAsync("Select TRA file", "AGS compiled translation (*.tra)|*.tra|All files|*.*",
-        (filepath) =>
+      return SelectFilesAsync(
+        (filenames) =>
         {
-          string targetFilepath = Path.ChangeExtension(filepath, "trs");
-          AGSTranslation translation = new AGSTranslation();
+          foreach (string filename in filenames)
+          {
+            string targetFilepath = Path.ChangeExtension(filename, "trs");
+            AGSTranslation translation = new AGSTranslation();
 
-          translation.Decompile(filepath);
-          translation.WriteSourceFile(targetFilepath);
+            translation.Decompile(filename);
+            translation.WriteSourceFile(targetFilepath);
+          }
+        },
+        new DialogOptions
+        {
+          Title = "Select TRA files",
+          Filter = "AGS compiled translation (*.tra)|*.tra|All files|*.*",
+          Multiselect = true,
+          InitialDirectory = LastSelectedFilepath
         }
       );
     }
