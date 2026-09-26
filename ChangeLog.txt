@@ -1,3 +1,25 @@
+v011:
+
+UI:
+- Fixed initial directory for multiple open dialogs
+- Added AGT extension to assets file dialog filter
+- Added ability to select multiple TRA files
+
+Graphics:
+- Fixed missing room background palette colors
+
+Assets:
+- Fixed archive file name parsing
+- Fixed incorrect offsets reading appended CLIB v6 (old games)
+
+Translation:
+- Fixed TRA parsing with empty encoding
+- Ignore duplicated entries in TRA file
+
+Script:
+- Added script module list extraction
+
+
 v010:
 
 General:
