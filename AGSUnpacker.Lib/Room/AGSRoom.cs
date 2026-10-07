@@ -112,7 +112,12 @@ namespace AGSUnpacker.Lib.Room
 
     public static AGSRoom ReadFromFile(string filepath)
     {
-      AGSRoom room = new AGSRoom();
+      return ReadFromFile(filepath, string.Empty);
+    }
+
+    public static AGSRoom ReadFromFile(string filepath, string name)
+    {
+      AGSRoom room = new AGSRoom(name);
 
       using FileStream stream = new FileStream(filepath, FileMode.Open, FileAccess.Read);
       using BinaryReader reader = new BinaryReader(stream, Encoding.Latin1);

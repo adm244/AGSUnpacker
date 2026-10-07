@@ -140,63 +140,33 @@ namespace AGSUnpacker.Lib.Utils
     {
       if (Directory.Exists(sourceFolder))
       {
-        AGSGameData gameData = new AGSGameData();
-        List<AGSRoom> rooms = new List<AGSRoom>();
-
-        string[] filenames = Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories);
-
-        Console.WriteLine("Searching asset files...");
-
-        for (int i = 0; i < filenames.Length; ++i)
+        string[] files = Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories);
+        for (int i = 0; i < files.Length; ++i)
         {
-          string fileExtension = Path.GetExtension(filenames[i].ToLower());
+          string fileName = Path.GetFileName(files[i]);
+          string fileExtension = Path.GetExtension(files[i].ToLower());
 
           if (fileExtension == ".dta")
           {
-            Console.Write("\tParsing {0} data file...", Path.GetFileName(filenames[i]));
+            Console.Write($"Parsing {fileName} data file...");
+            AGSGameData gameData = AGSGameData.ReadFromFile(files[i]);
+            Console.WriteLine(" Done!");
 
-            gameData.LoadFromFile(filenames[i]);
-
+            Console.Write("Extracting scripts from game data...");
+            string globalScriptsFolder = Path.Combine(targetFolder, "global");
+            ExtractGameDataScripts(gameData, globalScriptsFolder);
             Console.WriteLine(" Done!");
           }
           else if (fileExtension == ".crm")
           {
-            Console.Write("\tParsing {0} room file...", Path.GetFileName(filenames[i]));
+            Console.Write($"Parsing {fileName} room file...");
+            AGSRoom room = AGSRoom.ReadFromFile(files[i], Path.GetFileNameWithoutExtension(files[i]));
+            Console.WriteLine(" Done!");
 
-            AGSRoom room = new AGSRoom(Path.GetFileNameWithoutExtension(filenames[i]));
-            room.ReadFromFileDeprecated(filenames[i]);
-            rooms.Add(room);
-
+            Console.Write($"Extracting {fileName} script...");
+            ExtractRoomScript(room, targetFolder);
             Console.WriteLine(" Done!");
           }
-        }
-
-        Console.Write("Extracting scripts from game data...");
-        string globalScriptsFolder = Path.Combine(targetFolder, "global");
-        ExtractGameDataScripts(gameData, globalScriptsFolder);
-        Console.WriteLine(" Done!");
-
-        for (int i = 0; i < rooms.Count; ++i)
-        {
-          Console.Write($"Extracting room{i} script...");
-          if (!string.IsNullOrEmpty(rooms[i].Script.SourceCode))
-          {
-            string filename = Path.GetFileNameWithoutExtension(rooms[i].Name);
-            if (string.IsNullOrEmpty(filename))
-            {
-              filename = Path.GetRandomFileName();
-            }
-            filename += ".txt";
-
-            string targetFilepath = Path.Combine(targetFolder, filename);
-
-            Directory.CreateDirectory(targetFolder);
-
-            File.WriteAllText(targetFilepath, rooms[i].Script.SourceCode);
-          }
-
-          DumpScript(rooms[i].Script.SCOM3, targetFolder, rooms[i].Name);
-          Console.WriteLine(" Done!");
         }
 
         return true;
@@ -230,6 +200,25 @@ namespace AGSUnpacker.Lib.Utils
 
         DumpScript(gameData.scriptModules[i], targetFolder, filename);
       }
+    }
+
+    private static void ExtractRoomScript(AGSRoom room, string targetFolder)
+    {
+      if (!string.IsNullOrEmpty(room.Script.SourceCode))
+      {
+        string filename = Path.GetFileNameWithoutExtension(room.Name);
+        if (string.IsNullOrEmpty(filename))
+        {
+          filename = Path.GetRandomFileName();
+        }
+        filename += ".txt";
+
+        string targetFilepath = Path.Combine(targetFolder, filename);
+        Directory.CreateDirectory(targetFolder);
+        File.WriteAllText(targetFilepath, room.Script.SourceCode);
+      }
+
+      DumpScript(room.Script.SCOM3, targetFolder, room.Name);
     }
 
     private static void DumpScript(AGSScript script, string targetFolder, string name = null)
